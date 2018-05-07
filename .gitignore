@@ -8,7 +8,7 @@ __pycache__/
 .idea/
 pip-selfcheck.json
 # Distribution / packaging
-#ext/auth/clients.py
+ext/auth/clients.py
 .Python
 lib/
 bin/
