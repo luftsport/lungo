@@ -28,9 +28,11 @@ class TokenAuth(TokenAuth):
         """
 
 
+        for app in apps:
 
-        if token == apps[0]['token']:
-            return True
+            if token == app['token']:
+                current_app = app
+                return True
 
 
         return False
