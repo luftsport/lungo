@@ -5,9 +5,15 @@ __pycache__/
 
 # C extensions
 *.so
-
+.idea/
 # Distribution / packaging
 .Python
+lib/
+bin/
+bin/
+include/
+lib64/
+lib64
 env/
 build/
 develop-eggs/
