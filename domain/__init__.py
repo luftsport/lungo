@@ -1,8 +1,8 @@
  
-import stations, values, aggregation
+import ka_clubs, ka_competence, ka_members
 
 DOMAIN = {
-    "stations": stations.definition,
-    "values": values.definition,
-    "values/aggregation": aggregation.minmax
+    "ka_clubs": ka_clubs.definition,
+    "ka_members": ka_members.definition,
+    #"values/aggregation": aggregation.minmax
 }
