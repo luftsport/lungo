@@ -1,8 +1,8 @@
 _schema = {
  'AccountId': {'type': 'integer'},
- 'AllChildren': {'type': '', 'default': None},
- 'AllParents': {'type': '', 'default': None},
- 'Children': {'type': '', 'default': None},
+ 'AllChildren': {'type': 'string', 'default': None},
+ 'AllParents': {'type': 'string', 'default': None},
+ 'Children': {'type': 'string', 'default': None},
  'City': {'type': 'string'},
  'Comment': {'type': 'string', 'default': None},
  'ContactId': {'type': 'integer'},
