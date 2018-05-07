@@ -10,6 +10,9 @@
 # Atuhentication
 from eve.auth import TokenAuth
 from flask import current_app as app, request, Response, abort
+
+# Not in github
+from ext.auth.clients import apps
 # from eve.methods.get import getitem as get_internal
 # from bson.objectid import ObjectId
 
@@ -24,14 +27,9 @@ class TokenAuth(TokenAuth):
         Token is decoded request.authorization['username']
         """
 
-        stations = {'id': 1,
-                    '_id': '5ad2330d26867a2206f135a3',
-                    'name': 'hauanveien',
-                    'token': '1e26730ea840499295417c74ddd2e052',
-                    'client_token': 'MWUyNjczMGVhODQwNDk5Mjk1NDE3Yzc0ZGRkMmUwNTI6'
-                    }
 
-        if token == stations['token']:
+
+        if token == apps[0]['token']:
             return True
 
 
