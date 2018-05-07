@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 .idea/
+ka/post.py
 pip-selfcheck.json
 # Distribution / packaging
 ext/auth/clients.py

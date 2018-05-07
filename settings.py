@@ -20,9 +20,9 @@ APP_VERSION         = '.'.join(__version_info__)
 APP_AUTHOR          = 'Einar Huseby'
 APP_LICENSE         = 'MIT'
 APP_COPYRIGHT       = '(c) 2018'
-APP_ALL             = ['member-api']
+APP_ALL             = ['lungo-member-api']
 
-AUTH_SESSION_LENGHT = 3600 #Seconds
+AUTH_SESSION_LENGHT = 3600 # Seconds
 
 MONGO_HOST = 'localhost'
 MONGO_PORT = 27017
