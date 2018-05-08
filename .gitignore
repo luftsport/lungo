@@ -7,9 +7,11 @@ __pycache__/
 *.so
 .idea/
 ka/post.py
+ka/filter
+ka/ka_filter
+ext/auth/clients.py
 pip-selfcheck.json
 # Distribution / packaging
-ext/auth/clients.py
 .Python
 lib/
 bin/

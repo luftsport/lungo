@@ -27,7 +27,11 @@ definition = {
     'item_title': 'ka_members',
     'datasource': {'source': 'ka_members',
                    },
-
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'Id',
+    },
+    'extra_response_fields': ['Id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH'],
