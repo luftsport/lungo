@@ -32,7 +32,7 @@ definition = {
         'field': 'Id',
     },
     'extra_response_fields': ['Id'],
-    'versioning': True,
+    'versioning': False,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
 
