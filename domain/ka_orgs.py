@@ -7,7 +7,7 @@ _schema = {
  'County': {'type': 'string'},
  'CountyId': {'type': 'integer'},
  'Email': {'type': 'string'},
- 'Id': {'type': 'integer'},
+ 'Id': {'type': 'integer', 'unique': True},
  'Name': {'type': 'string'},
  'NameDescr': {'type': 'string'},
  'OrgType': {'type': 'string'},
