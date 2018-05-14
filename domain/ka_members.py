@@ -20,6 +20,8 @@ _schema = {
               'default': []},
     'clubs_inactive': {'type': 'list',
                      'default': []},
+    'clubs_payment': {'type': 'list',
+              'default': []},
     'sections': {'type': 'list',
                  'default': []},
 }
