@@ -1,7 +1,6 @@
 _schema = {
     'Id': {'type': 'integer'},
     'MelwinId': {'type': 'integer', 'default': None},
-    'IsActive': {'type': 'boolean'},
     'MemberFeeStatus': {'type': 'integer'},
     'GenderId': {'type': 'integer'},
     'GenderText': {'type': 'string'},
@@ -17,8 +16,10 @@ _schema = {
                    'default': []},
     'licenses': {'type': 'list',
                  'default': []},
-    'clubs': {'type': 'list',
+    'clubs_active': {'type': 'list',
               'default': []},
+    'clubs_inactive': {'type': 'list',
+                     'default': []},
     'sections': {'type': 'list',
                  'default': []},
 }
