@@ -1,7 +1,6 @@
 _schema = {
     'Id': {'type': 'integer'},
     'MelwinId': {'type': 'integer', 'default': None},
-    'MemberFeeStatus': {'type': 'integer'},
     'GenderId': {'type': 'integer'},
     'GenderText': {'type': 'string'},
     'TrainingFeeStatus': {'type': 'integer'},
@@ -23,6 +22,8 @@ _schema = {
     'clubs_payment': {'type': 'list',
               'default': []},
     'sections': {'type': 'list',
+                 'default': []},
+    'activities': {'type': 'list',
                  'default': []},
 }
 
