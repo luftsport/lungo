@@ -25,6 +25,10 @@ _schema = {
                  'default': []},
     'activities': {'type': 'list',
                  'default': []},
+    'Magazines': {'type': 'list',
+                     'default': []},
+    'Products': {'type': 'list',
+                     'default': []},
 }
 
 definition = {
