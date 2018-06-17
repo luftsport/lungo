@@ -11,6 +11,7 @@ ka/filter
 ka/ka_filter
 ext/auth/clients.py
 pip-selfcheck.json
+./pip-selfcheck.json
 # Distribution / packaging
 .Python
 lib/
