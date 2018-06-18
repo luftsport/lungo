@@ -1,5 +1,5 @@
  
-import ka_clubs, ka_competence, ka_members, ka_orgs, organizations
+import ka_clubs, ka_competence, ka_members, ka_orgs, organizations, organization_types
 
 DOMAIN = {
     "ka/clubs": ka_clubs.definition,
