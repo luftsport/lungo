@@ -22,7 +22,11 @@ _schema = {
     'OrgStructuresDown': {'type': 'list',
                           'schema': {'type': 'dict',
                                      'schema': {'id': {'type': 'integer'},
-                                                'type': {'type': 'integer'}}}
+                                                'type': {'type': 'integer',
+                                                         'data_relation': {'resource': 'organization/types',
+                                                                           'field': 'OrgTypeId',
+                                                                           'embeddable': True
+                                                         }}}}
                           },
     'OrgStructuresUp': {'type': 'list',
                         'schema': {'type': 'dict',
