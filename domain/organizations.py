@@ -23,7 +23,7 @@ _schema = {
                           'schema': {'type': 'dict',
                                      'schema': {'id': {'type': 'integer'},
                                                 'type': {'type': 'integer',
-                                                         'data_relation': {'resource': 'organization/types',
+                                                         'data_relation': {'resource': 'organization_types',
                                                                            'field': 'OrgTypeId',
                                                                            'embeddable': True
                                                          }}}}
