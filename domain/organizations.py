@@ -1,8 +1,8 @@
 _schema = {
 
     'Account': { 'type': 'dict',
-        'schema': {'AccountId': {'type': 'integer'},
-                   'AccountNo': {'type': 'integer'}}
+        #'schema': {'AccountId': {'type': 'integer'},
+        #           'AccountNo': {'type': 'integer'}}
     },
     #'ActiveLabel': {'type': 'string'},
     #'CancellationDate': None,
