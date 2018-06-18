@@ -20,13 +20,20 @@ _schema = {
     'Name': {'type': 'string', 'default': ''},
     'OrgId': {'type': 'integer', 'unique': True},
     'OrgStructuresDown': {'type': 'list',
-                          'schema': {'type': 'dict', 'schema': {'id': {'type': 'integer'},
-                                                                'type': {'type': 'integer'}}}
+                          'schema': {'type': 'dict',
+                                     'schema': {'id': {'type': 'integer'},
+                                                'type': {'type': 'integer'}}}
                           },
     'OrgStructuresUp': {'type': 'list',
-                        'schema': {'type': 'dict', 'schema': {'id': {'type': 'integer'},
-                                                              'type': {'type': 'integer'}}}
+                        'schema': {'type': 'dict',
+                                   'schema': {'id': {'type': 'integer'},
+                                              'type': {'type': 'integer'}}}
                           },
+    #'data_relation': {
+    #    'resource': 'users',
+    #    'field': '_id',
+    #    'embeddable': True
+    #},
 
     'OrganizationTypeId': {'type': 'integer'},
     'ParentOrganizationId': {'type': 'integer'},
