@@ -18,7 +18,7 @@ _schema = {
     'Modified': {'type': 'datetime'},
     'NIFOrganizationNumber': {'type': 'string', 'default': ''},
     'Name': {'type': 'string', 'default': ''},
-    'OrgId': {'type': 'integer'},
+    'OrgId': {'type': 'integer', 'unique': True},
     'OrgStructuresDown': {'type': 'list',
                           'schema': {'type': 'dict', 'schema': {'id': {'type': 'integer'},
                                                                 'type': {'type': 'integer'}}}

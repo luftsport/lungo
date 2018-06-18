@@ -25,7 +25,7 @@ APP_ALL             = ['lungo-member-api']
 AUTH_SESSION_LENGHT = 3600 # Seconds
 
 MONGO_HOST = 'localhost'
-MONGO_PORT = 27018
+MONGO_PORT = 27017
 MONGO_USERNAME = ''
 MONGO_PASSWORD = ''
 MONGO_DBNAME = 'ka'
