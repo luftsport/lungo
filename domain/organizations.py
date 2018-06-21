@@ -67,7 +67,7 @@ definition = {
     },
     'extra_response_fields': ['OrgId'],
     'versioning': False,
-    'resource_methods': ['GET', 'POST'],
+    'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
 
     'schema': _schema
