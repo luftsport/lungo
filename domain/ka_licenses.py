@@ -1,17 +1,16 @@
 _schema = {
     'Id': {'type': 'integer', 'required': True},
-    'Code': {'type': 'string', 'required': True},
     'Name': {'type': 'string'},
     'PersonId': {'type': 'integer', 'required': True}
 }
 
 definition = {
-    'item_title': 'ka_competence',
-    'datasource': {'source': 'ka_competence',
+    'item_title': 'ka_licenses',
+    'datasource': {'source': 'ka_licenses',
                    },
     'additional_lookup': {
-        'url': 'regex("[\w{1}\-\w{1,5}]+")',
-        'field': 'Code',
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'Id',
     },
     'extra_response_fields': ['Id'],
     'versioning': False,
