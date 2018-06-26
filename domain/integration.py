@@ -1,9 +1,12 @@
 _schema = {
-    '_auth': {'type': 'dict', 'schema': {
-        'username': {'type': 'string'},
-        'password': {'type': 'string'},
-        'club': {'type': 'integer'}
-    }},
+    '_auth': {
+        'type': 'dict',
+        'schema': {
+            'username': {'type': 'string'},
+            'password': {'type': 'string'},
+            'club': {'type': 'integer'}
+        }
+    },
     'ActiveClubs': {'type': 'list'},
     'ActiveFunctions': {'type': 'list'},
     'Clubs': {'type': 'list'},
@@ -16,7 +19,6 @@ _schema = {
     'LastChangedDate': {'type': 'datetime'},
     'LastName': {'type': 'string'},
     'Nationality': {'type': 'integer'},
-    'Id': {'type': 'integer'},
     'PersonGender': 'Male',
     'PersonId': {'type': 'integer'},
     'RestrictedAddress': {'type': 'boolean'},
