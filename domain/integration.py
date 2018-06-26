@@ -39,9 +39,9 @@ definition = {
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,20}]+")',
-        'field': '_auth.id',
+        'field': '_auth.club',
     },
-    'extra_response_fields': ['_auth.id'],
+    'extra_response_fields': ['_auth.club'],
     'versioning': False,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
