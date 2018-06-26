@@ -1,12 +1,18 @@
-_schema = {
+"""
     '_auth': {
         'type': 'dict',
         'schema': {
-            'username': {'type': 'string'},
-            'password': {'type': 'string'},
-            'club': {'type': 'integer'}
+            '_auth_username': {'type': 'string'},
+            '_auth_password': {'type': 'string'},
+            '_auth_club': {'type': 'integer'}
         }
     },
+    """
+_schema = {
+
+    '_auth_username': {'type': 'string'},
+    '_auth_password': {'type': 'string'},
+    '_auth_club': {'type': 'integer'},
     'ActiveClubs': {'type': 'list'},
     'ActiveFunctions': {'type': 'list'},
     'Clubs': {'type': 'list'},
@@ -39,9 +45,9 @@ definition = {
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,20}]+")',
-        'field': '_auth.club',
+        'field': '_auth_club',
     },
-    'extra_response_fields': ['_auth.club'],
+    'extra_response_fields': ['_auth_club'],
     'versioning': False,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
