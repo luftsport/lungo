@@ -1,5 +1,6 @@
  
-import ka_clubs, ka_competence, ka_members, ka_orgs, organizations, organization_types, ka_licenses
+import ka_clubs, ka_competence, ka_members, ka_orgs, ka_licenses
+import organizations, organization_types, integration
 
 DOMAIN = {
     "ka/clubs": ka_clubs.definition,
@@ -9,5 +10,6 @@ DOMAIN = {
     "ka/licenses": ka_licenses.definition,
     "organizations": organizations.definition,
     "organization/types": organization_types.definition,
+    "integration": integration.definition,
     #"values/aggregation": aggregation.minmax
 }
