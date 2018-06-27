@@ -7,9 +7,6 @@
             '_auth_club': {'type': 'integer'}
         }
     },
-    """
-_schema = {
-
     '_auth_username': {'type': 'string'},
     '_auth_password': {'type': 'string'},
     '_auth_club': {'type': 'integer'},
@@ -37,6 +34,21 @@ _schema = {
     'ApprovePublishing': {'type': 'boolean'},
     'AutomaticDataCleansingReservation': {'type': 'boolean'},
     'BirthDate': {'type': 'datetime'},
+    """
+_schema = {
+
+    'active_clubs': {'type': 'list'},
+    'active_functions': {'type': 'list'},
+    'clubs': {'type': 'list'},
+    'club': {'type': 'integer', 'required': True},
+    'id': {'type': 'integer', 'required': True},
+    'first_name': {'type': 'string'},
+    'full_name': {'type': 'string'},
+    'login': {'type': 'string'},
+    'password': {'type': 'string'},
+    'person_id': {'type': 'integer'},
+    'user_id': {'type': 'integer'},
+    'username': {'type': 'string'},
 }
 
 definition = {
@@ -45,9 +57,9 @@ definition = {
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,20}]+")',
-        'field': '_auth_club',
+        'field': 'club',
     },
-    'extra_response_fields': ['_auth_club'],
+    'extra_response_fields': ['club'],
     'versioning': False,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
