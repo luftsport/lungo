@@ -41,7 +41,7 @@ _schema = {
     'active_functions': {'type': 'list'},
     'functions': {'type': 'list'},
     'clubs': {'type': 'list'},
-    'club': {'type': 'integer', 'required': True},
+    'club': {'type': 'integer', 'required': True, 'unique': True},
     'id': {'type': 'integer', 'required': True},
     'first_name': {'type': 'string'},
     'full_name': {'type': 'string'},
