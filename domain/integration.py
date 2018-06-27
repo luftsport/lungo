@@ -49,6 +49,7 @@ _schema = {
     'person_id': {'type': 'integer'},
     'user_id': {'type': 'integer'},
     'username': {'type': 'string'},
+    'modified': {'type': 'datetime'}
 }
 
 definition = {
