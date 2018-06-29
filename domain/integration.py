@@ -59,9 +59,9 @@ definition = {
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,20}]+")',
-        'field': 'club',
+        'field': 'club_id',
     },
-    'extra_response_fields': ['club'],
+    'extra_response_fields': ['club_id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
