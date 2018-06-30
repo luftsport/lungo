@@ -6,9 +6,11 @@ _schema = {
              {
                  'ChangeType': {'type': 'string'},
                  'Created': {'type': 'datetime'},
+                 'EntityType': {'type': 'string'},
                  'Id': {'type': 'integer'},
                  'MergeResultOf': {'type': 'list'},
                  'Modified': {'type': 'datetime'},
+                 'Name': {'type': 'string'},
                  'SequenceOrdinal': {'type': 'datetime'},
              }
          }
@@ -17,6 +19,7 @@ _schema = {
     'EndDate': {'type': 'datetime'},
     'NextStartDate': {'type': 'datetime'},
     'ReportDate': {'type': 'datetime'},
+    'ParentOrgId': {'type': 'integer'},
     'club_id': {'type': 'integer'}
 }
 
