@@ -14,8 +14,8 @@ _schema = {
 }
 
 definition = {
-    'item_title': 'integration changes',
-    'datasource': {'source': 'changes',
+    'item_title': 'integration changes stream',
+    'datasource': {'source': 'changes_stream',
                    },
     # Can be a time in microseconds
     # 'additional_lookup': {
