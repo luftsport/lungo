@@ -1,34 +1,33 @@
-
 _schema = {
 
- 'Address': {'type': 'string'},
- 'BrregOrgNo': {'type': 'string'},
- 'City': {'type': 'string'},
- 'County': {'type': 'string'},
- 'CountyId': {'type': 'integer'},
- 'Email': {'type': 'string'},
- 'Id': {'type': 'integer', 'unique': True},
- 'Name': {'type': 'string'},
- 'NameDescr': {'type': 'string'},
- 'OrgType': {'type': 'string'},
- 'OrgTypeId': {'type': 'integer'},
- 'Url': {'type': 'string'},
- 'Zip': {'type': 'string'},
- '_down': {'type': 'list', 'default': []},
- '_up': {'type': 'list', 'default': []},
+    'Changes': {'type': 'list', 'schema':
+        {'type': 'dict',
+         'schema':
+             {
+                 'ChangeType': {'type': 'string'},
+                 'Created': {'type': 'datetime'},
+                 'Id': {'type': 'integer'},
+                 'MergeResultOf': {'type': 'list'},
+                 'Modified': {'type': 'datetime'},
+                 'SequenceOrdinal': {'type': 'datetime'},
+             }
+         }
+                },
+    'StartDate': {'type': 'datetime'},
+    'EndDate': {'type': 'datetime'},
+    'NextStartDate': {'type': 'datetime'},
+    'ReportDate': {'type': 'datetime'},
+    'club_id': {'type': 'integer'}
 }
 
 definition = {
-    'item_title': 'ka_orgs',
-    'datasource': {'source': 'ka_orgs',
+    'item_title': 'integration changes',
+    'datasource': {'source': 'changes',
                    },
-    'additional_lookup': {
-        'url': 'regex("[\d{1,9}]+")',
-        'field': 'Id',
-    },
-    'extra_response_fields': ['Id'],
+
+    'extra_response_fields': ['club_d'],
     'versioning': False,
-    'resource_methods': ['GET', 'POST'],
+    'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
 
     'schema': _schema
