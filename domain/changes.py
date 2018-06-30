@@ -27,6 +27,11 @@ definition = {
     'item_title': 'integration changes',
     'datasource': {'source': 'changes',
                    },
+    # Can be a time in microseconds
+    #'additional_lookup': {
+    #    'url': 'regex("[\d{1,20}]+")',
+    #    'field': 'Changes.SequenceOrdinal',
+    #},
 
     'extra_response_fields': ['club_d'],
     'versioning': False,
