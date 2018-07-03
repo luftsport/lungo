@@ -28,7 +28,7 @@ _schema = {
     'full_name': {'type': 'string'},
     'function_applications': {'type': 'list'},
     'functions': {'type': 'list'},
-    'gender': {'type': 'string', 'allowed': ['M', 'F', 'A', 'U']},
+    'gender': {'type': 'string', 'allowed': ["M", "F", "A", "U"]},
     'id': {'type': 'integer'},
     'last_changed_date': {'type': 'datetime'},
     'last_name': 'Huseby',
