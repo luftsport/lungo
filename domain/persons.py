@@ -35,6 +35,8 @@ _schema = {
     'last_name': {'type': 'string'},
     'passive_functions': {'type': 'list'},
     'qualifications': {'type': 'list'},
+    'licenses': {'type': 'list'},
+    'competences': {'type': 'list'},
     'settings': {'type': 'dict', 'schema':
         {'approve_marketing': {'type': 'boolean'},
          'approve_publishing': {'type': 'boolean'},
