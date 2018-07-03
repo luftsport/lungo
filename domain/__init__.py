@@ -1,6 +1,6 @@
  
 import ka_clubs, ka_competence, ka_members, ka_orgs, ka_licenses
-import organizations, organization_types, integration, changes, changes_stream
+import organizations, organization_types, integration, changes, changes_stream, persons
 
 DOMAIN = {
     "ka/clubs": ka_clubs.definition,
@@ -13,5 +13,6 @@ DOMAIN = {
     "integration": integration.definition,
     "integration/changes": changes.definition,
     "integration/changes/stream": changes_stream.definition,
+    "persons": persons.definition
     #"values/aggregation": aggregation.minmax
 }

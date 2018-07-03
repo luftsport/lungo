@@ -1,34 +1,63 @@
-
 _schema = {
 
- 'Address': {'type': 'string'},
- 'BrregOrgNo': {'type': 'string'},
- 'City': {'type': 'string'},
- 'County': {'type': 'string'},
- 'CountyId': {'type': 'integer'},
- 'Email': {'type': 'string'},
- 'Id': {'type': 'integer', 'unique': True},
- 'Name': {'type': 'string'},
- 'NameDescr': {'type': 'string'},
- 'OrgType': {'type': 'string'},
- 'OrgTypeId': {'type': 'integer'},
- 'Url': {'type': 'string'},
- 'Zip': {'type': 'string'},
- '_down': {'type': 'list', 'default': []},
- '_up': {'type': 'list', 'default': []},
+    'active_clubs': {'type': 'list'},
+    'active_functions': {'type': 'list'},
+    'address': {'type': 'dict', 'schema':
+        {'city': {'type': 'string'},
+         'contact_id': {'type': 'integer'},
+         'contact_information_id': {'type': 'integer'},
+         'country_id': {'type': 'integer'},
+         'email': {'type': 'string'},
+         'fax': {'type': 'string'},
+         'phone_home': {'type': 'string'},
+         'phone_mobile': {'type': 'string'},
+         'phone_work': {'type': 'string'},
+         'secret_address': {'type': 'boolean'},
+         'secret_email': {'type': 'boolean'},
+         'secret_phone_home': {'type': 'boolean'},
+         'secret_phone_mobile': {'type': 'boolean'},
+         'secret_phone_work': {'type': 'boolean'},
+         'street_address': {'type': 'string'},
+         'zip_code': {'type': 'string'}
+         }
+                },
+    'birth_date': {'type': 'datetime'},
+    'clubs': {'type': 'list'},
+    'created_date': {'type': 'datetime'},
+    'first_name': {'type': 'string'},
+    'full_name': {'type': 'string'},
+    'function_applications': {'type': 'list'},
+    'functions': {'type': 'list'},
+    'gender': {'type': 'string', 'allowed': ['M', 'F', 'A', 'U']},
+    'id': {'type': 'integer'},
+    'last_changed_date': {'type': 'datetime'},
+    'last_name': 'Huseby',
+    'passive_functions': {'type': 'list'},
+    'qualifications': {'type': 'list'},
+    'settings': {'type': 'dict', 'schema':
+        {'approve_marketing': {'type': 'boolean'},
+         'approve_publishing': {'type': 'boolean'},
+         'automatic_data_cleansing_reservation': {'type': 'boolean'},
+         'is_person_info_locked': {'type': 'boolean'},
+         'is_validated': {'type': 'boolean'},
+         'restricted_address': {'type': 'boolean'}
+         }
+                 },
+    'sport_no': {'type': 'string'},
+    'user_id': {'type': 'integer'}
 }
 
 definition = {
-    'item_title': 'ka_orgs',
-    'datasource': {'source': 'ka_orgs',
+    'item_title': 'persons',
+    'datasource': {'source': 'persons',
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
-        'field': 'Id',
+        'field': 'id',
     },
-    'extra_response_fields': ['Id'],
-    'versioning': False,
-    'resource_methods': ['GET', 'POST'],
+    'extra_response_fields': ['id'],
+    'versioning': True,
+    'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
 
     'schema': _schema
