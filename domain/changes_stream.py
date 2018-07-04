@@ -11,7 +11,7 @@ _schema = {
     'club_id': {'type': 'integer'},
     'ordinal': {'type': 'string', 'unique': True},
     '_status': {'type': 'string'},
-    '_error': {'type': 'dict'}
+    '_issues': {'type': 'dict'}
 }
 
 definition = {
