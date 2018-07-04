@@ -10,7 +10,8 @@ _schema = {
     'SequenceOrdinal': {'type': 'datetime'},
     'club_id': {'type': 'integer'},
     'ordinal': {'type': 'string', 'unique': True},
-    'status': {'type': 'string'}
+    'status': {'type': 'string'},
+    '_error': {'type': 'dict'}
 }
 
 definition = {
