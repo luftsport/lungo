@@ -10,7 +10,7 @@ _schema = {
     'SequenceOrdinal': {'type': 'datetime'},
     'club_id': {'type': 'integer'},
     'ordinal': {'type': 'string', 'unique': True},
-    'status': {'type': 'string'},
+    '_status': {'type': 'string'},
     '_error': {'type': 'dict'}
 }
 
@@ -24,7 +24,7 @@ definition = {
     #    'field': 'Changes.SequenceOrdinal',
     # },
 
-    'extra_response_fields': ['club_d'],
+    'extra_response_fields': ['Id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
