@@ -64,13 +64,30 @@ app.register_blueprint(swagger)
 import json
 from flask import redirect, abort, Response
 
+"""
+__subclasshook__', '__weakref__', '_ensure_sequence', '_get_mimetype_params', '_on_close', '_status', '_status_code'
+, 'accept_ranges', 'add_etag', 'age', 'allow', 'autocorrect_location_header', 'automatically_set_content_length', 'c
+ache_control', 'calculate_content_length', 'call_on_close', 'charset', 'close', 'content_encoding', 'content_languag
+e', 'content_length', 'content_location', 'content_md5', 'content_range', 'content_type', 'data', 'date', 'default_m
+imetype', 'default_status', 'delete_cookie', 'direct_passthrough', 'expires', 'force_type', 'freeze', 'from_app', 'g
+et_app_iter', 'get_data', 'get_etag', 'get_wsgi_headers', 'get_wsgi_response', 'headers', 'implicit_sequence_convers
+ion', 'is_sequence', 'is_streamed', 'iter_encoded', 'last_modified', 'location', 'make_conditional', 'make_sequence'
+, 'mimetype', 'mimetype_params', 'response', 'retry_after', 'set_cookie', 'set_data', 'set_etag', 'status', 'status_
+code', 'stream', 'vary', 'www_authenticate']
+"""
 def after_get_persons(request, response):
     d = json.loads(response.get_data().decode('UTF-8'))
 
     #print(dir(response))
     if '_items' not in d and '_merged_to' in d:
         #redirect('/persons/%s' % d['_merged_to'], code=302)
-        abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
+        #abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
+        response.headers['Location'] = '/persons/%s' % d['_merged_to']
+        response.status = 'Moved Permanently'
+        response.status_code = 301
+        response.set_data(json.dumps({'_status': 'ERR',
+                                      '_error': '301 Moved permanently',
+                                      '_url': '/persons/%s' % d['_merged_to']}))
 
 app.on_post_GET_persons += after_get_persons
 """
