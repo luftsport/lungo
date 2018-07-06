@@ -62,15 +62,15 @@ app.url_map.converters['regex'] = RegexConverter
 app.register_blueprint(swagger)
 # You might want to simply update the eve settings module instead.
 import json
-from flask import redirect, abort
+from flask import redirect, abort, Response
+
 def after_get_persons(request, response):
     d = json.loads(response.get_data().decode('UTF-8'))
 
     #print(dir(response))
     if '_items' not in d and '_merged_to' in d:
-        redirect('/persons/%s' % d['_merged_to'], code=302)
-        #abort(code=302, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
-
+        #redirect('/persons/%s' % d['_merged_to'], code=302)
+        abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
 
 app.on_post_GET_persons += after_get_persons
 """
