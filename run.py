@@ -68,9 +68,9 @@ def after_get_persons(request, response):
 
     if '_items' not in d and '_merged_to' in d:
         response = redirect('/persons/%s' % d['id'], code=301)
-        
 
-app.on_post_GET_observations += after_get_persons
+
+app.on_post_GET_persons += after_get_persons
 """
 
     START:
