@@ -68,7 +68,7 @@ def after_get_persons(request, response):
 
     #print(dir(response))
     if '_items' not in d and '_merged_to' in d:
-        abort(code=302, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302)
+        abort(code=302, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
 
 
 app.on_post_GET_persons += after_get_persons
