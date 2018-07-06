@@ -87,7 +87,8 @@ def after_get_persons(request, response):
         response.status_code = 301
         response.set_data(json.dumps({'_status': 'ERR',
                                       '_error': '301 Moved permanently',
-                                      '_url': '/api/v1/persons/%s' % d['_merged_to']}))
+                                      '_url': '/api/v1/persons/%s' % d['_merged_to'],
+                                      'id': d['_merged_to']}))
 
 app.on_post_GET_persons += after_get_persons
 """
