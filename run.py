@@ -82,7 +82,7 @@ def after_get_persons(request, response):
     if '_items' not in d and '_merged_to' in d:
         #redirect('/persons/%s' % d['_merged_to'], code=302)
         #abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
-        response.headers['Location'] = '/persons/%s' % d['_merged_to']
+        response.headers['Location'] = '/api/v1/persons/%s' % d['_merged_to']
         response.status = 'Moved Permanently'
         response.status_code = 301
         response.set_data(json.dumps({'_status': 'ERR',
