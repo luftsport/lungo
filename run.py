@@ -67,7 +67,7 @@ def after_get_persons(request, response):
     d = json.loads(response.get_data().decode('UTF-8'))
 
     if '_items' not in d and '_merged_to' in d:
-        response = redirect('/persons/%s' % d['id'], code=301)
+        response = redirect('/persons/%s' % d['_merged_to'], code=301)
 
 
 app.on_post_GET_persons += after_get_persons
