@@ -66,9 +66,9 @@ from flask import redirect
 def after_get_persons(request, response):
     d = json.loads(response.get_data().decode('UTF-8'))
 
-    print(dir(response))
+    #print(dir(response))
     if '_items' not in d and '_merged_to' in d:
-        response = redirect('/persons/%s' % d['_merged_to'], code=301)
+        return redirect('/persons/%s' % d['_merged_to'], code=301)
 
 
 app.on_post_GET_persons += after_get_persons
