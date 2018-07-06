@@ -61,8 +61,16 @@ app.url_map.converters['regex'] = RegexConverter
 # app.register_blueprint(eve_docs,        url_prefix="%s/docs" % app.globals.get('prefix'))
 app.register_blueprint(swagger)
 # You might want to simply update the eve settings module instead.
+import json
+from flask import redirect
+def after_get_persons(request, response):
+    d = json.loads(response.get_data().decode('UTF-8'))
 
+    if '_items' not in d and '_merged_to' in d:
+        response = redirect('/persons/%s' % d['id'], code=301)
+        
 
+app.on_post_GET_observations += after_get_persons
 """
 
     START:
