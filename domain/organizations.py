@@ -1,15 +1,15 @@
 _schema = {
 
-    'Account': { 'type': 'dict',
-        #'schema': {'AccountId': {'type': 'integer'},
-        #           'AccountNo': {'type': 'integer'}}
-    },
-    #'ActiveLabel': {'type': 'string'},
-    #'CancellationDate': None,
-    #'CancellationTypeId': None,
+    'Account': {'type': 'dict',
+                # 'schema': {'AccountId': {'type': 'integer'},
+                #           'AccountNo': {'type': 'integer'}}
+                },
+    # 'ActiveLabel': {'type': 'string'},
+    # 'CancellationDate': None,
+    # 'CancellationTypeId': None,
     'Comment': {'type': 'string', 'default': ''},
     'Contact': {'type': 'dict', 'default': {}},
-    #'ContactId': {'type': 'integer'},
+    # 'ContactId': {'type': 'integer'},
     'Created': {'type': 'datetime'},
     'DescribingName': {'type': 'string', 'default': ''},
     'IsActive': {'type': 'boolean'},
@@ -26,18 +26,18 @@ _schema = {
                                                          'data_relation': {'resource': 'organization/types',
                                                                            'field': 'OrgTypeId',
                                                                            'embeddable': True
-                                                         }}}}
+                                                                           }}}}
                           },
     'OrgStructuresUp': {'type': 'list',
                         'schema': {'type': 'dict',
                                    'schema': {'id': {'type': 'integer'},
                                               'type': {'type': 'integer'}}}
-                          },
-    #'data_relation': {
+                        },
+    # 'data_relation': {
     #    'resource': 'users',
     #    'field': '_id',
     #    'embeddable': True
-    #},
+    # },
 
     'OrganizationTypeId': {'type': 'integer'},
     'ParentOrganizationId': {'type': 'integer'},
@@ -49,12 +49,12 @@ _schema = {
         'Name': {'type': 'string'}
 
     }}},
-    'MainActivity': { 'type': 'dict',
-                      'schema': {'ActivityCode': {'type': 'string'},
+    'MainActivity': {'type': 'dict',
+                     'schema': {'ActivityCode': {'type': 'string'},
                                 'ActivityId': {'type': 'integer'},
                                 'Name': {'type': 'string'}
                                 },
-    }
+                     }
 }
 
 definition = {
