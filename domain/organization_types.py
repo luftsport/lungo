@@ -1,9 +1,9 @@
 _schema = {
 
-    'IsLegal': {'type': 'boolean'},
-    'OrgTypeId': {'type': 'integer', 'unique': True},
-    'OrgTypeNo': {'type': 'string', 'unique': True},
-    'OrgTypeText': {'type': 'string'}
+    'is_legal': {'type': 'boolean'},
+    'org_type_id': {'type': 'integer', 'unique': True},
+    'org_type_no': {'type': 'string', 'unique': True},
+    'org_type_text': {'type': 'string'}
 }
 
 definition = {
@@ -12,11 +12,11 @@ definition = {
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
-        'field': 'OrgTypeId',
+        'field': 'org_type_id',
     },
-    'extra_response_fields': ['OrgTypeId'],
+    'extra_response_fields': ['org_type_id'],
     'versioning': False,
-    'resource_methods': ['GET', 'POST'],
+    'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
 
     'schema': _schema

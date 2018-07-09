@@ -1,58 +1,62 @@
 _schema = {
 
-    'Account': {'type': 'dict',
+    'account': {'type': 'dict',
                 # 'schema': {'AccountId': {'type': 'integer'},
                 #           'AccountNo': {'type': 'integer'}}
                 },
     # 'ActiveLabel': {'type': 'string'},
     # 'CancellationDate': None,
     # 'CancellationTypeId': None,
-    'Comment': {'type': 'string', 'default': ''},
-    'Contact': {'type': 'dict', 'default': {}},
+    'comment': {'type': 'string', 'default': ''},
+    'contact': {'type': 'dict', 'default': {}},
     # 'ContactId': {'type': 'integer'},
-    'Created': {'type': 'datetime'},
-    'DescribingName': {'type': 'string', 'default': ''},
-    'IsActive': {'type': 'boolean'},
-    'LocalCouncilId': {'type': 'integer'},
-    'LocalCouncilName': {'type': 'string', 'default': ''},
-    'Modified': {'type': 'datetime'},
-    'NIFOrganizationNumber': {'type': 'string', 'default': ''},
-    'Name': {'type': 'string', 'default': ''},
-    'OrgId': {'type': 'integer', 'unique': True},
-    'OrgStructuresDown': {'type': 'list',
-                          'schema': {'type': 'dict',
-                                     'schema': {'id': {'type': 'integer'},
-                                                'type': {'type': 'integer',
-                                                         'data_relation': {'resource': 'organization/types',
-                                                                           'field': 'OrgTypeId',
-                                                                           'embeddable': True
-                                                                           }}}}
-                          },
-    'OrgStructuresUp': {'type': 'list',
-                        'schema': {'type': 'dict',
-                                   'schema': {'id': {'type': 'integer'},
-                                              'type': {'type': 'integer'}}}
-                        },
+    'created': {'type': 'datetime'},
+    'describing_name': {'type': 'string', 'default': ''},
+    'is_active': {'type': 'boolean'},
+    'local_council_id': {'type': 'integer'},
+    'local_council_name': {'type': 'string', 'default': ''},
+    'modified': {'type': 'datetime'},
+    'NIF_organization_number': {'type': 'string', 'default': ''},
+    'name': {'type': 'string', 'default': ''},
+    'org_id': {'type': 'integer', 'unique': True},
+    '_up': {'type': 'list',
+            'schema': {'type': 'dict',
+                       'schema': {'id': {'type': 'integer'},
+                                  'type': {'type': 'integer',
+                                           'data_relation': {'resource': 'organization/types',
+                                                             'field': 'org_type_id',
+                                                             'embeddable': True
+                                                             }}}}
+            },
+    '_down': {'type': 'list',
+              'schema': {'type': 'dict',
+                         'schema': {'id': {'type': 'integer'},
+                                    'type': {'type': 'integer',
+                                             'data_relation': {'resource': 'organization/types',
+                                                               'field': 'org_type_id',
+                                                               'embeddable': True
+                                                               }}}}
+              },
     # 'data_relation': {
     #    'resource': 'users',
     #    'field': '_id',
     #    'embeddable': True
     # },
 
-    'OrganizationTypeId': {'type': 'integer'},
-    'ParentOrganizationId': {'type': 'integer'},
-    'RegisterAuthorityOrganizationNumber': {'type': 'string'},
-    'ShortName': {'type': 'string'},
-    'Activities': {'type': 'list', 'schema': {'type': 'dict', 'schema': {
-        'ActivityCode': {'type': 'string'},
-        'ActivityId': {'type': 'integer'},
-        'Name': {'type': 'string'}
+    'organization_type_id': {'type': 'integer'},
+    'parent_organization_id': {'type': 'integer'},
+    'register_authority_organization_number': {'type': 'string'},
+    'short_name': {'type': 'string'},
+    'activities': {'type': 'list', 'schema': {'type': 'dict', 'schema': {
+        'code': {'type': 'string'},
+        'id': {'type': 'integer'},
+        'name': {'type': 'string'}
 
     }}},
     'MainActivity': {'type': 'dict',
-                     'schema': {'ActivityCode': {'type': 'string'},
-                                'ActivityId': {'type': 'integer'},
-                                'Name': {'type': 'string'}
+                     'schema': {'code': {'type': 'string'},
+                                'id': {'type': 'integer'},
+                                'name': {'type': 'string'}
                                 },
                      }
 }
@@ -63,9 +67,9 @@ definition = {
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
-        'field': 'OrgId',
+        'field': 'org_id',
     },
-    'extra_response_fields': ['OrgId'],
+    'extra_response_fields': ['org_id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],

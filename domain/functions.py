@@ -28,9 +28,9 @@ definition = {
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
-        'field': 'id',
+        'field': 'function_id',
     },
-    'extra_response_fields': ['id'],
+    'extra_response_fields': ['function_id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELTE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
