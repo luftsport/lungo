@@ -22,7 +22,7 @@ definition = {
     },
     'extra_response_fields': ['function_type_id'],
     'versioning': False,
-    'resource_methods': ['GET', 'POST', 'DELTE'],
+    'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
 
     'schema': _schema
