@@ -1,7 +1,7 @@
 _schema = {
     'description': {'type': 'string'},
     'function_category_id': {'type': 'integer'},
-    'function_category_name': 'Utøver',
+    'function_category_name': {'type': 'string'},
     'function_type_id': {'type': 'integer', 'unique': True},
     'function_type_no': {'type': 'string'},
     'is_license': {'type': 'boolean'},
