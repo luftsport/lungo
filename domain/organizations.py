@@ -16,14 +16,14 @@ _schema = {
     'local_council_id': {'type': 'integer'},
     'local_council_name': {'type': 'string', 'default': ''},
     'modified': {'type': 'datetime'},
-    'NIF_organization_number': {'type': 'string', 'default': ''},
+    'nif_organization_number': {'type': 'string', 'default': ''},
     'name': {'type': 'string', 'default': ''},
     'org_id': {'type': 'integer', 'unique': True},
     '_up': {'type': 'list',
             'schema': {'type': 'dict',
                        'schema': {'id': {'type': 'integer'},
                                   'type': {'type': 'integer',
-                                           'data_relation': {'resource': 'organization/types',
+                                           'data_relation': {'resource': 'organizations/types',
                                                              'field': 'org_type_id',
                                                              'embeddable': True
                                                              }}}}
@@ -32,7 +32,7 @@ _schema = {
               'schema': {'type': 'dict',
                          'schema': {'id': {'type': 'integer'},
                                     'type': {'type': 'integer',
-                                             'data_relation': {'resource': 'organization/types',
+                                             'data_relation': {'resource': 'organizations/types',
                                                                'field': 'org_type_id',
                                                                'embeddable': True
                                                                }}}}
@@ -53,7 +53,7 @@ _schema = {
         'name': {'type': 'string'}
 
     }}},
-    'MainActivity': {'type': 'dict',
+    'main_activity': {'type': 'dict',
                      'schema': {'code': {'type': 'string'},
                                 'id': {'type': 'integer'},
                                 'name': {'type': 'string'}

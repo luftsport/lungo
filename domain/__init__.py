@@ -9,7 +9,7 @@ DOMAIN = {
     "ka/competences": ka_competence.definition,
     "ka/licenses": ka_licenses.definition,
     "organizations": organizations.definition,
-    "organization/types": organization_types.definition,
+    #"organization/types": organization_types.definition,
     "functions": functions.definition,
     "functions/types": function_types.definition,
     "integration": integration.definition,
