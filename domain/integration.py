@@ -35,6 +35,7 @@
     'AutomaticDataCleansingReservation': {'type': 'boolean'},
     'BirthDate': {'type': 'datetime'},
     """
+"""
 _schema = {
 
     'active_clubs': {'type': 'list'},
@@ -52,6 +53,15 @@ _schema = {
     'username': {'type': 'string'},
     'modified': {'type': 'datetime'}
 }
+"""
+_schema = {'username': {'type': 'string', 'required': True},
+           'password': {'type': 'string', 'required': True},
+           'id': {'type': 'integer', 'required': True},
+           'app_id': {'type': 'integer', 'required': True},
+           'function_id': {'type': 'integer', 'required': True},
+           'club_id': {'type': 'integer', 'required': True},
+           'modified': {'type': 'datetime'}
+           }
 
 definition = {
     'item_title': 'integration',
