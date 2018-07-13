@@ -12,6 +12,7 @@ _schema = {
     'publish': {'type': 'boolean'},
 }
 
+
 definition = {
     'item_title': 'function types',
     'datasource': {'source': 'function_types',
