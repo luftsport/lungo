@@ -21,12 +21,14 @@ _schema = {
                         'secret_phone_work': {'type': 'boolean'},
                         'street_address': {'type': 'string'},
                         'street_address2': {'type': 'string'},
-                        'zip_code': {'type': 'string'}
+                        'zip_code': {'type': 'string'},
+                        'home_page': {'type': 'string'},
                     }
                 },
     'nationality_id': {'type': 'integer'},
     'file_upload_id': {'type': 'integer'},
     'birth_date': {'type': 'datetime'},
+    'date_of_death': {'type': 'datetime'},
     'clubs': {'type': 'list'},
     'created_date': {'type': 'datetime'},
     'first_name': {'type': 'string'},
