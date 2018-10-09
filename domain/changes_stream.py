@@ -1,15 +1,15 @@
 _schema = {
 
-    'ChangeType': {'type': 'string'},
-    'Created': {'type': 'datetime'},
-    'EntityType': {'type': 'string'},
-    'Id': {'type': 'integer'},
-    'MergeResultOf': {'type': 'list'},
-    'Modified': {'type': 'datetime'},
-    'Name': {'type': 'string'},
-    'SequenceOrdinal': {'type': 'datetime'},
-    'club_id': {'type': 'integer'},
-    'ordinal': {'type': 'string', 'unique': True},
+    'change_type': {'type': 'string'},
+    'created': {'type': 'datetime'},
+    'entity_type': {'type': 'string'},
+    'id': {'type': 'integer'},
+    'merge_result_of': {'type': 'list'},
+    'modified': {'type': 'datetime'},
+    'name': {'type': 'string'},
+    'sequence_ordinal': {'type': 'datetime'},
+    '_club_id': {'type': 'integer'},
+    '_ordinal': {'type': 'string', 'unique': True},
     '_status': {'type': 'string'},
     '_issues': {'type': 'dict'}
 }
