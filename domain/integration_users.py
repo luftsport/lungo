@@ -69,7 +69,7 @@ _schema = {'username': {'type': 'string', 'required': True},
 
 definition = {
     'item_title': 'integration',
-    'datasource': {'source': 'integration',
+    'datasource': {'source': 'integration', # @TODO - move to integration_users
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,20}]+")',
@@ -79,6 +79,6 @@ definition = {
     'versioning': False,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
-
+    #'mongo_indexes':
     'schema': _schema
 }
