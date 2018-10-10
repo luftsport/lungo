@@ -27,7 +27,7 @@ definition = {
     'extra_response_fields': ['Id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELETE'],
-    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'item_methods': ['GET', 'PATCH', 'PUT', 'DELETE'],
 
     'schema': _schema
 }
