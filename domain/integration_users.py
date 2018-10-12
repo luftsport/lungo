@@ -73,8 +73,8 @@ definition = {
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,20}]+")',
-        # 'field': 'club_id',
-        'field': 'id',
+        'field': 'club_id',
+        #'field': 'id',
     },
     'extra_response_fields': ['club_id'],
     'versioning': False,
