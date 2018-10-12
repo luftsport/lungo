@@ -73,12 +73,13 @@ definition = {
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,20}]+")',
-        'field': 'club_id',
+        # 'field': 'club_id',
+        'field': 'id',
     },
     'extra_response_fields': ['club_id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST'],
-    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'item_methods': ['GET', 'PATCH', 'PUT', 'DELETE'],
     #'mongo_indexes':
     'schema': _schema
 }
