@@ -58,10 +58,10 @@ _schema = {
 """
 _schema = {'username': {'type': 'string', 'required': True},
            'password': {'type': 'string', 'required': True},
-           'id': {'type': 'integer', 'required': True},
+           'id': {'type': 'integer', 'required': True, 'unique': True},
            'app_id': {'type': 'integer', 'required': True},
            'function_id': {'type': 'integer', 'required': True},
-           'club_id': {'type': 'integer', 'required': True},
+           'club_id': {'type': 'integer', 'required': True, 'unique': True},
            'club_name': {'type': 'string'},
            'club_created': {'type': 'datetime', 'required': True},
            'modified': {'type': 'datetime'}
