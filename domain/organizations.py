@@ -18,7 +18,7 @@ _schema = {
     'modified': {'type': 'datetime'},
     'nif_organization_number': {'type': 'string', 'default': ''},
     'name': {'type': 'string', 'default': ''},
-    'org_id': {'type': 'integer', 'unique': True},
+    'id': {'type': 'integer', 'unique': True},
     '_up': {'type': 'list',
             'schema': {'type': 'dict',
                        'schema': {'id': {'type': 'integer'},
@@ -67,9 +67,9 @@ definition = {
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
-        'field': 'org_id',
+        'field': 'id',
     },
-    'extra_response_fields': ['org_id'],
+    'extra_response_fields': ['id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
@@ -89,7 +89,7 @@ parents = {
             'pipeline': [
                 {
                     "$match": {
-                        "org_id": "$start_id",
+                        "id": "$start_id",
                         "parent": {
                             "$ne": None
                         }
@@ -97,7 +97,7 @@ parents = {
                 },
                 {
                     "$project": {
-                        "org_id": 1,
+                        "id": 1,
                         "name": 1,
                         "_up": 1,
                         "_down": 1,
