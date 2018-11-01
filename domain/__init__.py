@@ -1,7 +1,8 @@
 import ka_clubs, ka_competence, ka_members, ka_orgs, ka_licenses, ka_org_activity
 import persons
 import integration_users, integration_changes
-import organizations, organization_types, functions, function_types, competences, competences_types, licenses, licenses_types
+import organizations, organization_types, functions, function_types, competences, competences_types, licenses, \
+    licenses_types
 
 DOMAIN = {
     "ka/clubs": ka_clubs.definition,
@@ -11,6 +12,7 @@ DOMAIN = {
     "ka/competences": ka_competence.definition,
     "ka/licenses": ka_licenses.definition,
     "organizations": organizations.definition,
+    "organizations/types/count": organizations.agg_count_types,
     "organizations/types": organization_types.definition,
     "functions": functions.definition,
     "functions/types": function_types.definition,
