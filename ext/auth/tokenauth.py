@@ -26,7 +26,10 @@ class TokenAuth(TokenAuth):
         """Simple token check. Tokens comes in the form of request.authorization['username']
         Token is decoded request.authorization['username']
         """
-        print('Token: ', token)
+        if resource is None:
+            resource = ''
+
+        print('Token: ', token, resource, method)
         try:
             if token in users.keys() and method in users[token]['resources'][resource]:
 
