@@ -1,3 +1,5 @@
+from bson import SON
+
 _schema = {
 
     'change_type': {'type': 'string'},
@@ -8,7 +10,8 @@ _schema = {
     'modified': {'type': 'datetime'},
     'name': {'type': 'string'},
     'sequence_ordinal': {'type': 'datetime'},
-    '_club_id': {'type': 'integer'},
+    '_org_id': {'type': 'integer'},
+    '_org_id': {'type': 'integer'},
     '_ordinal': {'type': 'string', 'unique': True},
     '_status': {'type': 'string'},
     '_issues': {'type': 'dict'}
@@ -30,4 +33,28 @@ definition = {
     'item_methods': ['GET', 'PATCH', 'PUT', 'DELETE'],
 
     'schema': _schema
+}
+
+# Aggregations
+agg_count_entity_types = {
+    'datasource': {
+        'source': 'integration_changes',
+        'aggregation': {
+            'pipeline': [
+                {"$group": {"_id": "$entity_type", "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
+}
+agg_count_clubs = {
+    'datasource': {
+        'source': 'integration_changes',
+        'aggregation': {
+            'pipeline': [
+                {"$group": {"_id": "$_org_id", "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
 }
