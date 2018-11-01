@@ -18,6 +18,8 @@ from eve_swagger import swagger
 
 from eve_healthcheck import EveHealthCheck
 
+from blueprints.syncdaemon import Sync
+
 # Import blueprints
 # from blueprints.authentication import Authenticate
 # Register custom blueprints
@@ -43,15 +45,16 @@ SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settin
 # app = Eve(settings=SETTINGS_PATH)
 app = Eve(auth=TokenAuth, settings=SETTINGS_PATH)
 #app = Eve(settings=SETTINGS_PATH)
-
-# Healthcheck
-hc = EveHealthCheck(app, '/healthcheck')
-
 """ Define global settings
 These settings are mirrored from Eve, but should not be!
 @todo: use app.config instead
 """
 app.globals = {"prefix": "/api/v1"}
+
+# Healthcheck
+hc = EveHealthCheck(app, '%s/healthcheck' % app.globals.get('prefix'))
+
+
 
 # Custom url mapping (needed by native flask routes)
 app.url_map.converters['objectid'] = ObjectIDConverter
@@ -59,7 +62,10 @@ app.url_map.converters['regex'] = RegexConverter
 
 # Register eve-docs blueprint
 # app.register_blueprint(eve_docs,        url_prefix="%s/docs" % app.globals.get('prefix'))
-app.register_blueprint(swagger)
+app.register_blueprint(swagger, url_prefix=app.globals.get('prefix'))
+
+app.register_blueprint(Sync, url_prefix="%s/syncdaemon" % app.globals.get('prefix'))
+
 # You might want to simply update the eve settings module instead.
 import json
 from flask import redirect, abort, Response
