@@ -12,7 +12,7 @@ from eve.auth import TokenAuth
 from flask import current_app as app, request, Response, abort
 
 # Not in github
-from ext.auth.clients import apps
+from ext.auth.clients import apps, users
 # from eve.methods.get import getitem as get_internal
 # from bson.objectid import ObjectId
 
@@ -26,14 +26,22 @@ class TokenAuth(TokenAuth):
         """Simple token check. Tokens comes in the form of request.authorization['username']
         Token is decoded request.authorization['username']
         """
+        print('Token: ', token)
+        try:
+            if token in users.keys() and method in users[token]['resources'][resource]:
 
+                self.user_id = users[token]['id']
+                return True
+        except:  # Keyerror
+            pass
 
+        """
         for app in apps:
 
             if token == app['token']:
                 current_app = app
                 return True
-
+        """
 
         return False
     
