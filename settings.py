@@ -60,9 +60,8 @@ ITEM_METHODS = ['GET', 'PATCH', 'DELETE', 'PUT']
 CACHE_CONTROL = 'max-age=20'
 CACHE_EXPIRES = 20
 
-# Support only json response
-XML = False
-JSON = True
+# Support only json response 'eve.render.XMLRenderer'
+RENDERERS = ['eve.render.JSONRenderer']
 
 # Maximum value allowed for max_results query parameter
 PAGINATION_LIMIT = 20000
