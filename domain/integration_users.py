@@ -1,41 +1,5 @@
-"""
-    '_auth': {
-        'type': 'dict',
-        'schema': {
-            '_auth_username': {'type': 'string'},
-            '_auth_password': {'type': 'string'},
-            '_auth_club': {'type': 'integer'}
-        }
-    },
-    '_auth_username': {'type': 'string'},
-    '_auth_password': {'type': 'string'},
-    '_auth_club': {'type': 'integer'},
-    'ActiveClubs': {'type': 'list'},
-    'ActiveFunctions': {'type': 'list'},
-    'Clubs': {'type': 'list'},
-    'ExtraAddresses': {'type': 'list'},
-    'Functions': {'type': 'list'},
-    'HomeAddress': {'type': 'dict'},
-    'MyProfileSettings': {'type': 'dict'},
-    'Id': {'type': 'integer', 'required': True},
-    'IsPersonInfoLocked': {'type': 'boolean'},
-    'LastChangedDate': {'type': 'datetime'},
-    'LastName': {'type': 'string'},
-    'Nationality': {'type': 'integer'},
-    'PersonGender': {'type': 'string'},
-    'PersonId': {'type': 'integer'},
-    'RestrictedAddress': {'type': 'boolean'},
-    'SportNo': {'type': 'string'},
-    'UserId': {'type': 'integer'},
-    'Username': {'type': 'string'},
-    'FirstName': {'type': 'string'},
-    'FullName': {'type': 'string'},
-    'ApproveMarketing': {'type': 'boolean'},
-    'ApprovePublishing': {'type': 'boolean'},
-    'AutomaticDataCleansingReservation': {'type': 'boolean'},
-    'BirthDate': {'type': 'datetime'},
-    """
-"""
+from bson import SON
+
 _schema = {
 
     'active_clubs': {'type': 'list'},
@@ -82,4 +46,16 @@ definition = {
     'item_methods': ['GET', 'PATCH', 'PUT', 'DELETE'],
     #'mongo_indexes':
     'schema': _schema
+}
+
+agg_count_clubs = {
+    'datasource': {
+        'source': 'integration',
+        'aggregation': {
+            'pipeline': [
+                {"$group": {"_id": "$club_id", "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
 }
