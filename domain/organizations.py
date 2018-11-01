@@ -43,9 +43,9 @@ _schema = {
     #    'embeddable': True
     # },
 
-    'organization_type_id': {'type': 'integer'},
-    'parent_organization_id': {'type': 'integer'},
-    'register_authority_organization_number': {'type': 'string'},
+    'type_id': {'type': 'integer'},
+    'parent_id': {'type': 'integer'},
+    'authority_id': {'type': 'string'},
     'short_name': {'type': 'string'},
     'activities': {'type': 'list', 'schema': {'type': 'dict', 'schema': {
         'code': {'type': 'string'},
@@ -79,6 +79,18 @@ definition = {
 
 # Aggregation
 from bson import SON, ObjectId
+
+agg_count_types = {
+    'datasource': {
+        'source': 'organizations',
+        'aggregation': {
+            'pipeline': [
+                {"$group": {"_id": "$type_id", "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
+}
 
 parents = {
     'item_title': 'Content Parents Aggregation',
