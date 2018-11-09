@@ -8,9 +8,9 @@
 from flask import jsonify, abort, Response, current_app as app
 import sys, json
 import bson.json_util as json_util
-from ..scf import Scf
+#from ..scf import Scf
 
-from ext.notifications.sms import Sms  # Email
+#from ext.notifications.sms import Sms  # Email
 #from ext.app.decorators import async
 
 CRITICAL_ERROR_CODES = [503]
@@ -47,11 +47,11 @@ def eve_abort(status=500, message='', sysinfo=None):
             if status in CRITICAL_ERROR_CODES:
                 if not is_mongo_alive(status):
                     app.logger.critical("MongoDB is down [%s]" % sysinfo)
-                    send_sms(status, "MongoDB is down (%s)" % app.config['APP_INSTANCE'])
+                    #send_sms(status, "MongoDB is down (%s)" % app.config['APP_INSTANCE'])
                 else:
                     app.logger.critical("%s [%s]" % (message, sysinfo))
                     message = message
-                    send_sms(status, "%s (%s)" % (message, app.config['APP_INSTANCE']))
+                    #send_sms(status, "%s (%s)" % (message, app.config['APP_INSTANCE']))
 
         else:
             #app.logger.debug("%s: %s" % (message, sysinfo))
@@ -119,10 +119,10 @@ def is_mongo_alive(status=502):
         app.data.driver.db.command('ping')
         return True
     except:
-        send_sms(status, "Mongodb is down (%s)" % app.config['APP_INSTANCE'])
+        #send_sms(status, "Mongodb is down (%s)" % app.config['APP_INSTANCE'])
         return False
 
-
+"""
 def send_sms(status, message):
     try:
         sms = Sms()
@@ -130,3 +130,4 @@ def send_sms(status, message):
         sms.send(mobile=config.get_warn_sms(), message="[%s] %s" % (status, message))
     except:
         pass
+"""
