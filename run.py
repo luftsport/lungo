@@ -108,6 +108,8 @@ def after_get_persons(request, response):
 #    print('Response')
 #    print(response)
 # app.on_fetched_item_persons += after_fetched_person
+# HTTP 301
+app.on_post_GET_persons += after_get_persons
 
 app.on_inserted_functions += on_function_post
 app.on_replaced_functions += on_function_post
@@ -119,8 +121,7 @@ app.on_replaced_competences += on_competence_post
 app.on_inserted_persons += on_person_after_post
 app.on_replaced_persons += on_person_after_put
 
-# HTTP 301
-app.on_post_GET_persons += after_get_persons
+
 """
 
     START:
