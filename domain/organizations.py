@@ -54,11 +54,11 @@ _schema = {
 
     }}},
     'main_activity': {'type': 'dict',
-                     'schema': {'code': {'type': 'string'},
-                                'id': {'type': 'integer'},
-                                'name': {'type': 'string'}
-                                },
-                     }
+                      'schema': {'code': {'type': 'string'},
+                                 'id': {'type': 'integer'},
+                                 'name': {'type': 'string'}
+                                 },
+                      }
 }
 
 definition = {
@@ -73,7 +73,14 @@ definition = {
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
-
+    'mongo_indexes': {'org_id': ([('id', 1)], {'background': True}),
+                      'type_id': ([('type_id', 1)], {'background': True}),
+                      'activities': ([('activities', 1)], {'background': True}),
+                      'main_activity': ([('main_activity', 1)], {'background': True}),
+                      '_up': ([('_up', 1)], {'background': True}),
+                      '_down': ([('_down', 1)], {'background': True}),
+                      'name': ([('name', 'text')], {'background': True})
+                      },
     'schema': _schema
 }
 

@@ -18,6 +18,8 @@ definition = {
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
-
+    'mongo_indexes': {'org_type_id': ([('org_type_id', 1)], {'background': True}),
+                      'org_type_text': ([('org_type_text', 'text')], {'background': True})
+                      },
     'schema': _schema
 }

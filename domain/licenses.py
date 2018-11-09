@@ -11,6 +11,7 @@ _schema = {
     'print_date': {'type': 'datetime'},
     'registered_date': {'type': 'datetime'},
     'total_paid_amount': {'type': 'float'},
+    'paid_date': {'type': 'datetime'},
     'update_permission': {'type': 'boolean'},
     'id': {'type': 'integer', 'required': True, 'unique': True},
     'period_from_date': {'type': 'datetime'},
@@ -42,6 +43,14 @@ definition = {
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
-
+    'mongo_indexes': {'license_id': ([('id', 1)], {'background': True}),
+                      'type_id': ([('type_id', 1)], {'background': True}),
+                      'person_id': ([('person_id', 1)], {'background': True}),
+                      'org_id_owner': ([('org_id_owner', 1)], {'background': True}),
+                      'period_to_date': ([('period_to_date', 1)], {'background': True}),
+                      'period_from_date': ([('period_from_date', 1)], {'background': True}),
+                      'period_owner_org_id': ([('period_owner_org_id', 1)], {'background': True}),
+                      'text': ([('period_name', 'text'), ('type_name', 'text')], {'background': True}),
+                      },
     'schema': _schema
 }
