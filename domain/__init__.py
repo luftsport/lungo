@@ -3,7 +3,7 @@ import persons, persons_search
 import integration_users, integration_changes
 import organizations, organization_types, functions, function_types, competences, competences_types, licenses, \
     licenses_types
-import test, test_ref
+#import test, test_ref
 
 DOMAIN = {
     # Tests Only local
