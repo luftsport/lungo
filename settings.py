@@ -102,6 +102,7 @@ OPLOG_ENDPOINT = None #'oplog'  # Name of the Operations Log endpoint. If the en
 OPLOG_AUDIT = True  # Set it to True to enable the audit feature. When audit is enabled client IP and document changes are also logged to the Operations Log. Defaults to True.
 # OPLOG_CUSTOM_FIELDS = {'u': None}
 
+EMBEDDING = True
 SWAGGER_INFO = {
     'title': 'LUNGO - NLF MEMBERSHIP API',
     'version': APP_VERSION,
