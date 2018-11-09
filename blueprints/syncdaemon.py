@@ -21,7 +21,7 @@ resume() SIGCONT
 terminate() SIGTERM
 wait(timeout=None) wait for process termination
 
-Pyro4.Proxy('PYRO:nif.integration@localhost:5555').shutdown()
+Pyro4.Proxy(RPC_SERVICE).shutdown()
 
 
 """
@@ -29,9 +29,14 @@ Pyro4.Proxy('PYRO:nif.integration@localhost:5555').shutdown()
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
 import psutil
 import Pyro4
+from ext.auth.decorators import require_token
 
 Sync = Blueprint('Manage syncdaemon process', __name__)
 
+RPC_SERVICE_NAME = 'integration.service'
+RPC_SERVICE_PORT = 5555
+RPC_SERVICE_HOST = 'localhost'
+RPC_SERVICE = 'PYRO:{}@{}:{}'.format(RPC_SERVICE_NAME, RPC_SERVICE_HOST, RPC_SERVICE_PORT)
 
 def get_process():
     with open('/home/einar/Development/nif-integration/daemon.pid', 'r') as f:
@@ -45,6 +50,7 @@ def get_process():
 
 
 @Sync.route("/process/info", methods=['GET'])
+@require_token()
 def process_info():
     p = get_process()
 
@@ -71,6 +77,7 @@ def process_info():
 
 
 @Sync.route("/process/kill/<int:pid>", methods=['POST'])
+@require_token()
 def process_kill(pid):
     p = get_process()
 
@@ -87,8 +94,9 @@ Daemon
 
 
 @Sync.route("/shutdown", methods=['POST'])
+@require_token()
 def shutdown():
-    s = Pyro4.Proxy('PYRO:nif.integration@localhost:5555').shutdown()
+    s = Pyro4.Proxy(RPC_SERVICE).shutdown()
 
 
 """
@@ -97,40 +105,46 @@ workers
 
 
 @Sync.route("/workers/status", methods=['GET'])
+@require_token()
 def workers_status():
     """Returns dict of all workers"""
-    s = Pyro4.Proxy('PYRO:nif.integration@localhost:5555').get_workers_status()
+    s = Pyro4.Proxy(RPC_SERVICE).get_workers_status()
 
-    return jsonify(**{'workers': s})
+    return jsonify(**{'_items': s})
 
 
 @Sync.route("/workers/failed/clubs", methods=['GET'])
+@require_token()
 def workers_failed_clubs():
-    s = Pyro4.Proxy('PYRO:nif.integration@localhost:5555').get_failed_clubs()
+    s = Pyro4.Proxy(RPC_SERVICE).get_failed_clubs()
 
-    return jsonify(**{'clubs': s})
+    return jsonify(**{'_items': s})
 
 
 @Sync.route("/workers/logs", methods=['GET'])
+@require_token()
 def workers_logs():
-    s = Pyro4.Proxy('PYRO:nif.integration@localhost:5555').get_logs()
+    s = Pyro4.Proxy(RPC_SERVICE).get_logs()
 
-    return jsonify(**s)
+    return jsonify(**{'_items': s})
 
 
 @Sync.route("/workers/reboot", methods=['POST'])
+@require_token()
 def workers_reboot():
-    s = Pyro4.Proxy('PYRO:nif.integration@localhost:5555').reboot_workers()
+    s = Pyro4.Proxy(RPC_SERVICE).reboot_workers()
 
 
 @Sync.route("/workers/shutdown", methods=['POST'])
+@require_token()
 def workers_shutdown():
-    s = Pyro4.Proxy('PYRO:nif.integration@localhost:5555').shutdown_workers()
+    s = Pyro4.Proxy(RPC_SERVICE).shutdown_workers()
 
 
 @Sync.route("/workers/start", methods=['POST'])
+@require_token()
 def workers_start():
-    s = Pyro4.Proxy('PYRO:nif.integration@localhost:5555').start_workers()
+    s = Pyro4.Proxy(RPC_SERVICE).start_workers()
 
 
 """
@@ -143,18 +157,21 @@ get_worker_log
 
 
 @Sync.route("/worker/status/<int:index>", defaults={'index': 0}, methods=['GET'])
+@require_token()
 def worker_status(index):
-    s = Pyro4.Proxy('PYRO:nif.integration@localhost:5555').get_worker_status(index)
-    return jsonify(**s)
+    s = Pyro4.Proxy(RPC_SERVICE).get_worker_status(index)
+    return jsonify(**{'_items': s})
 
 
 @Sync.route("/worker/log/<int:index>", defaults={'index': 0}, methods=['GET'])
+@require_token()
 def worker_log(index):
-    s = Pyro4.Proxy('PYRO:nif.integration@localhost:5555').get_worker_log(index)
-    return jsonify(**s)
+    s = Pyro4.Proxy(RPC_SERVICE).get_worker_log(index)
+    return jsonify(**{'_items': s})
 
 
 @Sync.route("/worker/restart/<int:index>", defaults={'index': 0}, methods=['POST'])
+@require_token()
 def worker_restart(index):
-    s = Pyro4.Proxy('PYRO:nif.integration@localhost:5555').restart_worker(index)
-    return jsonify(**s)
+    s = Pyro4.Proxy(RPC_SERVICE).restart_worker(index)
+    return jsonify(**{'_items': s})
