@@ -68,7 +68,6 @@ app.register_blueprint(Sync, url_prefix="%s/syncdaemon" % app.globals.get('prefi
 
 # You might want to simply update the eve settings module instead.
 import json
-from flask import redirect, abort, Response
 
 """
 __subclasshook__', '__weakref__', '_ensure_sequence', '_get_mimetype_params', '_on_close', '_status', '_status_code'
@@ -81,8 +80,17 @@ ion', 'is_sequence', 'is_streamed', 'iter_encoded', 'last_modified', 'location',
 , 'mimetype', 'mimetype_params', 'response', 'retry_after', 'set_cookie', 'set_data', 'set_etag', 'status', 'status_
 code', 'stream', 'vary', 'www_authenticate']
 """
+
+
+from ext.app.hooks import on_function_post, on_license_post, on_competence_post,\
+    on_person_after_post, on_person_after_put
+
 def after_get_persons(request, response):
     d = json.loads(response.get_data().decode('UTF-8'))
+
+    #me = get_internal('persons', **{'id': 5389166})
+    #patch_internal('persons', {'clubs': [432, 4653]}, False, True, **{'id': 5389166})
+    #print(me)
 
     #print(dir(response))
     if '_items' not in d and '_merged_to' in d:
@@ -96,6 +104,22 @@ def after_get_persons(request, response):
                                       '_url': '/api/v1/persons/%s' % d['_merged_to'],
                                       'id': d['_merged_to']}))
 
+#def after_fetched_person(response):
+#    print('Response')
+#    print(response)
+# app.on_fetched_item_persons += after_fetched_person
+
+app.on_inserted_functions += on_function_post
+app.on_replaced_functions += on_function_post
+app.on_inserted_licenses += on_license_post
+app.on_replaced_licenses += on_license_post
+app.on_inserted_competences += on_competence_post
+app.on_replaced_competences += on_competence_post
+
+app.on_inserted_persons += on_person_after_post
+app.on_replaced_persons += on_person_after_put
+
+# HTTP 301
 app.on_post_GET_persons += after_get_persons
 """
 
