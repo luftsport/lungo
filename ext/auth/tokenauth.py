@@ -12,7 +12,7 @@ from eve.auth import TokenAuth
 from flask import current_app as app, request, Response, abort
 
 # Not in github
-from ext.auth.clients import apps, users
+from ext.auth.clients import users
 # from eve.methods.get import getitem as get_internal
 # from bson.objectid import ObjectId
 
@@ -30,6 +30,7 @@ class TokenAuth(TokenAuth):
             resource = ''
 
         print('Token: ', token, resource, method)
+        print(users.keys())
         try:
             if token in users.keys() and method in users[token]['resources'][resource]:
 
