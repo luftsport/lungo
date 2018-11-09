@@ -6,9 +6,9 @@ import organizations, organization_types, functions, function_types, competences
 import test, test_ref
 
 DOMAIN = {
-    # Tests
-    "test": test.definition,
-    "testref": test_ref.definition,
+    # Tests Only local
+    #"test": test.definition,
+    #testref": test_ref.definition,
     # KA
     "ka/clubs": ka_clubs.definition,
     "ka/members": ka_members.definition,
