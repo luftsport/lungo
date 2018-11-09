@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 .idea/
+pip-selfcheck.json
+ka/
 ka/post.py
 ka/filter
 ka/ka_filter
