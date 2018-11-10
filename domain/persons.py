@@ -21,7 +21,8 @@ _schema = {
                          'data_relation': {
                              'resource': 'organizations',
                              'field': 'id',
-                             'embeddable': True
+                             'embeddable': True,
+                             'validate': False
                          }
                          },
 
@@ -31,7 +32,8 @@ _schema = {
                              'data_relation': {
                                  'resource': 'functions',
                                  'field': 'id',
-                                 'embeddable': True
+                                 'embeddable': True,
+                                 'validate': False
                              }
                              }
                   },

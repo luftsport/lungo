@@ -5,7 +5,8 @@ _schema = {
                          'data_relation': {
                              'resource': 'organizations',
                              'field': 'id',
-                             'embeddable': True
+                             'embeddable': True,
+                             'validate': False
                          },
                          },
     'active_in_org_name': {'type': 'string'},
@@ -26,7 +27,8 @@ _schema = {
                   'data_relation': {
                       'resource': 'persons',
                       'field': 'id',
-                      'embeddable': True
+                      'embeddable': True,
+                      'validate': False
                   },
                   },
     'role_level_id': {'type': 'integer'},
