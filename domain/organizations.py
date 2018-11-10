@@ -22,21 +22,20 @@ _schema = {
     '_up': {'type': 'list',
             'schema': {'type': 'dict',
                        'schema': {'id': {'type': 'integer'},
-                                  'type': {'type': 'integer',
+                                  'type': {'type': 'integer','nullable': True,
                                            'data_relation': {'resource': 'organizations/types',
                                                              'field': 'org_type_id',
                                                              'embeddable': True,
-                                                             'nullable': True
+
                                                              }}}}
             },
     '_down': {'type': 'list',
               'schema': {'type': 'dict',
                          'schema': {'id': {'type': 'integer'},
-                                    'type': {'type': 'integer',
+                                    'type': {'type': 'integer','nullable': True,
                                              'data_relation': {'resource': 'organizations/types',
                                                                'field': 'org_type_id',
                                                                'embeddable': True,
-                                                               'nullable': True
                                                                }}}}
               },
     # 'data_relation': {

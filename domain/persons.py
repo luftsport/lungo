@@ -17,23 +17,22 @@ _schema = {
     'date_of_death': {'type': 'datetime'},
     'nationality_id': {'type': 'integer'},
     'clubs': {'type': 'list',
-              'schema': {'type': 'integer',
+              'schema': {'type': 'integer','nullable': True,
                          'data_relation': {
                              'resource': 'organizations',
                              'field': 'id',
                              'embeddable': True,
-                             'nullable': True
                          }
                          },
 
               },
     'functions': {'type': 'list',
-                  'schema': {'type': 'integer',
+                  'schema': {'type': 'integer','nullable': True,
                              'data_relation': {
                                  'resource': 'functions',
                                  'field': 'id',
                                  'embeddable': True,
-                                 'nullable': True
+
                              }
                              }
                   },
