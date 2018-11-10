@@ -1,6 +1,7 @@
 _schema = {
 
     'active_in_org_id': {'type': 'integer',
+                         'nullable': True,
                          'data_relation': {
                              'resource': 'organizations',
                              'field': 'id',
@@ -21,6 +22,7 @@ _schema = {
     'is_deleted': {'type': 'boolean'},
     'is_passive': {'type': 'boolean'},
     'person_id': {'type': 'integer',
+                  'nullable': True,
                   'data_relation': {
                       'resource': 'persons',
                       'field': 'id',
