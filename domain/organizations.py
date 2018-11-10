@@ -26,7 +26,7 @@ _schema = {
                                            'data_relation': {'resource': 'organizations/types',
                                                              'field': 'org_type_id',
                                                              'embeddable': True,
-                                                             'validate': False
+                                                             'nullable': True
                                                              }}}}
             },
     '_down': {'type': 'list',
@@ -36,7 +36,7 @@ _schema = {
                                              'data_relation': {'resource': 'organizations/types',
                                                                'field': 'org_type_id',
                                                                'embeddable': True,
-                                                               'validate': False
+                                                               'nullable': True
                                                                }}}}
               },
     # 'data_relation': {

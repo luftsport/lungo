@@ -6,7 +6,7 @@ _schema = {
                              'resource': 'organizations',
                              'field': 'id',
                              'embeddable': True,
-                             'validate': False
+                             'nullable': True
                          },
                          },
     'active_in_org_name': {'type': 'string'},
@@ -28,7 +28,7 @@ _schema = {
                       'resource': 'persons',
                       'field': 'id',
                       'embeddable': True,
-                      'validate': False
+                      'nullable': True
                   },
                   },
     'role_level_id': {'type': 'integer'},

@@ -22,7 +22,7 @@ _schema = {
                              'resource': 'organizations',
                              'field': 'id',
                              'embeddable': True,
-                             'validate': False
+                             'nullable': True
                          }
                          },
 
@@ -33,7 +33,7 @@ _schema = {
                                  'resource': 'functions',
                                  'field': 'id',
                                  'embeddable': True,
-                                 'validate': False
+                                 'nullable': True
                              }
                              }
                   },
