@@ -1,3 +1,6 @@
+
+RESOURCE_COLLECTION = 'organizations'
+
 _schema = {
 
     'account': {'type': 'dict',
@@ -22,21 +25,26 @@ _schema = {
     '_up': {'type': 'list',
             'schema': {'type': 'dict',
                        'schema': {'id': {'type': 'integer'},
-                                  'type': {'type': 'integer','nullable': True,
+                                  'type': {'type': 'integer',
                                            'data_relation': {'resource': 'organizations/types',
                                                              'field': 'org_type_id',
                                                              'embeddable': True,
-
-                                                             }}}}
+                                                             }
+                                           }
+                                  }
+                       }
             },
     '_down': {'type': 'list',
               'schema': {'type': 'dict',
                          'schema': {'id': {'type': 'integer'},
-                                    'type': {'type': 'integer','nullable': True,
+                                    'type': {'type': 'integer',
                                              'data_relation': {'resource': 'organizations/types',
                                                                'field': 'org_type_id',
                                                                'embeddable': True,
-                                                               }}}}
+                                                               }
+                                             }
+                                    }
+                         }
               },
     # 'data_relation': {
     #    'resource': 'users',
@@ -48,12 +56,15 @@ _schema = {
     'parent_id': {'type': 'integer'},
     'authority_id': {'type': 'string'},
     'short_name': {'type': 'string'},
-    'activities': {'type': 'list', 'schema': {'type': 'dict', 'schema': {
-        'code': {'type': 'string'},
-        'id': {'type': 'integer'},
-        'name': {'type': 'string'}
-
-    }}},
+    'activities': {'type': 'list',
+                   'schema': {
+                       'type': 'dict', 'schema': {
+                           'code': {'type': 'string'},
+                           'id': {'type': 'integer'},
+                           'name': {'type': 'string'}
+                       }
+                   }
+                   },
     'main_activity': {'type': 'dict',
                       'schema': {'code': {'type': 'string'},
                                  'id': {'type': 'integer'},
@@ -64,7 +75,7 @@ _schema = {
 
 definition = {
     'item_title': 'organizations',
-    'datasource': {'source': 'organizations',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
@@ -72,8 +83,8 @@ definition = {
     },
     'extra_response_fields': ['id'],
     'versioning': False,
-    'resource_methods': ['GET', 'POST', 'DELETE'],
-    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'resource_methods': ['GET'],
+    'item_methods': ['GET'],
     'mongo_indexes': {'org_id': ([('id', 1)], {'background': True}),
                       'type_id': ([('type_id', 1)], {'background': True}),
                       'activities': ([('activities', 1)], {'background': True}),
@@ -85,12 +96,44 @@ definition = {
     'schema': _schema
 }
 
+# Process resource without data_relations
+_schema_process = _schema.copy()
+_schema_process['_up'] = {'type': 'list',
+                          'schema': {'type': 'dict',
+                                     'schema': {'id': {'type': 'integer'},
+                                                'type': {'type': 'integer'}
+                                                }
+                                     }
+                          }
+_schema_process['_down'] = {'type': 'list',
+                            'schema': {'type': 'dict',
+                                       'schema': {'id': {'type': 'integer'},
+                                                  'type': {'type': 'integer'}
+                                                  }
+                                       }
+                            }
+
+process_definition = {
+    'item_title': 'organizations_process',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'extra_response_fields': ['id'],
+    'versioning': False,
+    'resource_methods': ['GET', 'POST', 'DELETE'],
+    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'schema': _schema_process
+}
+
 # Aggregation
 from bson import SON, ObjectId
 
 agg_count_types = {
     'datasource': {
-        'source': 'organizations',
+        'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
                 {"$group": {"_id": "$type_id", "count": {"$sum": 1}}},
@@ -100,10 +143,10 @@ agg_count_types = {
     }
 }
 
-parents = {
+agg_parents = {
     'item_title': 'Content Parents Aggregation',
     'datasource': {
-        'source': 'organizations',
+        'source': RESOURCE_COLLECTION,
         'aggregation': {
 
             'pipeline': [
@@ -152,10 +195,10 @@ parents = {
     }
 }
 
-children = {
+agg_children = {
     'item_title': 'Content Parents Aggregation',
     'datasource': {
-        'source': 'content',
+        'source': RESOURCE_COLLECTION,
         'aggregation': {
 
             'pipeline':
@@ -204,10 +247,10 @@ children = {
     }
 }
 
-siblings = {
+agg_siblings = {
     'item_title': 'Content Parents Aggregation',
     'datasource': {
-        'source': 'content',
+        'source': RESOURCE_COLLECTION,
         'aggregation': {
 
             'pipeline':

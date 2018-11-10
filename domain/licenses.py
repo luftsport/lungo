@@ -1,5 +1,11 @@
-_schema = {
 
+RESOURCE_COLLECTION = 'licenses'
+
+_schema = {
+    'id': {'type': 'integer', 'required': True, 'unique': True},
+    'type_id': {'type': 'integer'},
+    'type_name': {'type': 'string'},
+    'type_price': {'type': 'float'},
     'account_number': {'type': 'integer'},
     'competitor_id': {'type': 'integer'},
     'invoice_type_id': {'type': 'integer'},
@@ -13,7 +19,6 @@ _schema = {
     'total_paid_amount': {'type': 'float'},
     'paid_date': {'type': 'datetime'},
     'update_permission': {'type': 'boolean'},
-    'id': {'type': 'integer', 'required': True, 'unique': True},
     'period_from_date': {'type': 'datetime'},
     'period_function_type_count': {'type': 'integer'},
     'period_id': {'type': 'integer'},
@@ -26,14 +31,12 @@ _schema = {
     'status_date': {'type': 'datetime'},
     'status_id': {'type': 'integer'},
     'status_text': {'type': 'string'},
-    'type_id': {'type': 'integer'},
-    'type_name': {'type': 'string'},
-    'type_price': {'type': 'float'},
+
 }
 
 definition = {
     'item_title': 'Licenses',
-    'datasource': {'source': 'licenses',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
@@ -41,8 +44,8 @@ definition = {
     },
     'extra_response_fields': ['id'],
     'versioning': False,
-    'resource_methods': ['GET', 'POST', 'DELETE'],
-    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'resource_methods': ['GET'],
+    'item_methods': ['GET'],
     'mongo_indexes': {'license_id': ([('id', 1)], {'background': True}),
                       'type_id': ([('type_id', 1)], {'background': True}),
                       'person_id': ([('person_id', 1)], {'background': True}),
@@ -53,4 +56,24 @@ definition = {
                       'text': ([('period_name', 'text'), ('type_name', 'text')], {'background': True}),
                       },
     'schema': _schema
+}
+
+# Process resource without data_relations
+_schema_process = _schema.copy()
+_schema_process['type_id'] = {'type': 'integer'},
+_schema_process['qualifications'] = {'type': 'list'}
+
+process_definition = {
+    'item_title': 'licenses_process',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'extra_response_fields': ['id'],
+    'versioning': False,
+    'resource_methods': ['GET', 'POST', 'DELETE'],
+    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'schema': _schema_process
 }

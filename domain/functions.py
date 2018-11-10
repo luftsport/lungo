@@ -1,7 +1,9 @@
+
+RESOURCE_COLLECTION = 'functions'
+
 _schema = {
 
     'active_in_org_id': {'type': 'integer',
-                         'nullable': True,
                          'data_relation': {
                              'resource': 'organizations',
                              'field': 'id',
@@ -23,7 +25,6 @@ _schema = {
     'is_deleted': {'type': 'boolean'},
     'is_passive': {'type': 'boolean'},
     'person_id': {'type': 'integer',
-                  'nullable': True,
                   'data_relation': {
                       'resource': 'persons',
                       'field': 'id',
@@ -37,7 +38,7 @@ _schema = {
 
 definition = {
     'item_title': 'functions',
-    'datasource': {'source': 'functions',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
@@ -45,8 +46,8 @@ definition = {
     },
     'extra_response_fields': ['id'],
     'versioning': False,
-    'resource_methods': ['GET', 'POST', 'DELETE'],
-    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'resource_methods': ['GET'],
+    'item_methods': ['GET'],
     'mongo_indexes': {'function_id': ([('id', 1)], {'background': True}),
                       'person_id': ([('person_id', 1)], {'background': True}),
                       'type_id': ([('type_id', 1)], {'background': True}),
@@ -58,12 +59,32 @@ definition = {
     'schema': _schema
 }
 
+# Process resource without data_relations
+_schema_process = _schema.copy()
+_schema_process['active_in_org_id'] = {'type': 'integer'}
+_schema_process['person_id'] = {'type': 'integer'}
+
+process_definition = {
+    'item_title': 'functions_process',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'extra_response_fields': ['id'],
+    'versioning': False,
+    'resource_methods': ['GET', 'POST', 'DELETE'],
+    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'schema': _schema_process
+}
+
 # Aggregation
 from bson import SON, ObjectId
 
 agg_count_types = {
     'datasource': {
-        'source': 'functions',
+        'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
                 {"$group": {"_id": "$type_id", "count": {"$sum": 1}}},

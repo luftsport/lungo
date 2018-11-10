@@ -1,5 +1,7 @@
 from bson import SON
 
+RESOURCE_COLLECTION = 'persons'
+
 _schema = {
 
     'id': {'type': 'integer', 'unique': True},
@@ -17,7 +19,7 @@ _schema = {
     'date_of_death': {'type': 'datetime'},
     'nationality_id': {'type': 'integer'},
     'clubs': {'type': 'list',
-              'schema': {'type': 'integer','nullable': True,
+              'schema': {'type': 'integer',
                          'data_relation': {
                              'resource': 'organizations',
                              'field': 'id',
@@ -27,7 +29,7 @@ _schema = {
 
               },
     'functions': {'type': 'list',
-                  'schema': {'type': 'integer','nullable': True,
+                  'schema': {'type': 'integer',
                              'data_relation': {
                                  'resource': 'functions',
                                  'field': 'id',
@@ -87,7 +89,7 @@ _schema = {
 
 definition = {
     'item_title': 'persons',
-    'datasource': {'source': 'persons',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
@@ -95,8 +97,8 @@ definition = {
     },
     'extra_response_fields': ['id'],
     'versioning': True,
-    'resource_methods': ['GET', 'POST', 'DELETE'],
-    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'resource_methods': ['GET'],
+    'item_methods': ['GET'],
     'mongo_indexes': {'person id': ([('id', 1)], {'background': True}),
                       # , 'unique': True gives DuplicateKeyError with versioning
                       'location': ([('address.location.geo', '2dsphere')], {'background': True}),
@@ -110,9 +112,34 @@ definition = {
     'schema': _schema
 }
 
+# Process resource without data_relations
+_schema_process = _schema.copy()
+_schema_process['clubs'] = {'type': 'list'}
+_schema_process['competences'] = {'type': 'list'}
+_schema_process['functions'] = {'type': 'list'}
+_schema_process['licenses'] = {'type': 'list'}
+_schema_process['activities'] = {'type': 'list'}
+_schema_process['qualifications'] = {'type': 'list'}
+
+process_definition = {
+    'item_title': 'persons_process',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'extra_response_fields': ['id'],
+    'versioning': True,
+    'resource_methods': ['GET', 'POST', 'DELETE'],
+    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'schema': _schema_process
+}
+
+# Aggregations
 agg_count_gender = {
     'datasource': {
-        'source': 'persons',
+        'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
                 {"$group": {"_id": "$gender", "count": {"$sum": 1}}},
