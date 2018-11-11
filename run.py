@@ -44,7 +44,7 @@ SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settin
 # app = CustomEve(auth=TokenAuth, settings=SETTINGS_PATH)
 # app = Eve(settings=SETTINGS_PATH)
 app = Eve(auth=TokenAuth, settings=SETTINGS_PATH)
-#app = Eve(settings=SETTINGS_PATH)
+# app = Eve(settings=SETTINGS_PATH)
 """ Define global settings
 These settings are mirrored from Eve, but should not be!
 @todo: use app.config instead
@@ -53,8 +53,6 @@ app.globals = {"prefix": "/api/v1"}
 
 # Healthcheck
 hc = EveHealthCheck(app, '%s/healthcheck' % app.globals.get('prefix'))
-
-
 
 # Custom url mapping (needed by native flask routes)
 app.url_map.converters['objectid'] = ObjectIDConverter
@@ -81,34 +79,36 @@ ion', 'is_sequence', 'is_streamed', 'iter_encoded', 'last_modified', 'location',
 code', 'stream', 'vary', 'www_authenticate']
 """
 
+from ext.app.hooks import on_function_post, on_license_post, on_competence_post, \
+    on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put
 
-from ext.app.hooks import on_function_post, on_license_post, on_competence_post,\
-    on_person_after_post, on_person_after_put
 
 def after_get_persons(request, response):
     d = json.loads(response.get_data().decode('UTF-8'))
 
-    #me = get_internal('persons', **{'id': 5389166})
-    #patch_internal('persons', {'clubs': [432, 4653]}, False, True, **{'id': 5389166})
-    #print(me)
+    # me = get_internal('persons', **{'id': 5389166})
+    # patch_internal('persons', {'clubs': [432, 4653]}, False, True, **{'id': 5389166})
+    # print(me)
 
-    #print(dir(response))
+    # print(dir(response))
     if '_items' not in d and '_merged_to' in d:
-        #redirect('/persons/%s' % d['_merged_to'], code=302)
-        #abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
+        # redirect('/persons/%s' % d['_merged_to'], code=302)
+        # abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
         response.headers['Location'] = '/api/v1/persons/%s' % d['_merged_to']
-        #response.status = 'Moved Permanently'
+        # response.status = 'Moved Permanently'
         response.status_code = 301
         response.set_data(json.dumps({'_status': 'ERR',
                                       '_error': '301 Moved permanently',
                                       '_url': '/api/v1/persons/%s' % d['_merged_to'],
                                       'id': d['_merged_to']}))
 
-#def after_fetched_person(response):
+
+# def after_fetched_person(response):
 #    print('Response')
 #    print(response)
 # app.on_fetched_item_persons += after_fetched_person
 # HTTP 301
+"""
 app.on_post_GET_persons += after_get_persons
 
 app.on_inserted_functions += on_function_post
@@ -120,11 +120,42 @@ app.on_replaced_competences += on_competence_post
 
 app.on_inserted_persons += on_person_after_post
 app.on_replaced_persons += on_person_after_put
+"""
 
 
-def test_fr(resource_name, response):
-    print('Resource name: ', resource_name)
-app.on_fetched_resource += test_fr
+def _run_hook(resource_name, response, op):
+    if resource_name == 'persons/process':
+        if op == 'inserted':
+            on_person_after_post(response)
+        elif op == 'replaced':
+            on_person_after_put(response)
+    elif resource_name == 'functions/process':
+        if op == 'inserted':
+            on_function_post(response)
+        elif op == 'replaced':
+            on_function_put(response)
+    elif resource_name == 'licenses/process':
+        if op == 'inserted':
+            on_license_post(response)
+        elif op == 'replaced':
+            on_license_put(response)
+    elif resource_name == 'competences/process':
+        if op == 'inserted':
+            on_competence_post(response)
+        elif op == 'replaced':
+            on_competence_put(response)
+
+
+def _on_inserted(resource_name, items):
+    _run_hook(resource_name, items, 'inserted')
+
+
+def _on_replaced(resource_name, item, original):
+    _run_hook(resource_name, item, 'replaced')
+
+
+app.on_inserted += _on_inserted
+app.on_replaced += _on_replaced
 
 """
 
