@@ -23,6 +23,7 @@ wait(timeout=None) wait for process termination
 
 Pyro4.Proxy(RPC_SERVICE).shutdown()
 
+Pyro4.errors.CommunicationError
 
 """
 
@@ -30,16 +31,17 @@ from flask import Blueprint, current_app as app, request, Response, abort, jsoni
 import psutil
 import Pyro4
 from ext.auth.decorators import require_token
+from ext.app.eve_helper import eve_response
 
 Sync = Blueprint('Manage syncdaemon process', __name__)
 
 RPC_SERVICE_NAME = 'integration.service'
 RPC_SERVICE_PORT = 5555
 RPC_SERVICE_HOST = 'localhost'
-RPC_SERVICE = 'PYRO:{}@{}:{}'.format(RPC_SERVICE_NAME, RPC_SERVICE_HOST, RPC_SERVICE_PORT)
+RPC_SERVICE = 'PYRO:{0}@{1}:{2}'.format(RPC_SERVICE_NAME, RPC_SERVICE_HOST, RPC_SERVICE_PORT)
 
 def get_process():
-    with open('/home/einar/Development/nif-integration/daemon.pid', 'r') as f:
+    with open('/home/einar/nif-integration/syncdaemon.pid', 'r') as f:
         pid = int(f.read().strip())
 
     try:
@@ -60,18 +62,7 @@ def process_info():
                          'memory_full_info', 'memory_percent', 'name', 'nice',
                          'num_ctx_switches', 'num_threads',  'pid', 'ppid',
                          'status',  'threads', 'uids', 'username'])
-    """
-    mem = p.memory_info()
-    # Build a dictionary
-    d = {'memory': {'rss': mem.rss, 'vms': mem.vms, 'shared': mem.shared,
-                    'text': mem.text, 'lib': mem.lib, 'data': mem.data, 'dirty': mem.dirty},
-         'is_running': p.is_running(),
-         'pid': p.pid,
-         'status': p.status(),
-         'num_threads': p.num_threads(),
-         'threads': p.threads()
-         }
-    """
+
     # Jsonify the dictionary and return it
     return jsonify(**d)
 
@@ -110,7 +101,8 @@ def workers_status():
     """Returns dict of all workers"""
     s = Pyro4.Proxy(RPC_SERVICE).get_workers_status()
 
-    return jsonify(**{'_items': s})
+    return eve_response(data=s, status=200)
+    # return jsonify(**{'_items': s})
 
 
 @Sync.route("/workers/failed/clubs", methods=['GET'])
