@@ -122,6 +122,10 @@ app.on_inserted_persons += on_person_after_post
 app.on_replaced_persons += on_person_after_put
 
 
+def test_fr(resource_name, response):
+    print('Resource name: ', resource_name)
+app.on_fetched_resource += test_fr
+
 """
 
     START:
