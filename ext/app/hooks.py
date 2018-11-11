@@ -112,54 +112,56 @@ def on_function_put(response):
 
     person = _get_person(response['person_id'])
 
-    # Club member! has_paid_membership?
-    clubs = person.get('clubs', [])
-    activities = person.get('activities', [])
+    if '_id' in person:
 
-    if response['type_id'] == 10000000:
+        # Club member! has_paid_membership?
+        clubs = person.get('clubs', [])
+        activities = person.get('activities', [])
 
-        if not response['is_deleted'] and not response['is_passive']:
-            clubs.append(response['active_in_org_id'])
-        else:
-            try:
-                clubs.remove(response['active_in_org_id'])
-            except ValueError:
-                pass
-            except:
-                pass
+        if response['type_id'] == 10000000:
 
-        # Unique list
-        clubs = list(set(clubs))
+            if not response['is_deleted'] and not response['is_passive']:
+                clubs.append(response['active_in_org_id'])
+            else:
+                try:
+                    clubs.remove(response['active_in_org_id'])
+                except ValueError:
+                    pass
+                except:
+                    pass
 
-        # Activities!
-        for club_id in clubs:
-            try:
-                org = _get_org(club_id)
-                activity = org.get('main_activity', None)
-                if activity is not None:
-                    # @TODO see if code should be integer? String now.
-                    activities.append(activity)
-            except:
-                pass
+            # Unique list
+            clubs = list(set(clubs))
 
-        # Unique list of activities
-        activities = list({v['id']: v for v in activities}.values())
+            # Activities!
+            for club_id in clubs:
+                try:
+                    org = _get_org(club_id)
+                    activity = org.get('main_activity', None)
+                    if activity is not None:
+                        # @TODO see if code should be integer? String now.
+                        activities.append(activity)
+                except:
+                    pass
 
-    f = person.get('functions', [])
-    try:
-        f.append(response['id'])
-        f = list(set(f))
-    except:
-        pass
+            # Unique list of activities
+            activities = list({v['id']: v for v in activities}.values())
 
-    # if f != person.get('functions', []):
-    lookup = {'_id': person['_id']}
+        f = person.get('functions', [])
+        try:
+            f.append(response['id'])
+            f = list(set(f))
+        except:
+            pass
 
-    response, last_modified, etag, status = patch_internal(RESOURCE_PERSONS_PROCESS,
-                                                           {'functions': f, 'activities': activities, 'clubs': clubs},
-                                                           False, True, **lookup)
-    print(response, status)
-    # patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': l}, False, True, **look)
+        # if f != person.get('functions', []):
+        lookup = {'_id': person['_id']}
+
+        response, last_modified, etag, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                                               {'functions': f, 'activities': activities, 'clubs': clubs},
+                                                               False, True, **lookup)
+        # print(response, status)
+        # patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': l}, False, True, **look)
 
 
 def on_license_post(items):
@@ -180,21 +182,23 @@ def on_license_put(response):
     if expiry is None or expiry >= datetime.now():
         person = _get_person(response['person_id'])
 
-        licenses = person.get('licenses')
-        try:
-            licenses.append({'id': response.get('id'),
-                             'status_id': response.get('status_id', 0),
-                             'status_date': response.get('status_date', None),
-                             'expiry': response.get('period_to_date', None),
-                             'type_id': response.get('type_id', None),
-                             'type_name': response.get('type_name', None)})
+        if '_id' in person:
 
-            licenses = list({v['id']: v for v in licenses}.values())
-        except:
-            pass
+            licenses = person.get('licenses')
+            try:
+                licenses.append({'id': response.get('id'),
+                                 'status_id': response.get('status_id', 0),
+                                 'status_date': response.get('status_date', None),
+                                 'expiry': response.get('period_to_date', None),
+                                 'type_id': response.get('type_id', None),
+                                 'type_name': response.get('type_name', None)})
 
-        lookup = {'_id': person['_id']}
-        patch_internal(RESOURCE_PERSONS_PROCESS, {'licenses': licenses}, False, True, **lookup)
+                licenses = list({v['id']: v for v in licenses}.values())
+            except:
+                pass
+
+            lookup = {'_id': person['_id']}
+            patch_internal(RESOURCE_PERSONS_PROCESS, {'licenses': licenses}, False, True, **lookup)
 
 
 def on_competence_post(items):
@@ -209,7 +213,7 @@ def on_competence_post(items):
 
 
 def on_competence_put(response):
-    """pass"""
+    """"""
     # try:
     #    expiry = dateutil.parser.parse(response.get('valid_until', None))
     # except:
