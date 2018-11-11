@@ -99,10 +99,13 @@ workers
 @require_token()
 def workers_status():
     """Returns dict of all workers"""
-    s = Pyro4.Proxy(RPC_SERVICE).get_workers_status()
+    try:
+        s = Pyro4.Proxy(RPC_SERVICE).get_workers_status()
 
-    return eve_response(data=s, status=200)
-    # return jsonify(**{'_items': s})
+        return eve_response(data=s, status=200)
+    except Exception as e:
+        return eve_response(data=e)
+        # return jsonify(**{'_items': s})
 
 
 @Sync.route("/workers/failed/clubs", methods=['GET'])
