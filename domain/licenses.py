@@ -60,7 +60,7 @@ definition = {
 
 # Process resource without data_relations
 _schema_process = _schema.copy()
-_schema_process['type_id'] = {'type': 'integer'},
+_schema_process['type_id'] = {'type': 'integer'}
 _schema_process['qualifications'] = {'type': 'list'}
 
 process_definition = {
