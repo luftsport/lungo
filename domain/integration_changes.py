@@ -11,9 +11,14 @@ _schema = {
     'name': {'type': 'string'},
     'sequence_ordinal': {'type': 'datetime'},
     '_org_id': {'type': 'integer'},
-    '_ordinal': {'type': 'string', 'unique': True},
+    '_ordinal': {'type': 'string',
+                 'unique': True},
     '_status': {'type': 'string'},
-    '_issues': {'type': 'dict'}
+    '_issues': {'type': 'dict'},
+    '_realm': {'type': 'string',
+               'allowed': ['DST', 'PROD'],
+               'required': True},
+
 }
 
 definition = {

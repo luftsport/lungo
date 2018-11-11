@@ -1,14 +1,28 @@
 from bson import SON
 
-_schema = {'username': {'type': 'string', 'required': True},
-           'password': {'type': 'string', 'required': True},
-           'id': {'type': 'integer', 'required': True, 'unique': True},
-           'app_id': {'type': 'integer', 'required': True},
-           'function_id': {'type': 'integer', 'required': True},
-           'club_id': {'type': 'integer', 'required': True, 'unique': True},
+_schema = {'username': {'type': 'string',
+                        'required': True},
+           'password': {'type': 'string',
+                        'required': True},
+           'id': {'type': 'integer',
+                  'required': True,
+                  'unique': True},
+           'app_id': {'type': 'integer',
+                      'required': True},
+           'function_id': {'type': 'integer',
+                           'required': True},
+           'club_id': {'type': 'integer',
+                       'required': True,
+                       'unique': True},
            'club_name': {'type': 'string'},
-           'club_created': {'type': 'datetime', 'required': True},
-           'modified': {'type': 'datetime'}
+           'club_created': {'type': 'datetime',
+                            'required': True},
+           'modified': {'type': 'datetime'},
+           '_realm': {'type': 'string',
+                      'allowed': ['DST', 'PROD'],
+                      'required': True},
+           '_active': {'type': 'boolean',
+                       'default': True}
            }
 
 definition = {
