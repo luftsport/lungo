@@ -108,21 +108,22 @@ def after_get_persons(request, response):
 #    print(response)
 # app.on_fetched_item_persons += after_fetched_person
 # HTTP 301
-"""
 app.on_post_GET_persons += after_get_persons
 
-app.on_inserted_functions += on_function_post
-app.on_replaced_functions += on_function_post
-app.on_inserted_licenses += on_license_post
-app.on_replaced_licenses += on_license_post
-app.on_inserted_competences += on_competence_post
-app.on_replaced_competences += on_competence_post
+# Hooks to update person object
+app.on_inserted_functions_process += on_function_post
+app.on_replaced_functions_process += on_function_put
 
-app.on_inserted_persons += on_person_after_post
-app.on_replaced_persons += on_person_after_put
+app.on_inserted_licenses_process += on_license_post
+app.on_replaced_licenses_process += on_license_put
+
+app.on_inserted_competences_process += on_competence_post
+app.on_replaced_competences_process += on_competence_put
+
+app.on_inserted_persons_process += on_person_after_post
+app.on_replaced_persons_process += on_person_after_put
+
 """
-
-
 def _run_hook(resource_name, response, op):
     if resource_name == 'persons/process':
         if op == 'inserted':
@@ -156,6 +157,9 @@ def _on_replaced(resource_name, item, original):
 
 app.on_inserted += _on_inserted
 app.on_replaced += _on_replaced
+"""
+
+
 
 """
 
