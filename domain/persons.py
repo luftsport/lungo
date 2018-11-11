@@ -89,6 +89,7 @@ _schema = {
 
 definition = {
     'item_title': 'persons',
+    'url': 'persons',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
@@ -123,6 +124,7 @@ _schema_process['qualifications'] = {'type': 'list'}
 
 process_definition = {
     'item_title': 'persons_process',
+    'url': 'persons/process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
@@ -134,6 +136,23 @@ process_definition = {
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'schema': _schema_process
+}
+
+# Search
+search_definition = {
+    'item_title': 'persons search',
+    'url': 'persons/search',
+    'datasource': {'source': 'persons'},
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'extra_response_fields': ['id'],
+    'versioning': True,
+    'resource_methods': ['GET'],
+    'item_methods': [],
+    'allow_unknown': True,
+    'schema': _schema
 }
 
 # Aggregations

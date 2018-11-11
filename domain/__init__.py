@@ -1,5 +1,5 @@
 import ka_clubs, ka_competence, ka_members, ka_orgs, ka_licenses, ka_org_activity
-import persons, persons_search
+import persons
 import integration_users, integration_changes
 import organizations, organization_types
 import functions, function_types
@@ -23,8 +23,8 @@ DOMAIN = {
 
     # Persons
     "persons": persons.definition,
-    "persons/process": persons.process_definition,
-    "persons/search": persons_search.definition,
+    "persons-process": persons.process_definition,
+    "persons-search": persons.search_definition,
     "persons/gender": persons.agg_count_gender,
 
     # Organization
