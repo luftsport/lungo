@@ -8,6 +8,7 @@ import dateutil.parser
 from datetime import datetime
 from ext.app.decorators import async
 
+RESOURCE_PERSON_PROCESS = 'persons/process'
 # import requests
 # from ext.auth.clients import users as USERS
 
@@ -152,9 +153,9 @@ def on_function_post(items) -> None:
         # if f != person.get('functions', []):
         print('NOW TO THE PATCHING!!!')
         lookup = {'_id': person['_id']}
-        patch_internal('persons', {'functions': f, 'activities': activities, 'clubs': clubs}, False, True, **lookup)
+        patch_internal(RESOURCE_PERSON_PROCESS, {'functions': f, 'activities': activities, 'clubs': clubs}, False, True, **lookup)
 
-        # patch_internal('persons', {'competences': l}, False, True, **look)
+        # patch_internal(RESOURCE_PERSON_PROCESS, {'competences': l}, False, True, **look)
 
 
 def on_function_put(response):
@@ -188,7 +189,7 @@ def on_license_post(items):
                 pass
 
             lookup = {'_id': person['_id']}
-            patch_internal('persons', {'licenses': licenses}, False, True, **lookup)
+            patch_internal(RESOURCE_PERSON_PROCESS, {'licenses': licenses}, False, True, **lookup)
 
 
 def on_license_put(response):
@@ -237,7 +238,7 @@ def on_competence_post(items):
                     pass
 
                 lookup = {'_id': person['_id']}
-                patch_internal('persons', {'competences': competence}, False, True, **lookup)
+                patch_internal(RESOURCE_PERSON_PROCESS, {'competences': competence}, False, True, **lookup)
 
 
 def on_competence_put(response):
@@ -305,7 +306,7 @@ def _update_person_location(item):
                     item['address']['location']['quality'] = quality
 
                     lookup = {'_id': item['_id']}
-                    patch_internal('persons', {'address': item['address']}, False, True, **lookup)
+                    patch_internal(RESOURCE_PERSON_PROCESS, {'address': item['address']}, False, True, **lookup)
                     # request.post('https://')
 
 
