@@ -6,9 +6,8 @@ from eve.methods.get import get_internal
 import geocoder
 import dateutil.parser
 from datetime import datetime
-from ext.app.decorators import async
 
-RESOURCE_PERSON_PROCESS = 'persons/process'
+RESOURCE_PERSONS_PROCESS = 'persons/process'
 # import requests
 # from ext.auth.clients import users as USERS
 
@@ -148,14 +147,12 @@ def on_function_post(items) -> None:
             f = list(set(f))
         except:
             pass
-        print('Functions', f)
 
         # if f != person.get('functions', []):
-        print('NOW TO THE PATCHING!!!')
         lookup = {'_id': person['_id']}
-        patch_internal(RESOURCE_PERSON_PROCESS, {'functions': f, 'activities': activities, 'clubs': clubs}, False, True, **lookup)
+        patch_internal(RESOURCE_PERSONS_PROCESS, {'functions': f, 'activities': activities, 'clubs': clubs}, False, True, **lookup)
 
-        # patch_internal(RESOURCE_PERSON_PROCESS, {'competences': l}, False, True, **look)
+        # patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': l}, False, True, **look)
 
 
 def on_function_put(response):
@@ -189,7 +186,7 @@ def on_license_post(items):
                 pass
 
             lookup = {'_id': person['_id']}
-            patch_internal(RESOURCE_PERSON_PROCESS, {'licenses': licenses}, False, True, **lookup)
+            patch_internal(RESOURCE_PERSONS_PROCESS, {'licenses': licenses}, False, True, **lookup)
 
 
 def on_license_put(response):
@@ -204,7 +201,6 @@ def on_competence_post(items):
 
     """
     for response in items:
-        print(response)
         # try:
         #    expiry = dateutil.parser.parse(response.get('valid_until', None))
         # except:
@@ -216,7 +212,6 @@ def on_competence_post(items):
 
             if '_id' in person:
                 competence = person.get('competences', [])
-                print('Competence', competence)
 
                 # Remove stale competences?
                 try:
@@ -238,7 +233,7 @@ def on_competence_post(items):
                     pass
 
                 lookup = {'_id': person['_id']}
-                patch_internal(RESOURCE_PERSON_PROCESS, {'competences': competence}, False, True, **lookup)
+                patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True, **lookup)
 
 
 def on_competence_put(response):
@@ -272,10 +267,10 @@ def _update_person(item):
         on_function_post(functions.get('_items', []))
 
     # Geocode address
-    _update_person_location(item)
+    # Stream do this async is better
+    # _update_person_location(item)
 
 
-# @async
 def _update_person_location(item):
     """pass"""
 
@@ -298,7 +293,7 @@ def _update_person_location(item):
                                                           zip=item['address'].get('zip_code', ''),
                                                           )
 
-                if score > 0:
+                if score and int(score) > 0:
                     item['address']['location'] = {}
                     item['address']['location']['geo'] = geo
                     item['address']['location']['score'] = score
@@ -306,7 +301,7 @@ def _update_person_location(item):
                     item['address']['location']['quality'] = quality
 
                     lookup = {'_id': item['_id']}
-                    patch_internal(RESOURCE_PERSON_PROCESS, {'address': item['address']}, False, True, **lookup)
+                    patch_internal(RESOURCE_PERSONS_PROCESS, {'address': item['address']}, False, True, **lookup)
                     # request.post('https://')
 
 
