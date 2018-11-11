@@ -7,7 +7,7 @@ import geocoder
 import dateutil.parser
 from datetime import datetime
 
-RESOURCE_PERSONS_PROCESS = 'persons/process'
+RESOURCE_PERSONS_PROCESS = 'persons_process'
 # import requests
 # from ext.auth.clients import users as USERS
 
