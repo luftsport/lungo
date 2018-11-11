@@ -150,8 +150,9 @@ def on_function_post(items) -> None:
 
         # if f != person.get('functions', []):
         lookup = {'_id': person['_id']}
-        patch_internal(RESOURCE_PERSONS_PROCESS, {'functions': f, 'activities': activities, 'clubs': clubs}, False, True, **lookup)
 
+        response, last_modified, etag, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'functions': f, 'activities': activities, 'clubs': clubs}, False, True, **lookup)
+        print(response, status)
         # patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': l}, False, True, **look)
 
 
@@ -252,6 +253,7 @@ def on_person_after_put(item, original):
 
 
 def _update_person(item):
+    print('Update person!')
     lookup = {'person_id': item['id']}
 
     competences, _, _, c_status, _ = get_internal('competences', **lookup)
@@ -264,6 +266,7 @@ def _update_person(item):
 
     functions, _, _, f_status, _ = get_internal('functions', **lookup)
     if f_status == 200:
+        print('FUNCTIONS')
         on_function_post(functions.get('_items', []))
 
     # Geocode address
