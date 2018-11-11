@@ -6,6 +6,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'ka/competences',
     'item_title': 'ka_competence',
     'datasource': {'source': 'ka_competence',
                    },

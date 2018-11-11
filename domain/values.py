@@ -26,15 +26,16 @@ _schema = {
 }
 
 definition = {
+    'url': 'values',
     'item_title': 'values',
     'datasource': {'source': 'values',
                    },
 
-    #'additional_lookup': {
+    # 'additional_lookup': {
     #    'url': 'objectid',
     #    'field': 'station_id',
-    #},
-    #'extra_response_fields': ['station_id'],
+    # },
+    # 'extra_response_fields': ['station_id'],
 
     'versioning': False,
     'resource_methods': ['GET', 'POST'],

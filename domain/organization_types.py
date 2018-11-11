@@ -7,6 +7,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'organizations/types',
     'item_title': 'organization/types',
     'datasource': {'source': 'organization_types',
                    },

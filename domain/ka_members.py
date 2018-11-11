@@ -32,6 +32,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'ka/members',
     'item_title': 'ka_members',
     'datasource': {'source': 'ka_members',
                    },

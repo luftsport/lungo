@@ -5,6 +5,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'ka/licenses',
     'item_title': 'ka_licenses',
     'datasource': {'source': 'ka_licenses',
                    },

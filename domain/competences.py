@@ -24,6 +24,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'competences',
     'item_title': 'Competences',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
@@ -53,6 +54,7 @@ _schema_process['active_in_org_id'] = {'type': 'integer'}
 _schema_process['person_id'] = {'type': 'integer'}
 
 process_definition = {
+    'url': 'competences/process',
     'item_title': 'competences_process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
@@ -69,6 +71,7 @@ process_definition = {
 
 # Aggregations
 agg_count_codes = {
+    'url': 'competences/codes',
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

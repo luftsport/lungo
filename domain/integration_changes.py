@@ -22,6 +22,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'integration/changes',
     'item_title': 'integration changes',
     'datasource': {'source': 'integration_changes',
                    },
@@ -44,8 +45,11 @@ definition = {
                       'change_type': ([('_status', 1)], {'background': True}),
                       },
     'schema': _schema
-}  # Aggregations
+}
+
+# Aggregations
 agg_count_entity_types = {
+    'url': 'integration/changes/entity/types',
     'datasource': {
         'source': 'integration_changes',
         'aggregation': {
@@ -58,6 +62,7 @@ agg_count_entity_types = {
 }
 
 agg_count_statuses = {
+    'url': 'integration/changes/status',
     'datasource': {
         'source': 'integration_changes',
         'aggregation': {
@@ -70,6 +75,7 @@ agg_count_statuses = {
 }
 
 agg_count_clubs = {
+    'url': 'integration/changes/clubs',
     'datasource': {
         'source': 'integration_changes',
         'aggregation': {
@@ -82,6 +88,7 @@ agg_count_clubs = {
 }
 
 agg_count_change_types = {
+    'url': 'integration/changes/change/types',
     'datasource': {
         'source': 'integration_changes',
         'aggregation': {

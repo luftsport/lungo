@@ -19,6 +19,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'qualifications',
     'item_title': 'ka_orgs',
     'datasource': {'source': 'ka_orgs',
                    },

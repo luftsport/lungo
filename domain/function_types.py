@@ -13,6 +13,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'functions/types',
     'item_title': 'function types',
     'datasource': {'source': 'types',
                    },

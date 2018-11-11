@@ -26,6 +26,7 @@ _schema = {'username': {'type': 'string',
            }
 
 definition = {
+    'url': 'integration/users',
     'item_title': 'integration',
     'datasource': {'source': 'integration_users',  # @TODO - move to integration_users
                    },
@@ -49,6 +50,7 @@ definition = {
 
 # Count clubs by club_id
 agg_count_clubs = {
+    'url': 'integration/users/clubs',
     'datasource': {
         'source': 'integration',
         'aggregation': {

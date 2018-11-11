@@ -35,6 +35,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'licenses',
     'item_title': 'Licenses',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
@@ -64,6 +65,7 @@ _schema_process['type_id'] = {'type': 'integer'}
 _schema_process['qualifications'] = {'type': 'list'}
 
 process_definition = {
+    'url': 'licenses/process',
     'item_title': 'licenses_process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },

@@ -88,8 +88,8 @@ _schema = {
 }
 
 definition = {
-    'item_title': 'persons',
     'url': 'persons',
+    'item_title': 'persons',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
@@ -123,8 +123,8 @@ _schema_process['activities'] = {'type': 'list'}
 _schema_process['qualifications'] = {'type': 'list'}
 
 process_definition = {
-    'item_title': 'persons_process',
     'url': 'persons/process',
+    'item_title': 'persons_process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
@@ -140,8 +140,8 @@ process_definition = {
 
 # Search
 search_definition = {
-    'item_title': 'persons search',
     'url': 'persons/search',
+    'item_title': 'persons search',
     'datasource': {'source': 'persons'},
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
@@ -157,6 +157,7 @@ search_definition = {
 
 # Aggregations
 agg_count_gender = {
+    'url': 'persons/gender',
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

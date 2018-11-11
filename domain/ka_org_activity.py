@@ -7,6 +7,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'ka/orgs/activity',
     'item_title': 'ka_org_activity',
     'datasource': {'source': 'ka_org_activity',
                    },

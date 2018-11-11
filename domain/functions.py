@@ -1,4 +1,3 @@
-
 RESOURCE_COLLECTION = 'functions'
 
 _schema = {
@@ -37,6 +36,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'functions',
     'item_title': 'functions',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
@@ -65,6 +65,7 @@ _schema_process['active_in_org_id'] = {'type': 'integer'}
 _schema_process['person_id'] = {'type': 'integer'}
 
 process_definition = {
+    'url': 'functions/process',
     'item_title': 'functions_process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
@@ -83,6 +84,7 @@ process_definition = {
 from bson import SON, ObjectId
 
 agg_count_types = {
+    'url': 'functions/types/count',
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

@@ -10,6 +10,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'stations',
     'item_title': 'stations',
     'datasource': {'source': 'stations',
                    },

@@ -74,6 +74,7 @@ _schema = {
 }
 
 definition = {
+    'url': 'organizations',
     'item_title': 'organizations',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
@@ -114,6 +115,7 @@ _schema_process['_down'] = {'type': 'list',
                             }
 
 process_definition = {
+    'url': 'organizations/process',
     'item_title': 'organizations_process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
@@ -132,6 +134,7 @@ process_definition = {
 from bson import SON, ObjectId
 
 agg_count_types = {
+    'url': 'organizations/types/count',
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
