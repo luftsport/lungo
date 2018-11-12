@@ -26,7 +26,6 @@ _schema = {
                              'embeddable': True,
                          }
                          },
-
               },
     'functions': {'type': 'list',
                   'schema': {'type': 'integer',
@@ -142,7 +141,7 @@ process_definition = {
 search_definition = {
     'url': 'persons/search',
     'item_title': 'persons search',
-    'datasource': {'source': 'persons'},
+    'datasource': {'source': RESOURCE_COLLECTION},
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
         'field': 'id',

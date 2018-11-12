@@ -21,7 +21,7 @@ definition = {
         'url': 'regex("[\d{1,9}]+")',
         'field': 'id',
     },
-    'extra_response_fields': ['type_id'],
+    'extra_response_fields': ['id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
