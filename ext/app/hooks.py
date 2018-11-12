@@ -118,13 +118,15 @@ def on_function_put(response):
         clubs = person.get('clubs', [])
         activities = person.get('activities', [])
 
-        if response['type_id'] == 10000000:
-
-            if not response['is_deleted'] and not response['is_passive']:
-                clubs.append(response['active_in_org_id'])
+        if response.get('type_id', None) == 10000000:
+            
+            expiry = response.get('to_date', None)
+            
+            if not response['is_deleted'] and not response['is_passive'] and expiry is not None and expiry > datetime.utcnow():
+                clubs.append(response.get('active_in_org_id'))
             else:
                 try:
-                    clubs.remove(response['active_in_org_id'])
+                    clubs.remove(response.get('active_in_org_id'))
                 except ValueError:
                     pass
                 except:
@@ -174,12 +176,11 @@ def on_license_post(items):
 
 def on_license_put(response):
     """pass"""
-    try:
-        expiry = dateutil.parser.parse(response.get('period_to_date', None))
-    except:
-        expiry = None
+    
+    expiry = response.get('period_to_date', None) # dateutil.parser.parse(response.get('period_to_date', None))
 
-    if expiry is None or expiry >= datetime.now():
+
+    if expiry is None or expiry >= datetime.utcnow():
         person = _get_person(response['person_id'])
 
         if '_id' in person:
@@ -219,7 +220,7 @@ def on_competence_put(response):
     # except:
     #    expiry = None
     expiry = response.get('valid_until', None)
-    if expiry is not None and isinstance(expiry, datetime) and expiry >= datetime.now():
+    if expiry is not None and isinstance(expiry, datetime) and expiry >= datetime.utcnow():
 
         person = _get_person(response['person_id'])
 
@@ -228,7 +229,7 @@ def on_competence_put(response):
 
             # Remove stale competences?
             try:
-                competence[:] = [d for d in competence if d.get('expiry') >= datetime.now()]
+                competence[:] = [d for d in competence if d.get('expiry') >= datetime.utcnow()]
             except:
                 pass
 
