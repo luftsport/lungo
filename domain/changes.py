@@ -24,7 +24,7 @@ _schema = {
 }
 
 definition = {
-    'item_title': 'integration changes',
+    'item_title': 'Integration Changes',
     'datasource': {'source': 'changes',
                    },
     # Can be a time in microseconds

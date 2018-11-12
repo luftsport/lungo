@@ -88,7 +88,7 @@ _schema = {
 
 definition = {
     'url': 'persons',
-    'item_title': 'persons',
+    'item_title': 'Persons',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
@@ -123,7 +123,7 @@ _schema_process['qualifications'] = {'type': 'list'}
 
 process_definition = {
     'url': 'persons/process',
-    'item_title': 'persons_process',
+    'item_title': 'Persons Process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
@@ -140,7 +140,7 @@ process_definition = {
 # Search
 search_definition = {
     'url': 'persons/search',
-    'item_title': 'persons search',
+    'item_title': 'Persons Search',
     'datasource': {'source': RESOURCE_COLLECTION},
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

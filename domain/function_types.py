@@ -14,7 +14,7 @@ _schema = {
 
 definition = {
     'url': 'functions/types',
-    'item_title': 'function types',
+    'item_title': 'Function Types',
     'datasource': {'source': 'types',
                    },
     'additional_lookup': {

@@ -20,7 +20,7 @@ _schema = {
 
 definition = {
     'url': 'competences/types',
-    'item_title': 'competences/types',
+    'item_title': 'Competences Types',
     'datasource': {'source': 'ka_orgs',
                    },
     'additional_lookup': {

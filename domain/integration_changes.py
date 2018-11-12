@@ -1,11 +1,10 @@
 from bson import SON
 
 _schema = {
-
+    'id': {'type': 'integer'},
     'change_type': {'type': 'string'},
     'created': {'type': 'datetime'},
     'entity_type': {'type': 'string'},
-    'id': {'type': 'integer'},
     'merge_result_of': {'type': 'list'},
     'modified': {'type': 'datetime'},
     'name': {'type': 'string'},
@@ -23,7 +22,7 @@ _schema = {
 
 definition = {
     'url': 'integration/changes',
-    'item_title': 'integration changes',
+    'item_title': 'Integration Changes',
     'datasource': {'source': 'integration_changes',
                    },
     # Can be a time in microseconds
@@ -50,6 +49,7 @@ definition = {
 # Aggregations
 agg_count_entity_types = {
     'url': 'integration/changes/entity/types',
+    'item_title': 'Integration Changes Entity Types',
     'datasource': {
         'source': 'integration_changes',
         'aggregation': {
@@ -63,6 +63,7 @@ agg_count_entity_types = {
 
 agg_count_statuses = {
     'url': 'integration/changes/status',
+    'item_title': 'Integration Changes Status',
     'datasource': {
         'source': 'integration_changes',
         'aggregation': {
@@ -76,6 +77,7 @@ agg_count_statuses = {
 
 agg_count_clubs = {
     'url': 'integration/changes/clubs',
+    'item_title': 'Integration Changes Clubs',
     'datasource': {
         'source': 'integration_changes',
         'aggregation': {
@@ -89,6 +91,7 @@ agg_count_clubs = {
 
 agg_count_change_types = {
     'url': 'integration/changes/change/types',
+    'item_title': 'Integration Changes Types',
     'datasource': {
         'source': 'integration_changes',
         'aggregation': {

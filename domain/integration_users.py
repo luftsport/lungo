@@ -27,7 +27,7 @@ _schema = {'username': {'type': 'string',
 
 definition = {
     'url': 'integration/users',
-    'item_title': 'integration',
+    'item_title': 'Integration Users',
     'datasource': {'source': 'integration_users',  # @TODO - move to integration_users
                    },
     'additional_lookup': {

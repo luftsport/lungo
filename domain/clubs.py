@@ -20,7 +20,7 @@ _schema = {
 
 definition = {
     'url': 'obsolete/clubs',
-    'item_title': 'ka_orgs',
+    'item_title': 'Obsolete Clubs',
     'datasource': {'source': 'ka_orgs',
                    },
     'additional_lookup': {
