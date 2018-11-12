@@ -1,4 +1,3 @@
- 
 """
     Global Settings
     ===============
@@ -14,15 +13,14 @@ sys.path.insert(0, "domain")
 # Import the apps - DOMAIN definition (app.DOMAIN)
 import domain
 
+__version_info__ = ('0', '0', '1')
+APP_VERSION = '.'.join(__version_info__)
+APP_AUTHOR = 'Einar Huseby'
+APP_LICENSE = 'MIT'
+APP_COPYRIGHT = '(c) 2018'
+APP_ALL = ['lungo-member-api']
 
-__version_info__    = ('0', '0', '1')
-APP_VERSION         = '.'.join(__version_info__)
-APP_AUTHOR          = 'Einar Huseby'
-APP_LICENSE         = 'MIT'
-APP_COPYRIGHT       = '(c) 2018'
-APP_ALL             = ['lungo-member-api']
-
-AUTH_SESSION_LENGHT = 3600 # Seconds
+AUTH_SESSION_LENGHT = 3600  # Seconds
 
 MONGO_HOST = 'localhost'
 MONGO_PORT = 27017
@@ -72,7 +70,7 @@ ALLOW_UNKNOWN = False
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 # Will create on PUT wen not existing
-#UPSERT_ON_PUT = True
+# UPSERT_ON_PUT = True
 
 # File storage
 EXTENDED_MEDIA_INFO = ['content_type', 'name', 'length']
@@ -97,27 +95,31 @@ X_HEADERS = ['Content-Type', 'If-Match']  # Needed for the "Try it out" buttons
 
 OPLOG = False  # Set it to True to enable the Operations Log. Defaults to False.
 OPLOG_NAME = 'oplog'  # This is the name of the database collection where the Operations Log is stored. Defaults to oplog.
-OPLOG_METHODS = ['DELETE', 'POST', 'PATCH', 'PUT']  # List of HTTP methods which operations should be logged in the Operations Log. Defaults to ['DELETE', 'POST, 'PATCH', 'PUT'].
-OPLOG_ENDPOINT = None #'oplog'  # Name of the Operations Log endpoint. If the endpoint is enabled it can be configured like any other API endpoint. Set it to None to disable the endpoint. Defaults to None.
+OPLOG_METHODS = ['DELETE', 'POST', 'PATCH',
+                 'PUT']  # List of HTTP methods which operations should be logged in the Operations Log. Defaults to ['DELETE', 'POST, 'PATCH', 'PUT'].
+OPLOG_ENDPOINT = None  # 'oplog'  # Name of the Operations Log endpoint. If the endpoint is enabled it can be configured like any other API endpoint. Set it to None to disable the endpoint. Defaults to None.
 OPLOG_AUDIT = True  # Set it to True to enable the audit feature. When audit is enabled client IP and document changes are also logged to the Operations Log. Defaults to True.
 # OPLOG_CUSTOM_FIELDS = {'u': None}
 
 EMBEDDING = True
+
 SWAGGER_INFO = {
     'title': 'LUNGO - NLF Membership API',
     'version': APP_VERSION,
-    'description': 'Release Spruce Goose',
-    'termsOfService': 'Ole Brum',
-        'contact': {
-            'name': 'Einar Huseby',
-            'email': 'einar.huseby@gmail.com',
-            'url': 'https://www.lintek.no'
-        },
-        'license': {
-            'name': 'GPLV3',
-            'url': 'https://github.com/luftsport/lungo',
-        }
+    'description': 'Release: Spruce Goose',
+    'termsOfService': 'See www.nlf.no',
+    'contact': {
+        'name': 'Einar Huseby',
+        'email': 'einar.huseby@lintek.no',
+        'url': 'https://www.lintek.no'
+    },
+    'license': {
+        'name': 'GPLV3',
+        'url': 'https://github.com/luftsport/lungo',
+    },
+    'schemes': ['https'],
 }
+SWAGGER_HOST = 'medlem.nlf.no'
 # "Spruce Goose"
 # "Vin Fiz"
 # "Wright Flyer"
@@ -128,7 +130,7 @@ SWAGGER_INFO = {
 # "X-1"
 # "Mitchells"
 # "Enola Gay"
-# "Blériot XI"
+# "Bleriot XI"
 # "Pulpit"
 # "Natter"
 # "Albatross"
