@@ -1,4 +1,3 @@
-
 RESOURCE_COLLECTION = 'organizations'
 
 _schema = {
@@ -70,13 +69,15 @@ _schema = {
                                  'id': {'type': 'integer'},
                                  'name': {'type': 'string'}
                                  },
-                      }
+                      },
+    'logo': {'type': 'media'}
 }
 
 definition = {
     'url': 'organizations',
     'item_title': 'organizations',
     'datasource': {'source': RESOURCE_COLLECTION,
+                   'projection': {'logo': 0}
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
