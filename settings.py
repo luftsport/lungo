@@ -110,7 +110,7 @@ SWAGGER_INFO = {
     'termsOfService': 'See www.nlf.no',
     'contact': {
         'name': 'Einar Huseby',
-        'email': 'einar.huseby@lintek.no',
+        #'email': 'einar.huseby@lintek.no',
         'url': 'https://www.lintek.no'
     },
     'license': {
