@@ -105,6 +105,7 @@ OPLOG_AUDIT = True  # Set it to True to enable the audit feature. When audit is 
 EMBEDDING = True
 SWAGGER_INFO = {
     'title': 'LUNGO - NLF MEMBERSHIP API',
+    'release': 'Spruce Goose',
     'version': APP_VERSION,
     'description': 'API NLF membership data',
     'termsOfService': 'Ole Brum',
@@ -114,11 +115,28 @@ SWAGGER_INFO = {
             'url': 'https://www.lintek.no'
         },
         'license': {
-            'name': 'BSD',
-            'url': 'https://github.com/einarhuseby',
+            'name': 'GPLV3',
+            'url': 'https://github.com/luftsport/lungo',
         }
 }
-
+# "Spruce Goose"
+# "Vin Fiz"
+# "Wright Flyer"
+# "Little Stinker"
+# "Memphis Belle"
+# "Fokker Dr.I"
+# "Electra"
+# "X-1"
+# "Mitchells"
+# "Enola Gay"
+# "Blériot XI"
+# "Pulpit"
+# "Natter"
+# "Albatross"
+# "Kalinin"
+# "Betty"
+# "Volksjager"
+# "Reichenberg"
 # The DOMAIN dict explains which resources will be available and how they will
 # be accessible to the API consumer.
 DOMAIN = domain.DOMAIN
