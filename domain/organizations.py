@@ -119,6 +119,7 @@ process_definition = {
     'url': 'organizations/process',
     'item_title': 'organizations_process',
     'datasource': {'source': RESOURCE_COLLECTION,
+                   'projection': {'logo': 0}
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

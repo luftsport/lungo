@@ -5,7 +5,9 @@ import organizations, organization_types
 import functions, function_types
 import competences, competences_types
 import licenses, licenses_types
-import countries
+import countries, counties
+import licenses_status
+import licenses_types
 
 # import test, test_ref
 
@@ -62,4 +64,8 @@ DOMAIN = {
 
     # Resources
     "countries": countries.definition,
+
+    "counties": counties.definition,
+
+    "licenses_status": licenses_status.definition,
 }

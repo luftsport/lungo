@@ -1,35 +1,36 @@
 _schema = {
 
-    'Address': {'type': 'string'},
-    'BrregOrgNo': {'type': 'string'},
-    'City': {'type': 'string'},
-    'County': {'type': 'string'},
-    'CountyId': {'type': 'integer'},
-    'Email': {'type': 'string'},
-    'Id': {'type': 'integer', 'unique': True},
-    'Name': {'type': 'string'},
-    'NameDescr': {'type': 'string'},
-    'OrgType': {'type': 'string'},
-    'OrgTypeId': {'type': 'integer'},
-    'Url': {'type': 'string'},
-    'Zip': {'type': 'string'},
-    '_down': {'type': 'list', 'default': []},
-    '_up': {'type': 'list', 'default': []},
+    'born_after': {'type': 'datetime'},
+    'born_before': {'type': 'datetime'},
+    'class_id': {'type': 'integer'},
+    'description': 'Dekker 10.000,- v/død, 300.000,- v/invaliditet',
+    'gender_id': {'type': 'integer'},
+    'is_deleted': {'type': 'boolean'},
+    'is_payable': {'type': 'boolean'},
+    'is_valid': {'type': 'boolean'},
+    'period_id': {'type': 'integer'},
+    'id': {'type': 'integer'},
+    'price': {'type': 'number'},
+    'text': {'type': 'string'},
+    'org_id_owner': {'type': 'integer'},
 }
 
 definition = {
     'url': 'licenses/types',
-    'item_title': 'ka_orgs',
-    'datasource': {'source': 'ka_orgs',
+    'item_title': 'License Types',
+    'datasource': {'source': 'licenses_types',
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
-        'field': 'Id',
+        'field': 'id',
     },
-    'extra_response_fields': ['Id'],
+    'extra_response_fields': ['id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
-
+    'mongo_indexes': {'id': ([('id', 1)], {'background': True}),
+                      'org_id': ([('org_id_owner', 1)], {'background': True}),
+                      'text': ([('name', 'text')], {'background': True})
+                      },
     'schema': _schema
 }
