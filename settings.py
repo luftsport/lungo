@@ -104,10 +104,9 @@ OPLOG_AUDIT = True  # Set it to True to enable the audit feature. When audit is 
 
 EMBEDDING = True
 SWAGGER_INFO = {
-    'title': 'LUNGO - NLF MEMBERSHIP API',
-    'release': 'Spruce Goose',
+    'title': 'LUNGO - NLF Membership API',
     'version': APP_VERSION,
-    'description': 'API NLF membership data',
+    'description': 'Release Spruce Goose',
     'termsOfService': 'Ole Brum',
         'contact': {
             'name': 'Einar Huseby',
