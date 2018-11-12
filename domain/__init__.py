@@ -3,7 +3,7 @@ import persons
 import integration_users, integration_changes
 import organizations, organization_types
 import functions, function_types
-import competences, competences_types
+import competences #, competences_types
 import licenses, licenses_types
 import countries, counties
 import licenses_status
