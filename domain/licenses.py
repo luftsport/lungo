@@ -2,7 +2,9 @@
 RESOURCE_COLLECTION = 'licenses'
 
 _schema = {
-    'id': {'type': 'integer', 'required': True, 'unique': True},
+    'id': {'type': 'integer',
+           'required': True,
+           'unique': True},
     'type_id': {'type': 'integer'},
     'type_name': {'type': 'string'},
     'type_price': {'type': 'number'},
@@ -66,7 +68,7 @@ _schema_process['qualifications'] = {'type': 'list'}
 
 process_definition = {
     'url': 'licenses/process',
-    'item_title': 'licenses_process',
+    'item_title': 'Licenses Process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {

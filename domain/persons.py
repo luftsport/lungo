@@ -13,7 +13,7 @@ _schema = {
     'first_name': {'type': 'string'},
     'last_name': {'type': 'string'},
     'full_name': {'type': 'string'},
-    'gender': {'type': 'string', 'allowed': ["M", "F", "A", "U"]},
+    'gender': {'type': 'string', 'allowed': ['M', 'F', 'A', 'U']},
     'file_upload_id': {'type': 'integer'},
     'birth_date': {'type': 'datetime'},
     'date_of_death': {'type': 'datetime'},
@@ -157,12 +157,13 @@ search_definition = {
 # Aggregations
 agg_count_gender = {
     'url': 'persons/gender',
+    'item_title': 'Persons Gender',
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
-                {"$group": {"_id": "$gender", "count": {"$sum": 1}}},
-                {"$sort": SON([("count", -1), ("_id", -1)])}
+                {'$group': {'_id': '$gender', 'count': {'$sum': 1}}},
+                {'$sort': SON([('count', -1), ('_id', -1)])}
             ]
         }
     }

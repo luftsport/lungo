@@ -1,6 +1,7 @@
 
 _schema = {
- 'id': {'type': 'integer', 'unique': True},
+ 'id': {'type': 'integer',
+        'unique': True},
  'name': {'type': 'string'},
  'activity_id': {'type': 'integer'},
  'org_type_id': {'type': 'integer'},

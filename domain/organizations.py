@@ -20,7 +20,7 @@ _schema = {
     'modified': {'type': 'datetime'},
     'nif_organization_number': {'type': 'string', 'default': ''},
     'name': {'type': 'string', 'default': ''},
-    'id': {'type': 'integer', 'unique': True},
+    'id': {'type': 'integer', 'unique': True, 'required': True},
     '_up': {'type': 'list',
             'schema': {'type': 'dict',
                        'schema': {'id': {'type': 'integer'},
@@ -57,7 +57,8 @@ _schema = {
     'short_name': {'type': 'string'},
     'activities': {'type': 'list',
                    'schema': {
-                       'type': 'dict', 'schema': {
+                       'type': 'dict',
+                       'schema': {
                            'code': {'type': 'string'},
                            'id': {'type': 'integer'},
                            'name': {'type': 'string'}
@@ -70,7 +71,7 @@ _schema = {
                                  'name': {'type': 'string'}
                                  },
                       },
-    'logo': {'type': 'media'}
+    'logo': {'type': 'media'},
 }
 
 definition = {
@@ -117,7 +118,7 @@ _schema_process['_down'] = {'type': 'list',
 
 process_definition = {
     'url': 'organizations/process',
-    'item_title': 'organizations_process',
+    'item_title': 'Organizations Process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    'projection': {'logo': 0}
                    },
@@ -137,6 +138,7 @@ from bson import SON, ObjectId
 
 agg_count_types = {
     'url': 'organizations/types/count',
+    'item_title': 'Organiuzations Types Count',
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

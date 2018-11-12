@@ -1,6 +1,7 @@
 _schema = {
     'Id': {'type': 'integer'},
-    'MelwinId': {'type': 'integer', 'default': None},
+    'MelwinId': {'type': 'integer',
+                 'default': None},
     'GenderId': {'type': 'integer'},
     'GenderText': {'type': 'string'},
     'TrainingFeeStatus': {'type': 'integer'},

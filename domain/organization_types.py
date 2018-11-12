@@ -1,14 +1,16 @@
 _schema = {
 
     'is_legal': {'type': 'boolean'},
-    'org_type_id': {'type': 'integer', 'unique': True},
-    'org_type_no': {'type': 'string', 'unique': True},
+    'org_type_id': {'type': 'integer',
+                    'unique': True},
+    'org_type_no': {'type': 'string',
+                    'unique': True},
     'org_type_text': {'type': 'string'}
 }
 
 definition = {
     'url': 'organizations/types',
-    'item_title': 'organization/types',
+    'item_title': 'Organization Types',
     'datasource': {'source': 'organization_types',
                    },
     'additional_lookup': {

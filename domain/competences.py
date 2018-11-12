@@ -57,7 +57,7 @@ _schema_process['person_id'] = {'type': 'integer'}
 
 process_definition = {
     'url': 'competences/process',
-    'item_title': 'competences_process',
+    'item_title': 'Competences Process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
@@ -74,6 +74,7 @@ process_definition = {
 # Aggregations
 agg_count_codes = {
     'url': 'competences/codes',
+    'item_title': 'Competences Codes',
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
