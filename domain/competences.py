@@ -3,7 +3,9 @@ from bson import SON
 RESOURCE_COLLECTION = 'competences'
 
 _schema = {
-    'id': {'type': 'integer', 'required': True, 'unique': True},
+    'id': {'type': 'integer',
+           'required': True,
+           'unique': True},
     'approved_by_org_id': {'type': 'integer'},
     'approved_by_person_id': {'type': 'integer'},
     'course_id': {'type': 'integer'},

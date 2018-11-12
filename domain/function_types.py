@@ -2,7 +2,8 @@ _schema = {
     'description': {'type': 'string'},
     'category_id': {'type': 'integer'},
     'category_name': {'type': 'string'},
-    'id': {'type': 'integer', 'unique': True},
+    'id': {'type': 'integer',
+           'unique': True},
     'type_no': {'type': 'string'},
     'is_license': {'type': 'boolean'},
     'is_valid': {'type': 'boolean'},
@@ -15,7 +16,7 @@ _schema = {
 definition = {
     'url': 'functions/types',
     'item_title': 'Function Types',
-    'datasource': {'source': 'types',
+    'datasource': {'source': 'function_types',
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

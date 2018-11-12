@@ -66,7 +66,7 @@ _schema_process['person_id'] = {'type': 'integer'}
 
 process_definition = {
     'url': 'functions/process',
-    'item_title': 'functions_process',
+    'item_title': 'Functions Process',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
@@ -85,6 +85,7 @@ from bson import SON, ObjectId
 
 agg_count_types = {
     'url': 'functions/types/count',
+    'item_title': 'Functions Types Count',
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

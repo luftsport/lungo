@@ -28,7 +28,7 @@ _schema = {'username': {'type': 'string',
 definition = {
     'url': 'integration/users',
     'item_title': 'Integration Users',
-    'datasource': {'source': 'integration_users',  # @TODO - move to integration_users
+    'datasource': {'source': 'integration_users',
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,20}]+")',
@@ -51,6 +51,7 @@ definition = {
 # Count clubs by club_id
 agg_count_clubs = {
     'url': 'integration/users/clubs',
+    'item_title': 'Integration Users Clubs',
     'datasource': {
         'source': 'integration',
         'aggregation': {

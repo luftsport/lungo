@@ -3,7 +3,7 @@ _schema = {
     'born_after': {'type': 'datetime'},
     'born_before': {'type': 'datetime'},
     'class_id': {'type': 'integer'},
-    'description': 'Dekker 10.000,- v/død, 300.000,- v/invaliditet',
+    'description': {'type': 'string'},
     'gender_id': {'type': 'integer'},
     'is_deleted': {'type': 'boolean'},
     'is_payable': {'type': 'boolean'},
