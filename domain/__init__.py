@@ -5,6 +5,7 @@ import organizations, organization_types
 import functions, function_types
 import competences, competences_types
 import licenses, licenses_types
+import countries
 
 # import test, test_ref
 
@@ -59,5 +60,6 @@ DOMAIN = {
     "integration_changes_status": integration_changes.agg_count_statuses,
     "integration_changes_change_types": integration_changes.agg_count_change_types,
 
-    # "values_aggregation": aggregation.minmax
+    # Resources
+    "countries": countries.definition,
 }
