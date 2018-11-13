@@ -103,12 +103,22 @@ def after_get_persons(request, response):
                                       'id': d['_merged_to']}))
 
 
+def assign_lookup(resource, request, lookup):
+    """If lookup then we do add this"""
+    if app['globals']['lookup'] is not None:
+        for key, val in app['globals']['lookup'].items():
+            lookup[key] = val
+
+
 # def after_fetched_person(response):
 #    print('Response')
 #    print(response)
 # app.on_fetched_item_persons += after_fetched_person
 # HTTP 301
 app.on_post_GET_persons += after_get_persons
+
+# All get's get through this one!
+app.on_pre_GET += assign_lookup
 
 # Hooks to update person object
 app.on_inserted_functions_process += on_function_post

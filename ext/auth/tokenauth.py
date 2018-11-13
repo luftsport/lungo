@@ -29,10 +29,12 @@ class TokenAuth(TokenAuth):
         if resource is None:
             resource = ''
 
-        print('Token: ', token, resource, method)
-        print(users.keys())
+        # print('Token: ', token, resource, method)
+        # print(users.keys())
         try:
-            if token in users.keys() and method in users[token]['resources'][resource]:
+            if token in users.keys() and method in users[token]['resources'][resource]['methods']:
+
+                app['globals']['lookup'] = users[token]['resources'][resource]['lookup']
 
                 self.user_id = users[token]['id']
                 return True
