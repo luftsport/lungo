@@ -106,7 +106,7 @@ def after_get_persons(request, response):
 def assign_lookup(resource, request, lookup):
     """If lookup then we do add this"""
     if app.auth.resource_lookup is not None:
-        for key, val in app['globals']['lookup'].items():
+        for key, val in app.auth.resource_lookup.items():
             lookup[key] = val
 
         print(lookup)
