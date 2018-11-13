@@ -19,8 +19,10 @@ from ext.app.eve_helper import eve_abort
 class AuthenticationFailed(Exception):
     """Raise custom error"""
 
+
 class AuthenticationNoToken(Exception):
     """Raise custom error"""
+
 
 def require_token(allowed_roles=None):
     """ Custom decorator for token auth
@@ -33,7 +35,7 @@ def require_token(allowed_roles=None):
         def wrapped(*args, **kwargs):
 
             try:
-                print(request.headers.get('User-Agent'))
+                # print(request.headers.get('User-Agent'))
                 # No authorization in request
                 # Let it raise an exception
                 try:
@@ -45,9 +47,9 @@ def require_token(allowed_roles=None):
                 # Need to remove prefix + / for request.path
                 auth = TokenAuth()
                 auth_result = auth.check_auth(token=authorization_token,  # Token
-                                         method=request.method,
-                                         resource=request.path[len(app.globals.get('prefix')) + 1:],
-                                         allowed_roles=allowed_roles)
+                                              method=request.method,
+                                              resource=request.path[len(app.globals.get('prefix')) + 1:],
+                                              allowed_roles=allowed_roles)
 
                 if auth_result is not True:
                     raise AuthenticationFailed
