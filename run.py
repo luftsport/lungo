@@ -52,7 +52,7 @@ These settings are mirrored from Eve, but should not be!
 app.globals = {"prefix": "/api/v1"}
 
 # Healthcheck
-hc = EveHealthCheck(app, '%s/healthcheck' % app.globals.get('prefix'))
+hc = EveHealthCheck(app, 'healthcheck')
 
 # Custom url mapping (needed by native flask routes)
 app.url_map.converters['objectid'] = ObjectIDConverter
@@ -103,20 +103,16 @@ def after_get_persons(request, response):
                                       'id': d['_merged_to']}))
 
 
+app.on_post_GET_persons += after_get_persons
+
+
 def assign_lookup(resource, request, lookup):
     """If lookup then we do add this"""
+
     if app.auth.resource_lookup is not None:
         for key, val in app.auth.resource_lookup.items():
             lookup[key] = val
 
-        print(lookup)
-
-# def after_fetched_person(response):
-#    print('Response')
-#    print(response)
-# app.on_fetched_item_persons += after_fetched_person
-# HTTP 301
-app.on_post_GET_persons += after_get_persons
 
 # All get's get through this one!
 app.on_pre_GET += assign_lookup
@@ -169,8 +165,6 @@ def _on_replaced(resource_name, item, original):
 app.on_inserted += _on_inserted
 app.on_replaced += _on_replaced
 """
-
-
 
 """
 
