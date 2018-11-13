@@ -109,6 +109,7 @@ def assign_lookup(resource, request, lookup):
         for key, val in app['globals']['lookup'].items():
             lookup[key] = val
 
+        print(lookup)
 
 # def after_fetched_person(response):
 #    print('Response')
