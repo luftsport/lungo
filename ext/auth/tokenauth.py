@@ -33,8 +33,7 @@ class TokenAuth(TokenAuth):
         # print(users.keys())
         try:
             if token in users.keys() and method in users[token]['resources'][resource]['methods']:
-                print(app.auth)
-
+                print(users[token])
                 self.resource_lookup = users[token]['resources'][resource]['lookup']
 
                 self.user_id = users[token]['id']
