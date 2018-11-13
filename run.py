@@ -29,7 +29,7 @@ from blueprints.syncdaemon import Sync
 from ext.app.url_maps import ObjectIDConverter, RegexConverter
 
 # Custom auth extensions
-from ext.auth.tokenauth import TokenAuth
+from ext.auth.tokenauth import NlfTokenAuth
 
 # Make sure we are in virtualenv
 if not hasattr(sys, 'real_prefix'):
@@ -43,7 +43,7 @@ SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settin
 # Instantiate with custom auth
 # app = CustomEve(auth=TokenAuth, settings=SETTINGS_PATH)
 # app = Eve(settings=SETTINGS_PATH)
-app = Eve(auth=TokenAuth, settings=SETTINGS_PATH)
+app = Eve(auth=NlfTokenAuth, settings=SETTINGS_PATH)
 # app = Eve(settings=SETTINGS_PATH)
 """ Define global settings
 These settings are mirrored from Eve, but should not be!
@@ -52,7 +52,7 @@ These settings are mirrored from Eve, but should not be!
 app.globals = {"prefix": "/api/v1"}
 
 # Healthcheck
-hc = EveHealthCheck(app, 'healthcheck')
+hc = EveHealthCheck(app, '/api/v1/healthcheck')
 
 # Custom url mapping (needed by native flask routes)
 app.url_map.converters['objectid'] = ObjectIDConverter
