@@ -3,11 +3,12 @@ import persons
 import integration_users, integration_changes
 import organizations, organization_types
 import functions, function_types
-import competences #, competences_types
+import competences, competences_types
 import licenses, licenses_types
 import countries, counties
 import licenses_status
 import licenses_types
+import activities
 
 # import test, test_ref
 
@@ -45,7 +46,7 @@ DOMAIN = {
     # Competences
     "competences": competences.definition,
     "competences_process": competences.process_definition,
-    # "competences_types": competences_types.definition,
+    "competences_types": competences_types.definition,
     "competences_codes": competences.agg_count_codes,
 
     # Licenses
@@ -63,6 +64,7 @@ DOMAIN = {
     "integration_changes_change_types": integration_changes.agg_count_change_types,
 
     # Resources
+    "activities": activities.definition,
     "countries": countries.definition,
     "counties": counties.definition,
     "licenses_status": licenses_status.definition,
