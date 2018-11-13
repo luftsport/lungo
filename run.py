@@ -52,7 +52,7 @@ These settings are mirrored from Eve, but should not be!
 app.globals = {"prefix": "/api/v1"}
 
 # Healthcheck
-hc = EveHealthCheck(app, '/api/v1/healthcheck')
+hc = EveHealthCheck(app, '/healthcheck')
 
 # Custom url mapping (needed by native flask routes)
 app.url_map.converters['objectid'] = ObjectIDConverter
