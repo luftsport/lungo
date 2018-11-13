@@ -141,7 +141,10 @@ process_definition = {
 search_definition = {
     'url': 'persons/search',
     'item_title': 'Persons Search',
-    'datasource': {'source': RESOURCE_COLLECTION},
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   'projection': {"_score": {"$meta": "textScore"}, "full_name": 1, "id": 1},
+                   'default_sort': [("_score", {"$meta": "textScore"})]
+                   },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
         'field': 'id',
