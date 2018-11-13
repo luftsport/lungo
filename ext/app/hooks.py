@@ -8,53 +8,6 @@ import dateutil.parser
 from datetime import datetime
 
 RESOURCE_PERSONS_PROCESS = 'persons_process'
-# import requests
-# from ext.auth.clients import users as USERS
-
-"""
-All functions are on database events!
-
-  items = [{
-    "_id": 10000000, Klubbmedlem
-    "count": 198
-  }, {
-    "_id": 1, Leder
-    "count": 67
-  }, {
-    "_id": 7, Utdanningskontakt
-    "count": 30
-  }, {
-    "_id": 3, Styremedlem
-    "count": 10
-  }, {
-    "_id": 40000004, Medlemsansvarlig
-    "count": 8
-  }, {
-    "_id": 2, Nestleder
-    "count": 6
-  }, {
-    "_id": 40000008, Org.ansvarlig KL"
-    "count": 4
-  }, {
-    "_id": 201380,  Webansvarlig
-    "count": 4
-  }, {
-    "_id": 24, Adm.leder (ansatt)
-    "count": 4
-  }, {
-    "_id": 202427, SA-Integrasjonsbruker
-    "count": 2
-  }, {
-    "_id": 9, Varamedlem
-    "count": 2
-  }, {
-    "_id": 5, Kasserer (Styremedlem)
-    "count": 2
-  }, {
-    "_id": 202401, Ansvarlig politiattest
-    "count": 1
-  }]
-"""
 
 
 def _get_person(person_id) -> dict:
@@ -105,11 +58,10 @@ def on_function_post(items) -> None:
     """
 
     for response in items:
-
         on_function_put(response)
 
-def on_function_put(response):
 
+def on_function_put(response):
     person = _get_person(response['person_id'])
 
     if '_id' in person:
@@ -119,10 +71,11 @@ def on_function_put(response):
         activities = person.get('activities', [])
 
         if response.get('type_id', None) == 10000000:
-            
+
             expiry = response.get('to_date', None)
-            
-            if not response['is_deleted'] and not response['is_passive'] and expiry is not None and expiry > datetime.utcnow():
+
+            if not response['is_deleted'] and not response[
+                'is_passive'] and expiry is not None and expiry > datetime.utcnow():
                 clubs.append(response.get('active_in_org_id'))
             else:
                 try:
@@ -160,7 +113,8 @@ def on_function_put(response):
         lookup = {'_id': person['_id']}
 
         response, last_modified, etag, status = patch_internal(RESOURCE_PERSONS_PROCESS,
-                                                               {'functions': f, 'activities': activities, 'clubs': clubs},
+                                                               {'functions': f, 'activities': activities,
+                                                                'clubs': clubs},
                                                                False, True, **lookup)
         # print(response, status)
         # patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': l}, False, True, **look)
@@ -173,12 +127,10 @@ def on_license_post(items):
         on_license_put(response)
 
 
-
 def on_license_put(response):
     """pass"""
-    
-    expiry = response.get('period_to_date', None) # dateutil.parser.parse(response.get('period_to_date', None))
 
+    expiry = response.get('period_to_date', None)  # dateutil.parser.parse(response.get('period_to_date', None))
 
     if expiry is None or expiry >= datetime.utcnow():
         person = _get_person(response['person_id'])
@@ -251,7 +203,6 @@ def on_competence_put(response):
 
 
 def on_person_after_post(items):
-
     for response in items:
         _update_person(response)
 
@@ -274,51 +225,3 @@ def _update_person(item):
     functions, _, _, f_status, _ = get_internal('functions', **lookup)
     if f_status == 200:
         on_function_post(functions.get('_items', []))
-
-    # Geocode address
-    # Stream do this async is better
-    # _update_person_location(item)
-
-
-def _update_person_location(item):
-    """pass"""
-
-    # If moved to then this should not be geocoded
-    if '_merged_to' not in item:
-
-        # Make the address dict
-        if 'address' not in item:
-            item['address'] = {}
-
-        # Already geocoded?
-        if 'location' not in item['address']:
-
-            # Need a city at least, and not Ukjent
-            city = item['address'].get('city', '')
-            if len(city) > 0 and city != 'Ukjent':
-
-                geo, score, quality, confidence = get_geo(street=item['address'].get('street_address', ''),
-                                                          city=item['address'].get('city', ''),
-                                                          zip=item['address'].get('zip_code', ''),
-                                                          )
-
-                if score and int(score) > 0:
-                    item['address']['location'] = {}
-                    item['address']['location']['geo'] = geo
-                    item['address']['location']['score'] = score
-                    item['address']['location']['confidence'] = confidence
-                    item['address']['location']['quality'] = quality
-
-                    lookup = {'_id': item['_id']}
-                    patch_internal(RESOURCE_PERSONS_PROCESS, {'address': item['address']}, False, True, **lookup)
-                    # request.post('https://')
-
-
-def get_geo(street, city='', zip='', country='Norway'):
-    try:
-        g = geocoder.arcgis('{0} {1} {2}, {3}'.format(street, zip, city, country))
-        return g.geometry, g.score, g.quality, g.confidence
-
-    except:
-        # Møllergata!
-        return {'type': 'Point', 'coordinates': [10.749232432252462, 59.91643658534826]}, 0, 'PointAddress', 0
