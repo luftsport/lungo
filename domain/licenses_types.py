@@ -26,7 +26,7 @@ definition = {
     },
     'extra_response_fields': ['id'],
     'versioning': False,
-    'resource_methods': ['GET', 'POST'],
+    'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'mongo_indexes': {'id': ([('id', 1)], {'background': True}),
                       'org_id': ([('org_id_owner', 1)], {'background': True}),
