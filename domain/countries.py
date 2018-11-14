@@ -3,7 +3,7 @@ _schema = {
            'required': True},
     'name': {'type': 'string'},
     'iso_alpha2': {'type': 'string'},
-    'iso_alpha3': {'type': 'integer'}
+    'iso_alpha3': {'type': 'string'}
 }
 
 definition = {
