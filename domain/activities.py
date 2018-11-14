@@ -2,12 +2,13 @@ _schema = {
     'id': {'type': 'integer',
            'unique': True,
            'required': True},
-    'code': {'type': 'string'},
+    'code': {'type': 'integer',
+             'required': True},
     'description': {'type': 'string'},
     'name': {'type': 'string'},
     'org_id_owner': {'type': 'integer'},
     'org_name_owner': {'type': 'string'},
-    'parent_activity_id': {'type': 'int'},
+    'parent_activity_id': {'type': 'integer'},
 }
 
 definition = {
