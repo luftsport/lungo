@@ -37,7 +37,7 @@ _schema = {
                              }
                              }
                   },
-    'qualifications': {'type': 'list'},
+    # 'qualifications': {'type': 'list'},
     'activities': {'type': 'list'},
     'licenses': {'type': 'list'},
     'competences': {'type': 'list'},
