@@ -106,6 +106,7 @@ def on_function_put(response):
                     activity = org.get('main_activity', None)
                     if activity is not None:
                         # @TODO see if code should be integer? String now.
+                        activity['code'] = int(activity.get('code', 0))
                         activities.append(activity)
                 except:
                     pass
