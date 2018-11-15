@@ -8,7 +8,7 @@
 from flask import current_app as app, request, Response, abort
 from functools import wraps
 
-from ext.auth.tokenauth import TokenAuth
+from ext.auth.tokenauth import NlfTokenAuth
 # from ext.auth.helpers import Helpers
 
 
@@ -45,7 +45,7 @@ def require_token(allowed_roles=None):
 
                 # Do the authentication
                 # Need to remove prefix + / for request.path
-                auth = TokenAuth()
+                auth = NlfTokenAuth()
                 auth_result = auth.check_auth(token=authorization_token,  # Token
                                               method=request.method,
                                               resource=request.path[len(app.globals.get('prefix')) + 1:],
@@ -58,7 +58,7 @@ def require_token(allowed_roles=None):
             except AuthenticationFailed:
                 eve_abort(401, 'Please provide proper credentials')
             except Exception as e:
-                eve_abort(501, 'Server error')
+                eve_abort(500, 'Server error')
 
             return f(*args, **kwargs)
 
