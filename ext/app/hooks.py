@@ -10,6 +10,10 @@ from datetime import datetime
 RESOURCE_PERSONS_PROCESS = 'persons_process'
 
 
+def _get_end_of_year():
+    return datetime(datetime.utcnow().year, 12, 31, 23, 59, 59, 999999)
+
+
 def _get_person(person_id) -> dict:
     """Get person from persons internal
 
@@ -70,12 +74,17 @@ def on_function_put(response):
         clubs = person.get('clubs', [])
         activities = person.get('activities', [])
 
+        # Expiry date
+        expiry = response.get('to_date', None)
+        # Set expiry to end year
+        if expiry is None:
+            expiry = _get_end_of_year()
+
         if response.get('type_id', None) == 10000000:
 
-            expiry = response.get('to_date', None)
+            if not response['is_deleted'] and not response['is_passive'] and \
+                            expiry is not None and expiry > datetime.utcnow():
 
-            if not response['is_deleted'] and not response[
-                'is_passive'] and expiry is not None and expiry > datetime.utcnow():
                 clubs.append(response.get('active_in_org_id'))
             else:
                 try:
@@ -87,6 +96,8 @@ def on_function_put(response):
 
             # Unique list
             clubs = list(set(clubs))
+            # Valid expiry?
+            # clubs[:] = [d for d in clubs if d.get('expiry') >= datetime.utcnow()]
 
             # Activities!
             for club_id in clubs:
@@ -101,21 +112,31 @@ def on_function_put(response):
 
             # Unique list of activities
             activities = list({v['id']: v for v in activities}.values())
+            # Valid expiry?
+            # activities[:] = [d for d in activities if d.get('expiry') >= datetime.utcnow()]
 
+        # The rest of the functions
+        # Also exoiry date!
         f = person.get('functions', [])
-        try:
+        if expiry > datetime.utcnow():
             f.append(response['id'])
-            f = list(set(f))
-        except:
-            pass
+        else:
+            try:
+                f.remove(response.get('id'))
+            except:
+                pass
 
-        # if f != person.get('functions', []):
+        f = list(set(f))
+        # Valid expiry?
+        # f[:] = [d for d in f if d.get('expiry') >= datetime.utcnow()]
+
         lookup = {'_id': person['_id']}
 
-        response, last_modified, etag, status = patch_internal(RESOURCE_PERSONS_PROCESS,
-                                                               {'functions': f, 'activities': activities,
-                                                                'clubs': clubs},
-                                                               False, True, **lookup)
+        # response, last_modified, etag, status =
+        patch_internal(RESOURCE_PERSONS_PROCESS,
+                       {'functions': f, 'activities': activities,
+                        'clubs': clubs},
+                       False, True, **lookup)
         # print(response, status)
         # patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': l}, False, True, **look)
 
@@ -131,6 +152,9 @@ def on_license_put(response):
     """pass"""
 
     expiry = response.get('period_to_date', None)  # dateutil.parser.parse(response.get('period_to_date', None))
+    # Set expiry to end year
+    if expiry is None:
+        expiry = _get_end_of_year()
 
     if expiry is None or expiry >= datetime.utcnow():
         person = _get_person(response['person_id'])
@@ -146,7 +170,10 @@ def on_license_put(response):
                                  'type_id': response.get('type_id', None),
                                  'type_name': response.get('type_name', None)})
 
+                # Unique
                 licenses = list({v['id']: v for v in licenses}.values())
+                # Valid expiry
+                licenses[:] = [d for d in licenses if d.get('expiry') >= datetime.utcnow()]
             except:
                 pass
 
@@ -172,6 +199,11 @@ def on_competence_put(response):
     # except:
     #    expiry = None
     expiry = response.get('valid_until', None)
+
+    # Set expiry to end year
+    if expiry is None:
+        expiry = _get_end_of_year()
+
     if expiry is not None and isinstance(expiry, datetime) and expiry >= datetime.utcnow():
 
         person = _get_person(response['person_id'])
