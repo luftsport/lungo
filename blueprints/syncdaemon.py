@@ -104,7 +104,7 @@ def workers_status():
 
         return eve_response(data=s, status=200)
     except Exception as e:
-        return eve_response(data={'_error': {'message': '%s' % e}})
+        return eve_response(data={'_error': {'message': '%s' % e}}, status=200)
         # return jsonify(**{'_items': s})
 
 
