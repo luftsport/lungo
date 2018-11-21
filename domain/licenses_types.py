@@ -1,3 +1,4 @@
+RESOURCE_COLLECTION = 'licenses_types'
 _schema = {
 
     'born_after': {'type': 'datetime'},
@@ -18,7 +19,7 @@ _schema = {
 definition = {
     'url': 'licenses/types',
     'item_title': 'License Types',
-    'datasource': {'source': 'licenses_types',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

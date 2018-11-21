@@ -1,3 +1,4 @@
+RESOURCE_COLLECTION = 'function_types'
 _schema = {
     'description': {'type': 'string'},
     'category_id': {'type': 'integer'},
@@ -17,7 +18,7 @@ _schema = {
 definition = {
     'url': 'functions/types',
     'item_title': 'Function Types',
-    'datasource': {'source': 'function_types',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

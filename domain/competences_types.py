@@ -1,3 +1,5 @@
+RESOURCE_COLLECTION = 'competences_types'
+
 _schema = {
 
     'attributes': {'type': 'list'},
@@ -34,7 +36,7 @@ _schema = {
 definition = {
     'url': 'competences/types',
     'item_title': 'Competences Types',
-    'datasource': {'source': 'competences_types',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

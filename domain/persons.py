@@ -165,8 +165,18 @@ agg_count_gender = {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
-                {'$group': {'_id': '$gender', 'count': {'$sum': 1}}},
-                {'$sort': SON([('count', -1), ('_id', -1)])}
+                {'$facet': {
+                    'test': [
+                        {'$group': {'_id': '$gender', 'count': {'$sum': 1}}},
+                        {'$sort': SON([('count', -1), ('_id', -1)])}
+                    ],
+                    'does': [
+                        {'$group': {'_id': '$gender', 'count': {'$sum': 1}}},
+                        {'$sort': SON([('count', -1), ('_id', -1)])}
+                    ],
+                },
+
+                }
             ]
         }
     }

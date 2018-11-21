@@ -1,3 +1,5 @@
+RESOURCE_COLLECTION = 'licenses_status'
+
 _schema = {
     'id': {'type': 'integer',
            'required': True},
@@ -7,7 +9,7 @@ _schema = {
 definition = {
     'url': 'licenses/status',
     'item_title': 'License Statuses',
-    'datasource': {'source': 'licenses_status',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

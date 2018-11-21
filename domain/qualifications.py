@@ -1,4 +1,7 @@
 raise Exception
+
+RESOURCE_COLLECTION = 'qualifications'
+
 _schema = {
 
  'Address': {'type': 'string'},
@@ -21,7 +24,7 @@ _schema = {
 definition = {
     'url': 'qualifications',
     'item_title': 'ka_orgs',
-    'datasource': {'source': 'ka_orgs',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

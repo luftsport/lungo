@@ -1,7 +1,6 @@
 _schema = {
     'Id': {'type': 'integer'},
-    'MelwinId': {'type': 'integer',
-                 'default': None},
+    'MelwinId': {'type': 'integer'},
     'GenderId': {'type': 'integer'},
     'GenderText': {'type': 'string'},
     'TrainingFeeStatus': {'type': 'integer'},
@@ -17,19 +16,19 @@ _schema = {
     'licenses': {'type': 'list',
                  'default': []},
     'clubs_active': {'type': 'list',
-              'default': []},
-    'clubs_inactive': {'type': 'list',
                      'default': []},
+    'clubs_inactive': {'type': 'list',
+                       'default': []},
     'clubs_payment': {'type': 'list',
-              'default': []},
+                      'default': []},
     'sections': {'type': 'list',
                  'default': []},
     'activities': {'type': 'list',
-                 'default': []},
+                   'default': []},
     'Magazines': {'type': 'list',
-                     'default': []},
+                  'default': []},
     'Products': {'type': 'list',
-                     'default': []},
+                 'default': []},
 }
 
 definition = {
@@ -48,3 +47,26 @@ definition = {
 
     'schema': _schema
 }
+
+"""
+    [
+        { 
+            "$unwind" : {
+                "path" : "$activities"
+            }
+        }, 
+        { 
+            "$group" : {
+                "_id" : "$activities.OrgId", 
+                "count" : {
+                    "$sum" : 1.0
+                }
+            }
+        }, 
+        { 
+            "$sort" : {
+                "count" : -1.0
+            }
+        }
+    ]
+"""

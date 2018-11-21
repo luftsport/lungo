@@ -1,3 +1,5 @@
+RESOURCE_COLLECTION = 'organization_types'
+
 _schema = {
 
     'is_legal': {'type': 'boolean'},
@@ -11,7 +13,7 @@ _schema = {
 definition = {
     'url': 'organizations/types',
     'item_title': 'Organization Types',
-    'datasource': {'source': 'organization_types',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

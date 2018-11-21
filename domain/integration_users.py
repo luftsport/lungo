@@ -1,4 +1,5 @@
 from bson import SON
+RESOURCE_COLLECTION = 'integration_users'
 
 _schema = {'username': {'type': 'string',
                         'required': True},
@@ -28,7 +29,7 @@ _schema = {'username': {'type': 'string',
 definition = {
     'url': 'integration/users',
     'item_title': 'Integration Users',
-    'datasource': {'source': 'integration_users',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,20}]+")',
@@ -53,7 +54,7 @@ agg_count_clubs = {
     'url': 'integration/users/clubs',
     'item_title': 'Integration Users Clubs',
     'datasource': {
-        'source': 'integration',
+        'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
                 {"$group": {"_id": "$club_id", "count": {"$sum": 1}}},

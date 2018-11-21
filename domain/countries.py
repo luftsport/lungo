@@ -1,3 +1,4 @@
+RESOURCE_COLLECTION = 'countries'
 _schema = {
     'id': {'type': 'integer',
            'required': True},
@@ -9,7 +10,7 @@ _schema = {
 definition = {
     'url': 'countries',
     'item_title': 'Countries',
-    'datasource': {'source': 'countries',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
