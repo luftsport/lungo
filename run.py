@@ -1,12 +1,12 @@
 """
-    WX - Weather API
-    ================
+    Lungo - YAMS!
+    =============
 
     @note: Run as `nohup python run.py >> lungo.log 2>&1&` NB in virtualenv!
 
     @author:        Einar Huseby
-    @copyright:     (c) 2014-2018
-    @license:       MIT, see LICENSE for more details. Note that Eve is BSD licensed
+    @copyright:     (c) 2014-2018 Norges Luftsportforbund
+    @license:       GPLV3, see LICENSE for more details.
 """
 
 import os, sys
