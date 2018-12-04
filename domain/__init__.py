@@ -20,6 +20,8 @@ DOMAIN = {
     # KA
     "ka_clubs": ka_clubs.definition,
     "ka_members": ka_members.definition,
+    "ka_members_activities": ka_members.agg_count_activities,
+    "ka_members_activities_member": ka_members.agg_count_member_activities,
     "ka_orgs": ka_orgs.definition,
     "ka_orgs_activity": ka_org_activity.definition,
     "ka_competences": ka_competence.definition,
