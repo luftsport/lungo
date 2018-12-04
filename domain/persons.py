@@ -49,7 +49,7 @@ _schema = {
                         'contact_id': {'type': 'integer'},
                         'contact_information_id': {'type': 'integer'},
                         'country_id': {'type': 'integer'},
-                        'email': {'type': 'string'},
+                        'email': {'type': 'list'},
                         'fax': {'type': 'string'},
                         'phone_home': {'type': 'string'},
                         'phone_mobile': {'type': 'string'},
