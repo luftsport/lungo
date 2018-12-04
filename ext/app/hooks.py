@@ -5,12 +5,15 @@ from eve.methods.patch import patch_internal
 from eve.methods.get import get_internal
 from datetime import datetime
 from operator import itemgetter
-
+from dateutil import tz
 # import dateutil.parser
 
 
 RESOURCE_PERSONS_PROCESS = 'persons_process'
-
+RESOURCE_FUNCTIONS_PROCESS = 'functions_process'
+LOCAL_TIMEZONE = "Europe/Oslo"  # UTC
+tz_utc = tz.gettz('UTC')
+tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 def _get_end_of_year():
     return datetime(datetime.utcnow().year, 12, 31, 23, 59, 59, 999999)
@@ -20,6 +23,12 @@ def _get_end_of_january():
     """End of jan next year"""
     return datetime(datetime.utcnow().year + 1, 1, 31, 23, 59, 59, 999999)
 
+def _fix_naive(date_time):
+    if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
+        """self.org_created is naive, no timezone we assume UTC"""
+        date_time = date_time.replace(tzinfo=tz_utc)
+
+    return date_time
 
 def _get_person(person_id) -> dict:
     """Get person from persons internal
@@ -126,12 +135,15 @@ def on_function_put(response) -> None:
 
         # Expiry date
         expiry = response.get('to_date', None)
+        expiry = _fix_naive(expiry)
 
+        # Will get all org_type_id's not only 5
         if response.get('type_id', 0) == 10000000:
 
             # Set expiry to end year
             if expiry is None:
                 expiry = _get_end_of_january()
+                expiry = _fix_naive(expiry)
 
             # If not deleted and is valid expiry add to club list
             if not response['is_deleted'] and not response['is_passive'] and \
@@ -179,16 +191,16 @@ def on_function_put(response) -> None:
 
         # The rest of the functions
         # Considers expiry date, if None then still valid
-        f = person.get('functions', [])
+        functions = person.get('functions', [])
         if expiry is None or expiry > datetime.utcnow():
-            f.append(response['id'])
+            functions.append(response['id'])
         else:
             try:
-                f.remove(response.get('id'))
+                functions.remove(response.get('id'))
             except:
                 pass
 
-        f = list(set(f))
+        f = list(set(functions))
         # Valid expiry?
         # f[:] = [d for d in f if d.get('expiry') >= datetime.utcnow()]
 
@@ -197,7 +209,7 @@ def on_function_put(response) -> None:
         # Update person with new values
         # response, last_modified, etag, status =
         patch_internal(RESOURCE_PERSONS_PROCESS,
-                       {'functions': f, 'activities': activities, 'clubs': clubs},
+                       {'functions': functions, 'activities': activities, 'clubs': clubs},
                        False, True, **lookup)
 
     # Always check and get type name
@@ -207,7 +219,11 @@ def on_function_put(response) -> None:
         if len(function_type) > 0:
             type_name = function_type.get('name', None)
             if type_name is not None:
-                patch_internal('functions', {'type_name': type_name}, False, True, **{'_id': response.get('_id')})
+                patch_internal(RESOURCE_FUNCTIONS_PROCESS,
+                               {'type_name': type_name},
+                               False,
+                               True,
+                               **{'_id': response.get('_id')})
 
 
 def on_license_post(items):
@@ -226,6 +242,8 @@ def on_license_put(response):
     if expiry is None:
         expiry = _get_end_of_year()
 
+    expiry = _fix_naive(expiry)
+
     # Always get person
     person = _get_person(response['person_id'])
     if '_id' in person:
@@ -239,7 +257,7 @@ def on_license_put(response):
                 licenses.append({'id': response.get('id'),
                                  'status_id': response.get('status_id', 0),
                                  'status_date': response.get('status_date', None),
-                                 'expiry': response.get('period_to_date', None),
+                                 'expiry': expiry,
                                  'type_id': response.get('type_id', None),
                                  'type_name': response.get('type_name', None)})
 
@@ -278,6 +296,8 @@ def on_competence_put(response):
     if expiry is None:
         expiry = _get_end_of_year()
 
+    expiry = _fix_naive(expiry)
+
     person = _get_person(response['person_id'])
 
     if '_id' in person:
@@ -291,7 +311,7 @@ def on_competence_put(response):
                 competence.append({'id': response.get('id'),
                                    '_code': response.get('_code', None),
                                    'issuer': response.get('approved_by_person_id', None),
-                                   'expiry': response.get('valid_until', None),
+                                   'expiry': expiry,
                                    'paid': response.get('paid_date', None)})
             except:
                 pass
