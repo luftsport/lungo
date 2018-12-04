@@ -1,3 +1,6 @@
+from bson import SON
+RESOURCE_COLLECTION = 'ka_members'
+
 _schema = {
     'Id': {'type': 'integer'},
     'MelwinId': {'type': 'integer'},
@@ -34,7 +37,7 @@ _schema = {
 definition = {
     'url': 'ka/members',
     'item_title': 'ka_members',
-    'datasource': {'source': 'ka_members',
+    'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
@@ -46,6 +49,38 @@ definition = {
     'item_methods': ['GET', 'PATCH', 'PUT'],
 
     'schema': _schema
+}
+
+agg_count_activities = {
+    'url': 'ka/members/activities',
+    'item_title': 'Members activities aggregation',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$unwind": {"path": "$activities"}},
+                {"$match": {"activities.OrgTypeId": 14}},
+                {"$group": {"_id": "$activities.PathName", "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
+}
+
+agg_count_member_activities = {
+    'url': 'ka/members/activities/member',
+    'item_title': 'Member activities aggregation',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$unwind": {"path": "$activities"}},
+                {"$match": {"Id": "$person_id", "activities.OrgTypeId": 14}},
+                {"$group": {"_id": "$activities.PathName", "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
 }
 
 """
