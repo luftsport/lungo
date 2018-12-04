@@ -12,12 +12,10 @@
 import os, sys
 
 from eve import Eve
-
+import json
 # Swagger docs
 from eve_swagger import swagger
-
 from eve_healthcheck import EveHealthCheck
-
 from blueprints.syncdaemon import Sync
 
 # Import blueprints
@@ -27,7 +25,6 @@ from blueprints.syncdaemon import Sync
 
 # Custom url mappings (for flask)
 from ext.app.url_maps import ObjectIDConverter, RegexConverter
-
 # Custom auth extensions
 from ext.auth.tokenauth import NlfTokenAuth
 
@@ -65,7 +62,7 @@ app.register_blueprint(swagger, url_prefix=app.globals.get('prefix'))
 app.register_blueprint(Sync, url_prefix="%s/syncdaemon" % app.globals.get('prefix'))
 
 # You might want to simply update the eve settings module instead.
-import json
+
 
 """
 __subclasshook__', '__weakref__', '_ensure_sequence', '_get_mimetype_params', '_on_close', '_status', '_status_code'
@@ -103,9 +100,6 @@ def after_get_persons(request, response):
                                       'id': d['_merged_to']}))
 
 
-app.on_post_GET_persons += after_get_persons
-
-
 def assign_lookup(resource, request, lookup):
     """If lookup then we do add this"""
 
@@ -114,10 +108,13 @@ def assign_lookup(resource, request, lookup):
             lookup[key] = val
 
 
+# After GET'ing a merged person
+app.on_post_GET_persons += after_get_persons
+
 # All get's get through this one!
 app.on_pre_GET += assign_lookup
 
-# Hooks to update person object
+# Hooks to update person object, database layer, AFTER
 app.on_inserted_functions_process += on_function_post
 app.on_replaced_functions_process += on_function_put
 
