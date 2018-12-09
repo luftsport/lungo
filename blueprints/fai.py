@@ -12,6 +12,7 @@ Fai = Blueprint('FAI resources', __name__)
 def make_params():
     params = {'auth_username': FAI_USERNAME,
               'auth_password': base64.b64encode(FAI_PASSWD), 'country': 'NOR'}
+    return params
 
 @Fai.route("/licenses", methods=['GET'])
 @require_token()
