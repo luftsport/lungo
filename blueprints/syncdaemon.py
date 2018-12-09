@@ -64,7 +64,7 @@ def process_info():
                          'status',  'threads', 'uids', 'username'])
 
     # Jsonify the dictionary and return it
-    return jsonify(**d)
+    return eve_response(d, 200)
 
 
 @Sync.route("/process/kill/<int:pid>", methods=['POST'])
@@ -74,9 +74,9 @@ def process_kill(pid):
 
     if p.pid == int(pid) and p.is_running() and p.status() == 'sleeping':
         p.kill()
-        return jsonify(**{'status': True})
+        return eve_response({'status': True}, 200)
 
-    return jsonify(**{'status': False})
+    return eve_response({'status': False}, 200)
 
 
 """
@@ -87,7 +87,11 @@ Daemon
 @Sync.route("/shutdown", methods=['POST'])
 @require_token()
 def shutdown():
-    s = Pyro4.Proxy(RPC_SERVICE).shutdown()
+    try:
+        Pyro4.Proxy(RPC_SERVICE).shutdown()
+        eve_response({'status': True}, 200)
+    except:
+        eve_response({'status': False}, 200)
 
 
 """
@@ -101,45 +105,63 @@ def workers_status():
     """Returns dict of all workers"""
     try:
         s = Pyro4.Proxy(RPC_SERVICE).get_workers_status()
-
         return eve_response(data=s, status=200)
     except Exception as e:
-        return eve_response(data={'_error': {'message': '%s' % e}}, status=200)
-        # return jsonify(**{'_items': s})
+        return eve_response(data={'_error': {'message': str(e)}}, status=200)
 
 
 @Sync.route("/workers/failed/clubs", methods=['GET'])
 @require_token()
 def workers_failed_clubs():
-    s = Pyro4.Proxy(RPC_SERVICE).get_failed_clubs()
+    try:
+        s = Pyro4.Proxy(RPC_SERVICE).get_failed_clubs()
+    except:
+        s = []
 
-    return jsonify(**{'_items': s})
+    return eve_response(s, 200)
 
 
 @Sync.route("/workers/logs", methods=['GET'])
 @require_token()
 def workers_logs():
-    s = Pyro4.Proxy(RPC_SERVICE).get_logs()
 
-    return jsonify(**{'_items': s})
+    try:
+        s = Pyro4.Proxy(RPC_SERVICE).get_logs()
+    except:
+        s = []
+
+    return eve_response(s, 200)
 
 
 @Sync.route("/workers/reboot", methods=['POST'])
 @require_token()
 def workers_reboot():
-    s = Pyro4.Proxy(RPC_SERVICE).reboot_workers()
+
+    try:
+        Pyro4.Proxy(RPC_SERVICE).reboot_workers()
+        return eve_response({'status': True}, 200)
+    except:
+        return eve_response({'status': False}, 200)
 
 
 @Sync.route("/workers/shutdown", methods=['POST'])
 @require_token()
 def workers_shutdown():
-    s = Pyro4.Proxy(RPC_SERVICE).shutdown_workers()
+    try:
+        Pyro4.Proxy(RPC_SERVICE).shutdown_workers()
+        return eve_response({'status': True}, 200)
+    except:
+        return eve_response({'status': False}, 200)
 
 
 @Sync.route("/workers/start", methods=['POST'])
 @require_token()
 def workers_start():
-    s = Pyro4.Proxy(RPC_SERVICE).start_workers()
+    try:
+        s = Pyro4.Proxy(RPC_SERVICE).start_workers()
+        return eve_response({'status': True}, 200)
+    except:
+        return eve_response({'status': False}, 200)
 
 
 """
@@ -154,19 +176,28 @@ get_worker_log
 @Sync.route("/worker/status/<int:index>", defaults={'index': 0}, methods=['GET'])
 @require_token()
 def worker_status(index):
-    s = Pyro4.Proxy(RPC_SERVICE).get_worker_status(index)
-    return jsonify(**{'_items': s})
+    try:
+        s = Pyro4.Proxy(RPC_SERVICE).get_worker_status(index)
+        return eve_response(s, 200)
+    except:
+        return eve_response({}, 200)
 
 
 @Sync.route("/worker/log/<int:index>", defaults={'index': 0}, methods=['GET'])
 @require_token()
 def worker_log(index):
-    s = Pyro4.Proxy(RPC_SERVICE).get_worker_log(index)
-    return jsonify(**{'_items': s})
+    try:
+        s = Pyro4.Proxy(RPC_SERVICE).get_worker_log(index)
+        return eve_response(s, 200)
+    except:
+        return eve_response({}, 200)
 
 
 @Sync.route("/worker/restart/<int:index>", defaults={'index': 0}, methods=['POST'])
 @require_token()
 def worker_restart(index):
-    s = Pyro4.Proxy(RPC_SERVICE).restart_worker(index)
-    return jsonify(**{'_items': s})
+    try:
+        s = Pyro4.Proxy(RPC_SERVICE).restart_worker(index)
+        return eve_response({'status': s}, 200)
+    except:
+        return eve_response({'status': False}, 200)
