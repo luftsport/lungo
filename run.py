@@ -17,6 +17,7 @@ import json
 from eve_swagger import swagger
 from eve_healthcheck import EveHealthCheck
 from blueprints.syncdaemon import Sync
+from blueprints.fai import Fai
 
 # Import blueprints
 # from blueprints.authentication import Authenticate
@@ -60,6 +61,7 @@ app.url_map.converters['regex'] = RegexConverter
 app.register_blueprint(swagger, url_prefix=app.globals.get('prefix'))
 
 app.register_blueprint(Sync, url_prefix="%s/syncdaemon" % app.globals.get('prefix'))
+app.register_blueprint(Fai, url_prefix="%s/fai" % app.globals.get('prefix'))
 
 # You might want to simply update the eve settings module instead.
 
