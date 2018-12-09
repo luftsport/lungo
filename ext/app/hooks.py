@@ -3,9 +3,10 @@ To hook all the different changes to our api!
 """
 from eve.methods.patch import patch_internal
 from eve.methods.get import get_internal
-from datetime import datetime
+from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
+
 # import dateutil.parser
 
 
@@ -15,20 +16,26 @@ LOCAL_TIMEZONE = "Europe/Oslo"  # UTC
 tz_utc = tz.gettz('UTC')
 tz_local = tz.gettz(LOCAL_TIMEZONE)
 
+
 def _get_end_of_year():
-    return datetime(datetime.utcnow().year, 12, 31, 23, 59, 59, 999999)
+    return datetime(datetime.utcnow().year, 12, 31, 23, 59, 59, 999999).replace(tzinfo=tz_utc)
 
 
 def _get_end_of_january():
     """End of jan next year"""
-    return datetime(datetime.utcnow().year + 1, 1, 31, 23, 59, 59, 999999)
+    return datetime(datetime.utcnow().year + 1, 1, 31, 23, 59, 59, 999999).replace(tzinfo=tz_utc)
+
 
 def _fix_naive(date_time):
-    if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
-        """self.org_created is naive, no timezone we assume UTC"""
-        date_time = date_time.replace(tzinfo=tz_utc)
+    if isinstance(date_time, datetime):
+        if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
+            """self.org_created is naive, no timezone we assume UTC"""
+            date_time = date_time.replace(tzinfo=tz_utc)
 
     return date_time
+
+def _get_now():
+    return datetime.utcnow().replace(tzinfo=tz_utc)
 
 def _get_person(person_id) -> dict:
     """Get person from persons internal
@@ -127,15 +134,14 @@ def on_function_put(response) -> None:
     """
     person = _get_person(response['person_id'])
 
+    # Expiry date
+    expiry = response.get('to_date', None)
+
     if '_id' in person:
 
         # Club member! has_paid_membership?
         clubs = person.get('clubs', [])
         activities = person.get('activities', [])
-
-        # Expiry date
-        expiry = response.get('to_date', None)
-        expiry = _fix_naive(expiry)
 
         # Will get all org_type_id's not only 5
         if response.get('type_id', 0) == 10000000:
@@ -147,7 +153,7 @@ def on_function_put(response) -> None:
 
             # If not deleted and is valid expiry add to club list
             if not response['is_deleted'] and not response['is_passive'] and \
-                            expiry is not None and expiry > datetime.utcnow():
+                            expiry is not None and expiry > _get_now():
 
                 clubs.append(response.get('active_in_org_id'))
             else:
@@ -161,7 +167,7 @@ def on_function_put(response) -> None:
             # Unique list
             clubs = list(set(clubs))
             # Valid expiry?
-            # clubs[:] = [d for d in clubs if d.get('expiry') >= datetime.utcnow()]
+            # clubs[:] = [d for d in clubs if d.get('expiry') >= _get_now()]
 
 
             # Activities
@@ -187,12 +193,18 @@ def on_function_put(response) -> None:
             # List of dicts
             # activities = list({v['id']: v for v in activities}.values())
             # Valid expiry?
-            # activities[:] = [d for d in activities if d.get('expiry') >= datetime.utcnow()]
+            # activities[:] = [d for d in activities if d.get('expiry') >= _get_now()]
 
         # The rest of the functions
         # Considers expiry date, if None then still valid
         functions = person.get('functions', [])
-        if expiry is None or expiry > datetime.utcnow():
+
+        if expiry is not None:
+            expiry = _fix_naive(expiry)
+        else:
+            expiry = _get_end_of_year()
+
+        if expiry is None or expiry > _get_now():
             functions.append(response['id'])
         else:
             try:
@@ -202,7 +214,7 @@ def on_function_put(response) -> None:
 
         f = list(set(functions))
         # Valid expiry?
-        # f[:] = [d for d in f if d.get('expiry') >= datetime.utcnow()]
+        # f[:] = [d for d in f if d.get('expiry') >= _get_now()]
 
         lookup = {'_id': person['_id']}
 
@@ -251,7 +263,7 @@ def on_license_put(response):
         licenses = person.get('licenses', [])
 
         # If valid expiry
-        if expiry is None or expiry >= datetime.utcnow():
+        if expiry is None or expiry >= _get_now():
 
             try:
                 licenses.append({'id': response.get('id'),
@@ -268,7 +280,7 @@ def on_license_put(response):
         licenses = list({v['id']: v for v in licenses}.values())
 
         # Valid expiry
-        licenses[:] = [d for d in licenses if d.get('expiry') >= datetime.utcnow()]
+        licenses[:] = [d for d in licenses if _fix_naive(d.get('expiry')) >= _get_now()]
 
         # Patch if difference
         if '_id' in person and _compare_list_of_dicts(licenses, person.get('licenses', [])) is True:
@@ -305,7 +317,7 @@ def on_competence_put(response):
         competence = person.get('competences', [])
 
         # Add this competence?
-        if expiry is not None and isinstance(expiry, datetime) and expiry >= datetime.utcnow():
+        if expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
 
             try:
                 competence.append({'id': response.get('id'),
@@ -317,7 +329,7 @@ def on_competence_put(response):
                 pass
 
         # Always remove stale competences
-        competence[:] = [d for d in competence if d.get('expiry') >= datetime.utcnow()]
+        competence[:] = [d for d in competence if _fix_naive(d.get('expiry')) >= _get_now()]
 
         # Always unique by id
         competence = list({v['id']: v for v in competence}.values())
