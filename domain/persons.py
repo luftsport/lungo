@@ -38,9 +38,49 @@ _schema = {
                              }
                   },
     # 'qualifications': {'type': 'list'},
-    'activities': {'type': 'list'},
-    'licenses': {'type': 'list'},
-    'competences': {'type': 'list'},
+    'activities': {'type': 'list',
+                   'schema': {'type': 'integer',
+                              'data_relation': {
+                                  'resource': 'activities',
+                                  'field': 'id',
+                                  'embeddable': True,
+                              }
+                              },
+                   },
+    'licenses': {'type': 'list',
+                 'schema': {'type': 'dict',
+                            'schema': {
+                                'id': {'type': 'integer',
+                                       'data_relation': {
+                                           'resource': 'licenses',
+                                           'field': 'id',
+                                           'embeddable': True,
+                                       }
+                                       },
+                                'status_id': {'type': 'integer'},
+                                'status_date': {'type': 'datetime'},
+                                'expiry': {'type': 'datetime'},
+                                'type_id': {'type': 'integer'},
+                                'type_name': {'type': 'string'},
+                            }}
+
+                 },
+    'competences': {'type': 'list',
+                    'schema': {'type': 'dict',
+                               'schema': {
+                                   'id': {'type': 'integer',
+                                          'data_relation': {
+                                              'resource': 'competences',
+                                              'field': 'id',
+                                              'embeddable': True,
+                                          }
+                                          },
+                                   '_code': {'type': 'integer'},
+                                   'issuer': {'type': 'integer'},
+                                   'expiry': {'type': 'datetime'},
+                                   'paid': {'type': 'datetime'},
+                               }}
+                    },
 
     'address': {'type': 'dict',
                 'schema':
