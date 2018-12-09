@@ -48,7 +48,7 @@ def get_process():
         process = psutil.Process(pid)
         return process
     except:
-        return False
+        return eve_response({'status': False}, 200)
 
 
 @Sync.route("/process/info", methods=['GET'])
@@ -89,9 +89,9 @@ Daemon
 def shutdown():
     try:
         Pyro4.Proxy(RPC_SERVICE).shutdown()
-        eve_response({'status': True}, 200)
+        return eve_response({'status': True}, 200)
     except:
-        eve_response({'status': False}, 200)
+        return eve_response({'status': False}, 200)
 
 
 """
