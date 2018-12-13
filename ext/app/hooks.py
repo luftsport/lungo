@@ -132,7 +132,7 @@ def on_function_put(response) -> None:
     :param response: database object
     :return: None
     """
-    person = _get_person(response['person_id'])
+    person = _get_person(response.get('person_id', None))
 
     # Expiry date
     expiry = response.get('to_date', None)
@@ -257,7 +257,7 @@ def on_license_put(response):
     expiry = _fix_naive(expiry)
 
     # Always get person
-    person = _get_person(response['person_id'])
+    person = _get_person(response.get('person_id', None))
     if '_id' in person:
 
         licenses = person.get('licenses', [])
@@ -310,7 +310,7 @@ def on_competence_put(response):
 
     expiry = _fix_naive(expiry)
 
-    person = _get_person(response['person_id'])
+    person = _get_person(response.get('person_id', None))
 
     if '_id' in person:
 
