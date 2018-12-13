@@ -34,8 +34,10 @@ def _fix_naive(date_time):
 
     return date_time
 
+
 def _get_now():
     return datetime.utcnow().replace(tzinfo=tz_utc)
+
 
 def _get_person(person_id) -> dict:
     """Get person from persons internal
@@ -45,11 +47,13 @@ def _get_person(person_id) -> dict:
     :return org: Returns the person given
     :rtype: dict
     """
-    person, _, _, status, _ = get_internal('persons', **{'id': person_id})
+    if person_id is not None:
 
-    if status == 200:
-        if '_items' in person and len(person['_items']) == 1:
-            return person['_items'][0]
+        person, _, _, status, _ = get_internal('persons', **{'id': person_id})
+
+        if status == 200:
+            if '_items' in person and len(person['_items']) == 1:
+                return person['_items'][0]
 
     return {}
 
