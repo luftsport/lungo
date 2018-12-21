@@ -184,10 +184,15 @@ def on_function_put(response) -> None:
                     # If None, go for 27 (Luftsport/370)
                     # @TODO see if should be None to pass next
                     activity = org.get('main_activity', {}).get('id', 27)
+                    club_activities = org.get('activities', [])
                     if activity is not None:
                         # @TODO see if code should be integer? String now.
                         # activity['code'] = int(activity.get('code', 0))
                         activities.append(activity)
+                    for act in club_activities:
+                        a = act.get('id', 27)
+                        activities.append(a)
+
                 except:
                     pass
 
