@@ -197,6 +197,7 @@ def on_function_put(response) -> None:
                     pass
 
             # Unique list of activities
+            activities.append(27)
             activities = list(set(activities))
 
             # List of dicts
