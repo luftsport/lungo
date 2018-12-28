@@ -131,7 +131,7 @@ def on_function_post(items) -> None:
         on_function_put(response)
 
 
-def on_function_put(response) -> None:
+def on_function_put(response, original=None) -> None:
     """
     :param response: database object
     :return: None
@@ -255,7 +255,7 @@ def on_license_post(items):
         on_license_put(response)
 
 
-def on_license_put(response):
+def on_license_put(response, original=None):
     """pass"""
 
     expiry = response.get('period_to_date', None)  # dateutil.parser.parse(response.get('period_to_date', None))
@@ -309,7 +309,7 @@ def on_competence_post(items):
         on_competence_put(response)
 
 
-def on_competence_put(response):
+def on_competence_put(response, original=None):
     """"""
 
     expiry = response.get('valid_until', None)
