@@ -300,7 +300,8 @@ def on_license_put(response, original=None):
         # Patch if difference
         if '_id' in person and _compare_list_of_dicts(licenses, person.get('licenses', [])) is True:
             lookup = {'_id': person['_id']}
-            patch_internal(RESOURCE_PERSONS_PROCESS, {'licenses': licenses}, False, True, **lookup)
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'licenses': licenses}, False, True, **lookup)
+            app.logger.info('Patch returned {} for license'.format(status))
 
 
 def on_competence_post(items):
@@ -353,8 +354,8 @@ def on_competence_put(response, original=None):
         # Patch if difference
         if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
             lookup = {'_id': person['_id']}
-            patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True, **lookup)
-
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True, **lookup)
+            app.logger.info('Patch returned {} for competence'.format(status))
 
 def on_person_after_post(items):
     for response in items:
