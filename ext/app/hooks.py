@@ -262,6 +262,7 @@ def on_license_post(items):
 def on_license_put(response, original=None):
     """pass"""
     print(response)
+    app.logger.info('In put license')
 
     expiry = response.get('period_to_date', None)  # dateutil.parser.parse(response.get('period_to_date', None))
 
