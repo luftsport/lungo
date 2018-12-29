@@ -6,7 +6,7 @@ from eve.methods.get import get_internal
 from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
-
+from flask import current_app as app
 # import dateutil.parser
 
 
@@ -164,8 +164,10 @@ def on_function_put(response, original=None) -> None:
                 try:
                     clubs.remove(response.get('active_in_org_id'))
                 except ValueError:
+                    app.logger.exception('Hooks, Line 167')
                     pass
                 except:
+                    app.logger.exception('Hooks, Line 170')
                     pass
 
             # Unique list
@@ -194,6 +196,7 @@ def on_function_put(response, original=None) -> None:
                         activities.append(a)
 
                 except:
+                    app.logger.exception('Hooks, Line 199')
                     pass
 
             # Unique list of activities
@@ -220,6 +223,7 @@ def on_function_put(response, original=None) -> None:
             try:
                 functions.remove(response.get('id'))
             except:
+                app.logger.exception('Hooks, Line 225')
                 pass
 
         f = list(set(functions))
@@ -284,6 +288,7 @@ def on_license_put(response, original=None):
                                  'type_name': response.get('type_name', None)})
 
             except:
+                app.logger.exception('Hooks, Line 291')
                 pass
 
         # Unique
@@ -336,6 +341,7 @@ def on_competence_put(response, original=None):
                                    'expiry': expiry,
                                    'paid': response.get('paid_date', None)})
             except:
+                app.logger.exception('Hooks, Line 344')
                 pass
 
         # Always remove stale competences
