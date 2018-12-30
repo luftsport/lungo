@@ -68,6 +68,9 @@ def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
     :type dict_id: any
     :return: True if difference, False if not or can't decide
     """
+    if len(l1) != len(l2):
+        return True
+
     try:
         list_1, list_2 = [sorted(l, key=itemgetter(dict_id)) for l in (l1, l2)]
         pairs = zip(list_1, list_2)
