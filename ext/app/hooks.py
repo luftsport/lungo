@@ -274,11 +274,12 @@ def on_license_put(response, original=None):
     # Always get person
     person = _get_person(response.get('person_id', None))
     if '_id' in person:
-
+        app.logger.info('Has a person')
         licenses = person.get('licenses', [])
 
         # If valid expiry
-        if expiry is None or expiry >= _get_now():
+        if expiry is None or expiry > _get_now():
+            app.logger.info('Has expiry')
 
             try:
                 licenses.append({'id': response.get('id'),
@@ -299,7 +300,11 @@ def on_license_put(response, original=None):
         licenses[:] = [d for d in licenses if _fix_naive(d.get('expiry')) >= _get_now()]
 
         # Patch if difference
-        if '_id' in person and _compare_list_of_dicts(licenses, person.get('licenses', [])) is True:
+        app.logger.info('Now compare')
+
+        if _compare_list_of_dicts(licenses, person.get('licenses', [])) is True:
+            app.logger.info('Ok comapred and we should definitively do it!')
+
             lookup = {'_id': person['_id']}
             resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'licenses': licenses}, False, True, **lookup)
             app.logger.info('Patch returned {} for license'.format(status))
