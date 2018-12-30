@@ -303,7 +303,7 @@ def on_license_put(response, original=None):
         licenses[:] = [d for d in licenses if _fix_naive(d.get('expiry')) >= _get_now()]
 
         # Patch if difference
-        app.logger.info('Now compare')
+        app.logger.info('Now compare {} with {}'.format(licenses, person.get('licenses', [])))
 
         if _compare_list_of_dicts(licenses, person.get('licenses', [])) is True:
             app.logger.info('Ok comapred and we should definitively do it!')
