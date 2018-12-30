@@ -173,8 +173,8 @@ agg_count_change_day_hour = {
                             "year": {
                                 "$year": "$_updated"
                             },
-                            "day": {
-                                "$day": "$_updated"
+                            "hour": {
+                                "$hour": "$_updated"
                             }
                         },
                         "count": {
