@@ -131,7 +131,7 @@ agg_count_change_day = {
                         }
                     }
                 },
-                {"$sort": SON([("_id.year", -1), ("_id.month", -1), ("_id.day", -1)])}
+                {"$sort": SON([("_id.year", 1), ("_id.month", 1), ("_id.day", 1)])}
             ]
         }
     }
@@ -146,8 +146,43 @@ agg_count_change_hour = {
         'aggregation': {
             'pipeline': [
                 {"$group": {"_id": {"hour": {"$hour": "$_updated"}}, "count": {"$sum": 1}}},
-                {"$sort": SON([("_id", -1)])}
+                {"$sort": SON([("_id", 1)])}
 
+            ]
+        }
+    }
+}
+
+#  Total count by day AND hour
+agg_count_change_day_hour = {
+    'url': 'integration/changes/aggregate/day/hour',
+    'item_title': 'Integration Changes Aggregate By Day and hour',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {
+                    "$group": {
+                        "_id": {
+                            "day": {
+                                "$dayOfMonth": "$_updated"
+                            },
+                            "month": {
+                                "$month": "$_updated"
+                            },
+                            "year": {
+                                "$year": "$_updated"
+                            },
+                            "day": {
+                                "$day": "$_updated"
+                            }
+                        },
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {"$sort": SON([("_id.year", 1), ("_id.month", 1), ("_id.day", 1), ("_id.hour", 1)])}
             ]
         }
     }

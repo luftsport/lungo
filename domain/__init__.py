@@ -68,6 +68,7 @@ DOMAIN = {
     "integration_changes_change_types": integration_changes.agg_count_change_types,
     "integration_changes_aggregate_day": integration_changes.agg_count_change_day,
     "integration_changes_aggregate_hour": integration_changes.agg_count_change_hour,
+    "integration_changes_aggregate_day_hour": integration_changes.agg_count_change_day_hour,
 
     # Resources
     "activities": activities.definition,
