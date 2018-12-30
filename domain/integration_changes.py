@@ -130,7 +130,8 @@ agg_count_change_day = {
                             "$sum": 1
                         }
                     }
-                }
+                },
+                {"$sort": SON([("_id.year", -1), ("_id.month", -1), ("_id.day", -1)])}
             ]
         }
     }
@@ -144,11 +145,9 @@ agg_count_change_hour = {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
-                {
-                    "$group": {
-                        "_id": {"hour": {"$hour": "$_updated"}}, "count": {"$sum": 1}
-                    }
-                }
+                {"$group": {"_id": {"hour": {"$hour": "$_updated"}}, "count": {"$sum": 1}}},
+                {"$sort": SON([("_id", -1)])}
+
             ]
         }
     }
