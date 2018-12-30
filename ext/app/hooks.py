@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
 from flask import current_app as app
+
 # import dateutil.parser
 
 
@@ -80,6 +81,14 @@ def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
             return False  # They are equal
     except:
         return True  # We do not know if difference
+
+
+def _compare_lists(l1, l2) -> bool:
+    """Just compare set(list)
+    :param l1: list
+    :param l2: list
+    :return: True if difference, False if """
+    return set(l1) != set(l2)
 
 
 def _get_org(org_id) -> dict:
@@ -167,10 +176,8 @@ def on_function_put(response, original=None) -> None:
                 try:
                     clubs.remove(response.get('active_in_org_id'))
                 except ValueError:
-                    app.logger.exception('Hooks, Line 167')
                     pass
                 except:
-                    app.logger.exception('Hooks, Line 170')
                     pass
 
             # Unique list
@@ -199,7 +206,6 @@ def on_function_put(response, original=None) -> None:
                         activities.append(a)
 
                 except:
-                    app.logger.exception('Hooks, Line 199')
                     pass
 
             # Unique list of activities
@@ -226,7 +232,6 @@ def on_function_put(response, original=None) -> None:
             try:
                 functions.remove(response.get('id'))
             except:
-                app.logger.exception('Hooks, Line 225')
                 pass
 
         f = list(set(functions))
@@ -237,9 +242,15 @@ def on_function_put(response, original=None) -> None:
 
         # Update person with new values
         # response, last_modified, etag, status =
-        patch_internal(RESOURCE_PERSONS_PROCESS,
-                       {'functions': functions, 'activities': activities, 'clubs': clubs},
-                       False, True, **lookup)
+        if _compare_lists(functions, person.get('functions', [])) is True or \
+                _compare_lists(activities, person.get('activities', [])) is True or \
+                _compare_lists(clubs, person.get('clubs', [])) is True:
+
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                                {'functions': functions, 'activities': activities, 'clubs': clubs},
+                                                False, True, **lookup)
+            if status != 200:
+                app.logger.error('Patch returned {} for functions, activities, clubs'.format(status))
 
     # Always check and get type name
     # Update the function
@@ -248,11 +259,13 @@ def on_function_put(response, original=None) -> None:
         if len(function_type) > 0:
             type_name = function_type.get('name', None)
             if type_name is not None:
-                patch_internal(RESOURCE_FUNCTIONS_PROCESS,
-                               {'type_name': type_name},
-                               False,
-                               True,
-                               **{'_id': response.get('_id')})
+                resp, _, _, status = patch_internal(RESOURCE_FUNCTIONS_PROCESS,
+                                                    {'type_name': type_name},
+                                                    False,
+                                                    True,
+                                                    **{'_id': response.get('_id')})
+                if status != 200:
+                    app.logger.error('Patch returned {} for function update type_name'.format(status))
 
 
 def on_license_post(items):
@@ -264,7 +277,6 @@ def on_license_post(items):
 
 def on_license_put(response, original=None):
     """pass"""
-    app.logger.info('In put license')
 
     expiry = response.get('period_to_date', None)  # dateutil.parser.parse(response.get('period_to_date', None))
 
@@ -277,12 +289,11 @@ def on_license_put(response, original=None):
     # Always get person
     person = _get_person(response.get('person_id', None))
     if '_id' in person:
-        app.logger.info('Has a person')
+
         licenses = person.get('licenses', []).copy()
 
         # If valid expiry
         if expiry is None or expiry > _get_now():
-            app.logger.info('Has expiry')
 
             try:
                 licenses.append({'id': response.get('id'),
@@ -293,7 +304,6 @@ def on_license_put(response, original=None):
                                  'type_name': response.get('type_name', None)})
 
             except:
-                app.logger.exception('Hooks, Line 291')
                 pass
 
         # Unique
@@ -303,14 +313,12 @@ def on_license_put(response, original=None):
         licenses[:] = [d for d in licenses if _fix_naive(d.get('expiry')) >= _get_now()]
 
         # Patch if difference
-        app.logger.info('Now compare {} with {}'.format(licenses, person.get('licenses', [])))
-
         if _compare_list_of_dicts(licenses, person.get('licenses', [])) is True:
-            app.logger.info('Ok comapred and we should definitively do it!')
 
             lookup = {'_id': person['_id']}
             resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'licenses': licenses}, False, True, **lookup)
-            app.logger.info('Patch returned {} for license'.format(status))
+            if status != 200:
+                app.logger.error('Patch returned {} for license'.format(status))
 
 
 def on_competence_post(items):
@@ -351,7 +359,6 @@ def on_competence_put(response, original=None):
                                    'expiry': expiry,
                                    'paid': response.get('paid_date', None)})
             except:
-                app.logger.exception('Hooks, Line 344')
                 pass
 
         # Always remove stale competences
@@ -363,8 +370,11 @@ def on_competence_put(response, original=None):
         # Patch if difference
         if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
             lookup = {'_id': person['_id']}
-            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True, **lookup)
-            app.logger.info('Patch returned {} for competence'.format(status))
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
+                                                **lookup)
+            if status != 200:
+                app.logger.error('Patch returned {} for competence'.format(status))
+
 
 def on_person_after_post(items):
     for response in items:
