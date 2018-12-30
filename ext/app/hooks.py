@@ -147,8 +147,8 @@ def on_function_put(response, original=None) -> None:
     if '_id' in person:
 
         # Club member! has_paid_membership?
-        clubs = person.get('clubs', [])
-        activities = person.get('activities', [])
+        clubs = person.get('clubs', []).copy()
+        activities = person.get('activities', []).copy()
 
         # Will get all org_type_id's not only 5
         if response.get('type_id', 0) == 10000000:
@@ -213,7 +213,7 @@ def on_function_put(response, original=None) -> None:
 
         # The rest of the functions
         # Considers expiry date, if None then still valid
-        functions = person.get('functions', [])
+        functions = person.get('functions', []).copy()
 
         if expiry is not None:
             expiry = _fix_naive(expiry)
@@ -278,7 +278,7 @@ def on_license_put(response, original=None):
     person = _get_person(response.get('person_id', None))
     if '_id' in person:
         app.logger.info('Has a person')
-        licenses = person.get('licenses', [])
+        licenses = person.get('licenses', []).copy()
 
         # If valid expiry
         if expiry is None or expiry > _get_now():
@@ -339,7 +339,7 @@ def on_competence_put(response, original=None):
 
     if '_id' in person:
 
-        competence = person.get('competences', [])
+        competence = person.get('competences', []).copy()
 
         # Add this competence?
         if expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
