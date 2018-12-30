@@ -1,4 +1,5 @@
 from bson import SON
+
 RESOURCE_COLLECTION = 'integration_changes'
 _schema = {
     'id': {'type': 'integer'},
@@ -99,6 +100,36 @@ agg_count_change_types = {
             'pipeline': [
                 {"$group": {"_id": "$change_type", "count": {"$sum": 1}}},
                 {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
+}
+
+agg_count_change_day = {
+    'url': 'integration/changes/aggregate/day',
+    'item_title': 'Integration Changes Aggregate By Day',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {
+                    "$group": {
+                        "_id": {
+                            "day": {
+                                "$dayOfMonth": "$_updated"
+                            },
+                            "month": {
+                                "$month": "$_updated"
+                            },
+                            "year": {
+                                "$year": "$_updated"
+                            }
+                        },
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                }
             ]
         }
     }

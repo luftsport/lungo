@@ -56,14 +56,18 @@ DOMAIN = {
     "licenses_process": licenses.process_definition,
     "licenses_types": licenses_types.definition,
 
-    # Integration
+    # Integration Users
     "integration_users": integration_users.definition,
     "integration_users_clubs": integration_users.agg_count_clubs,
+
+    # Integration Changes
     "integration_changes": integration_changes.definition,
     "integration_changes_entity_types": integration_changes.agg_count_entity_types,
     "integration_changes_clubs": integration_changes.agg_count_clubs,
     "integration_changes_status": integration_changes.agg_count_statuses,
     "integration_changes_change_types": integration_changes.agg_count_change_types,
+    "integration_changes_aggregate_day": integration_changes.agg_count_change_day,
+
 
     # Resources
     "activities": activities.definition,
