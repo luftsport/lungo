@@ -105,6 +105,7 @@ agg_count_change_types = {
     }
 }
 
+#  Total count by day
 agg_count_change_day = {
     'url': 'integration/changes/aggregate/day',
     'item_title': 'Integration Changes Aggregate By Day',
@@ -128,6 +129,24 @@ agg_count_change_day = {
                         "count": {
                             "$sum": 1
                         }
+                    }
+                }
+            ]
+        }
+    }
+}
+
+#  Total count by hour any day
+agg_count_change_hour = {
+    'url': 'integration/changes/aggregate/hour',
+    'item_title': 'Integration Changes Aggregate By Hour Of Day',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {
+                    "$group": {
+                        "_id": {"hour": {"$hour": "$_updated"}}, "count": {"$sum": 1}
                     }
                 }
             ]
