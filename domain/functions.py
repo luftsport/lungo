@@ -56,7 +56,7 @@ definition = {
                       'to_date': ([('to_date', 1)], {'background': True}),
                       'active_in_org_id': ([('active_in_org_id', 1)], {'background': True}),
                       'has_paid_membership': ([('has_paid_membership', 1)], {'background': True}),
-                      # 'type_name': ([('title', 'text')], {'background': True})
+                      'type_name': ([('title', 'text')], {'background': True})
                       },
     'schema': _schema
 }
