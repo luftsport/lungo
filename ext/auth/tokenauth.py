@@ -13,6 +13,7 @@ from flask import current_app as app, request, Response, abort
 
 # Not in github
 from ext.auth.clients import users
+import string
 
 
 # from eve.methods.get import getitem as get_internal
@@ -30,6 +31,11 @@ class NlfTokenAuth(TokenAuth):
         if resource is None:
             resource = ''
 
+        # Remove integer from end of string
+        try:
+            resource = resource.rstrip(string.digits)
+        except:
+            pass
         # print('Token: ', token, resource, method)
         # print(users.keys())
         try:
