@@ -43,6 +43,8 @@ DOMAIN = {
     "functions": functions.definition,
     "functions_process": functions.process_definition,
     "functions_types_count": functions.agg_count_types,
+    "functions_types_org_count": functions.agg_count_types_org,
+    "functions_types_activity_count": functions.agg_count_types_activity,
     "functions_types": function_types.definition,
 
     # Competences

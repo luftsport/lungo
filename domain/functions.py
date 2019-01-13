@@ -98,3 +98,33 @@ agg_count_types = {
         }
     }
 }
+
+agg_count_types_org = {
+    'url': 'functions/types/org/count',
+    'item_title': 'Functions Types Count',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$match": {"active_in_org_id": "$org_id"}},
+                {"$group": {"_id": {"type_id": "$type_id", "name": "$type_name"}, "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
+}
+
+agg_count_types_activity = {
+    'url': 'functions/types/activity/count',
+    'item_title': 'Functions Types Count',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$match": {"active_in_org_id": {"$in": "$org_ids"}}},
+                {"$group": {"_id": {"type_id": "$type_id", "name": "$type_name"}, "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
+}
