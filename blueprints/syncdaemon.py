@@ -97,7 +97,7 @@ def shutdown():
 
 @Sync.route("/status", methods=['GET'])
 @require_token()
-def shutdown():
+def status():
     try:
         Pyro4.Proxy(RPC_SERVICE).status()
         return eve_response({'status': True}, 200)
