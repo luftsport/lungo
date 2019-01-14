@@ -40,6 +40,7 @@ RPC_SERVICE_PORT = 5555
 RPC_SERVICE_HOST = 'localhost'
 RPC_SERVICE = 'PYRO:{0}@{1}:{2}'.format(RPC_SERVICE_NAME, RPC_SERVICE_HOST, RPC_SERVICE_PORT)
 
+
 def get_process():
     with open('/home/einar/nif-integration/syncdaemon.pid', 'r') as f:
         pid = int(f.read().strip())
@@ -60,8 +61,8 @@ def process_info():
     d = p.as_dict(attrs=['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent',
                          'cpu_times', 'create_time', 'cwd', 'exe', 'gids', 'io_counters', 'ionice',
                          'memory_full_info', 'memory_percent', 'name', 'nice',
-                         'num_ctx_switches', 'num_threads',  'pid', 'ppid',
-                         'status',  'threads', 'uids', 'username'])
+                         'num_ctx_switches', 'num_threads', 'pid', 'ppid',
+                         'status', 'threads', 'uids', 'username'])
 
     # Jsonify the dictionary and return it
     return eve_response(d, 200)
@@ -89,6 +90,16 @@ Daemon
 def shutdown():
     try:
         Pyro4.Proxy(RPC_SERVICE).shutdown()
+        return eve_response({'status': True}, 200)
+    except:
+        return eve_response({'status': False}, 200)
+
+
+@Sync.route("/status", methods=['GET'])
+@require_token()
+def shutdown():
+    try:
+        Pyro4.Proxy(RPC_SERVICE).status()
         return eve_response({'status': True}, 200)
     except:
         return eve_response({'status': False}, 200)
@@ -124,7 +135,6 @@ def workers_failed_clubs():
 @Sync.route("/workers/logs", methods=['GET'])
 @require_token()
 def workers_logs():
-
     try:
         s = Pyro4.Proxy(RPC_SERVICE).get_logs()
     except:
@@ -136,7 +146,6 @@ def workers_logs():
 @Sync.route("/workers/reboot", methods=['POST'])
 @require_token()
 def workers_reboot():
-
     try:
         Pyro4.Proxy(RPC_SERVICE).reboot_workers()
         return eve_response({'status': True}, 200)
