@@ -42,7 +42,7 @@ API_VERSION = 'v1'
 
 # Pagination settings
 PAGINATION_LIMIT = 100000
-PAGINATION_DEFAULT = 10000
+PAGINATION_DEFAULT = 25
 
 # Enable reads (GET), inserts (POST) and DELETE for resources/collections
 # (if you omit this line, the API will default to ['GET'] and provide
@@ -60,9 +60,6 @@ CACHE_EXPIRES = 20
 
 # Support only json response 'eve.render.XMLRenderer'
 RENDERERS = ['eve.render.JSONRenderer']
-
-# Maximum value allowed for max_results query parameter
-PAGINATION_LIMIT = 20000
 
 ALLOW_UNKNOWN = False
 
