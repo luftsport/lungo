@@ -221,3 +221,62 @@ agg_count_gender = {
         }
     }
 }
+
+# Persons merged from
+# http://127.0.0.1:9191/api/v1/persons/merged?aggregate={"$person_id": 7897818}
+agg_merged_from = {
+    'url': 'persons/merged',
+    'item_title': 'Persons merged from',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {
+                    "$match": {
+                        "id": "$person_id"
+                    }
+                },
+                {
+                    "$project": {
+                        "id": 1,
+                        "full_name": 1,
+                        "_merged_to": 1
+                    }
+                },
+                {
+                    "$graphLookup": {
+                        "from": "persons",
+                        "startWith": "$person_id",
+                        "connectFromField": "id",
+                        "connectToField": "_merged_to",
+                        "as": "merged_from",
+                        "maxDepth": 100,
+                        "depthField": "depthField"
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 1,
+                        "id": 1,
+                        "merged_from": {
+                            "$map": {
+                                "input": "$merged_from.id",
+                                "as": "from_id",
+                                "in": "$$from_id"
+                            }
+                        }
+                        #"merged_from.id": 1,
+                        #"merged_from._id": 1
+                    }
+                },
+                #{"$unwind": {"$merged_from"}},
+                #{"$group": {"_id": {"$push": "id"}}},
+                # {"$group": {"_id": "$_id", "merged": {"$push": "$merged_from.id"}}},
+                # {"$project": {"merged": 1, "merged_from": -1}}
+            ]
+        }
+    }
+}
+# {"$unwind": {"merged_from"}},
+#                {"$group": {"$merged_from._id": None, "merged": {"$push": "$merged_from.id"}}},
+#                {"$project": {"merged": 1, "merged_from": -1}}

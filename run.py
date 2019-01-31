@@ -111,12 +111,18 @@ def assign_lookup(resource, request, lookup):
         for key, val in app.auth.resource_lookup.items():
             lookup[key] = val
 
+# Should be able to filter out all merged when doing lookup
+# def filter_merged_to(request, lookup):
+#    if any(i in lookup for i in ['id', '_id']) is False:
+#        lookup['_merged_to'] = {"$exists": False}
+
 
 # After GET'ing a merged person
 app.on_post_GET_persons += after_get_persons
 
 # All get's get through this one!
 app.on_pre_GET += assign_lookup
+# app.on_pre_GET_persons += filter_merged_to
 
 # Hooks to update person object, database layer, AFTER
 app.on_inserted_functions_process += on_function_post
