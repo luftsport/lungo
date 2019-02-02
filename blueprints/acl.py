@@ -38,8 +38,9 @@ def _acl_from_functions(person_id):
                 function_acl.append({'activity': org.get('main_activity', {'id': 27}).get('id'),
                                      'club': f['active_in_org_id'],
                                      'role': f['type_id'],
-                                     'name': f['type_name'],
-                                     'func': f['id']})
+                                     # 'name': f['type_name'],
+                                     # 'func': f['id']
+                                     })
 
         return status, function_acl
 
@@ -83,6 +84,19 @@ def acl_simple_all():
         pass
 
 
+@ACL.route('/activities/<int:person_id>', methods=['GET'])
+@require_token()
+def acl_activities_person(person_id) -> list:
+    activities = []
+    status, roles = _acl_from_functions(person_id)
+
+    if status == 200:
+        for role in roles:
+            activities.append(NLF_ORG[role['activity']])
+
+    return eve_response(list(set(activities)), 200)
+
+
 @ACL.route('/activities', methods=['GET'])
 @require_token()
 def acl_activities():
@@ -104,7 +118,8 @@ def acl_clubs():
 @require_token()
 def acl_activities_clubs(activity_id):
     clubs, _, _, status, _ = get_internal('organizations',
-                                          **{'type_id': {'$in': [5, 2, 19]}, 'main.activity.id': activity_id})
+                                          **{'type_id': {'$in': [5, 2, 19]},
+                                             'main.activity.id': activity_id})
 
     if status == 200:
         return eve_response(list(set([d['id'] for d in clubs['_items']])), status)
@@ -133,7 +148,8 @@ def acl_roles():
 @require_token()
 def acl_activity_roles(activity_id):
     clubs, _, _, status, _ = get_internal('organizations',
-                                          **{'type_id': {'$in': [5, 2, 19]}, 'main_activity.id': activity_id})
+                                          **{'type_id': {'$in': [5, 2, 19]},
+                                             'main_activity.id': activity_id})
 
     if status == 200:
         clubs = list(set([d['id'] for d in clubs['_items']]))
