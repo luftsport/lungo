@@ -70,7 +70,7 @@ def acl_simple(person_id):
             if a['activity'] in list(NLF_ORG.keys()):  # and a['role'] in [10000000]:
                 simple_acl.append('{}_{}'.format(
                     NLF_ORG[a['activity']],
-                    ''.join(re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', a['name']).split()).lower().rstrip('_')))
+                    ''.join(re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', a.get('name', '')).split()).lower().rstrip('_')))
 
         return eve_response(list(set(simple_acl)), 200)
 
@@ -86,7 +86,7 @@ def acl_simple_all():
 
 @ACL.route('/activities/<int:person_id>', methods=['GET'])
 @require_token()
-def acl_activities_person(person_id) -> list:
+def acl_activities_person(person_id):
     activities = []
     status, roles = _acl_from_functions(person_id)
 
@@ -97,10 +97,21 @@ def acl_activities_person(person_id) -> list:
     return eve_response(list(set(activities)), 200)
 
 
-@ACL.route('/activities', methods=['GET'])
+@ACL.route('/activities/<int:person_id>', methods=['GET'])
 @require_token()
 def acl_activities():
     return eve_response(NLF_ORG, 200)
+
+
+@ACL.route('/clubs', methods=['GET'])
+@require_token()
+def acl_clubs_person():
+    clubs, _, _, status, _ = get_internal('organizations', **{'type_id': {'$in': [5, 2, 19]}})
+
+    if status == 200:
+        return eve_response([d['id'] for d in clubs['_items']])
+
+    return eve_response([], status)
 
 
 @ACL.route('/clubs', methods=['GET'])
