@@ -38,8 +38,8 @@ def _acl_from_functions(person_id):
                 function_acl.append({'activity': org.get('main_activity', {'id': 27}).get('id'),
                                      'club': f['active_in_org_id'],
                                      'role': f['type_id'],
-                                     # 'name': f['type_name'],
-                                     # 'func': f['id']
+                                     'name': f['type_name'],
+                                     'func': f['id']
                                      })
 
         return status, function_acl
@@ -53,6 +53,7 @@ def acl(person_id):
     status, function_acl = _acl_from_functions(person_id)
 
     if status == 200:
+        function_acl = [{'activity': i['activity'], 'club': i['club'], 'role': i['role']} for i in function_acl]
         return eve_response(function_acl, 200)
 
     return eve_abort(status)
@@ -71,7 +72,7 @@ def acl_simple(person_id):
                 simple_acl.append(
                     '{}_{}'.format(
                         NLF_ORG[a['activity']].strip(),
-                        re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', a.get('type_name', '')).lower().strip('_').strip()
+                        re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', a.get('name', '')).lower().strip('_').strip()
                     )
                 )
 
