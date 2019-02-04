@@ -68,9 +68,8 @@ def acl_simple(person_id):
         simple_acl = []
         for a in function_acl:
             if a['activity'] in list(NLF_ORG.keys()):  # and a['role'] in [10000000]:
-                simple_acl.append('{}_{}'.format(
-                    NLF_ORG[a['activity']],
-                    ''.join(re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', a.get('name', '')).split()).lower().rstrip('_')))
+                simple_acl.append('{}_{}'.format(NLF_ORG[a['activity']],
+                                                 ''.join(re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', a.get('name', ''))).split()).lower().rstrip('_'))
 
         return eve_response(list(set(simple_acl)), 200)
 
