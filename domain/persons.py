@@ -183,7 +183,8 @@ search_definition = {
     'item_title': 'Persons Search',
     'datasource': {'source': RESOURCE_COLLECTION,
                    'projection': {"_score": {"$meta": "textScore"}, "full_name": 1, "id": 1},
-                   'default_sort': [("_score", {"$meta": "textScore"})]
+                   'default_sort': [("_score", {"$meta": "textScore"})],
+                   'filter': {'_merged_to': {'$exists': False}}
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
@@ -265,12 +266,12 @@ agg_merged_from = {
                                 "in": "$$from_id"
                             }
                         }
-                        #"merged_from.id": 1,
-                        #"merged_from._id": 1
+                        # "merged_from.id": 1,
+                        # "merged_from._id": 1
                     }
                 },
-                #{"$unwind": {"$merged_from"}},
-                #{"$group": {"_id": {"$push": "id"}}},
+                # {"$unwind": {"$merged_from"}},
+                # {"$group": {"_id": {"$push": "id"}}},
                 # {"$group": {"_id": "$_id", "merged": {"$push": "$merged_from.id"}}},
                 # {"$project": {"merged": 1, "merged_from": -1}}
             ]
