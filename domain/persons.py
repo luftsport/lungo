@@ -1,4 +1,5 @@
 from bson import SON
+import datetime
 
 RESOURCE_COLLECTION = 'persons'
 
@@ -281,3 +282,63 @@ agg_merged_from = {
 # {"$unwind": {"merged_from"}},
 #                {"$group": {"$merged_from._id": None, "merged": {"$push": "$merged_from.id"}}},
 #                {"$project": {"merged": 1, "merged_from": -1}}
+
+# Age aggregation per club
+# Should be extended to accomodate multiple dimensions
+agg_age_distribution = {
+    'url': 'persons/age',
+    'item_title': 'Persons age aggregation',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline':
+                [
+                    {
+                        "$match": {
+                            "birth_date": {
+                                "$gt": "1900-01-01T00:00:00.000+0000"
+                            },
+                            "clubs.0": {
+                                "$exists": True
+                            },
+                            "clubs": {
+                                "$in": ["$club_id"]
+                            }
+                        }
+                    },
+                    {
+                        "$project": {
+                            "ageInMillis": {
+                                "$subtract": [datetime.dateime.now.isoformat(), "$birth_date"]
+                            }
+                        }
+                    },
+                    {
+                        "$project": {
+                            "age": {
+                                "$divide": ["$ageInMillis", 31558464000]
+                            }
+                        }
+                    },
+                    {
+                        "$project": {
+                            "age": {
+                                "$subtract": ["$age", {"$mod": ["$age", 1]}]
+                            }
+                        }
+                    },
+                    {
+                        "$group": {
+                            "_id": "$age",
+                            "Total": {"$sum": 1}
+                        }
+                    },
+                    {
+                        "$sort": {
+                            "_id": -1
+                        }
+                    }
+                ]
+        }
+    }
+}
