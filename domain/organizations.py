@@ -10,7 +10,37 @@ _schema = {
     # 'CancellationDate': None,
     # 'CancellationTypeId': None,
     'comment': {'type': 'string', 'default': ''},
-    'contact': {'type': 'dict', 'default': {}},
+    'contact': {'type': 'dict',
+                'default': {},
+                'schema':
+                    {
+                        'city': {'type': 'string'},
+                        'contact_id': {'type': 'integer'},
+                        'contact_information_id': {'type': 'integer'},
+                        'country_id': {'type': 'integer'},
+                        'email': {'type': 'list'},
+                        'fax': {'type': 'string'},
+                        'phone_home': {'type': 'string'},
+                        'phone_mobile': {'type': 'string'},
+                        'phone_work': {'type': 'string'},
+                        'secret_address': {'type': 'boolean'},
+                        'secret_email': {'type': 'boolean'},
+                        'secret_phone_home': {'type': 'boolean'},
+                        'secret_phone_mobile': {'type': 'boolean'},
+                        'secret_phone_work': {'type': 'boolean'},
+                        'street_address': {'type': 'string'},
+                        'street_address2': {'type': 'string'},
+                        'zip_code': {'type': 'string'},
+                        'home_page': {'type': 'string'},
+                        'location': {'type': 'dict',
+                                     'schema': {'geo': {'type': 'point'},
+                                                'score': {'type': 'integer'},
+                                                'confidence': {'type': 'integer'},
+                                                'quality': {'type': 'string'}
+                                                }
+                                     },
+                    }
+                },
     # 'ContactId': {'type': 'integer'},
     'created': {'type': 'datetime'},
     'describing_name': {'type': 'string', 'default': ''},
@@ -94,7 +124,8 @@ definition = {
                       'main_activity': ([('main_activity', 1)], {'background': True}),
                       '_up': ([('_up', 1)], {'background': True}),
                       '_down': ([('_down', 1)], {'background': True}),
-                      'name': ([('name', 'text')], {'background': True})
+                      'name': ([('name', 'text')], {'background': True}),
+                      'location': ([('contact.location.geo', '2dsphere')], {'background': True}),
                       },
     'schema': _schema
 }
