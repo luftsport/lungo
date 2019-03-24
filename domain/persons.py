@@ -299,6 +299,9 @@ agg_age_distribution = {
                             "birth_date": {
                                 "$gt": datetime.datetime(1900, 1, 1, 0, 0, 0)
                             },
+                            "_merged_to": {
+                                "$exists": False
+                            },
                             "clubs.0": {
                                 "$exists": True
                             },
@@ -331,7 +334,7 @@ agg_age_distribution = {
                     {
                         "$group": {
                             "_id": "$age",
-                            "Total": {"$sum": 1}
+                            "total": {"$sum": 1}
                         }
                     },
                     {
