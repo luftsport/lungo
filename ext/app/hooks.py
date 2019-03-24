@@ -159,6 +159,9 @@ def on_function_put(response, original=None) -> None:
         clubs = person.get('clubs', []).copy()
         activities = person.get('activities', []).copy()
 
+        # san_clubs is sanitized clubs
+        san_clubs = []
+
         # Will get all org_type_id's not only 5
         if response.get('type_id', 0) == 10000000:
 
@@ -189,8 +192,7 @@ def on_function_put(response, original=None) -> None:
             # Activities
             # Do not know which club is actually which activity
             # Need to redo all.
-            # san_clubs is sanitized clubs
-            san_clubs = []
+
             for club_id in clubs:
                 try:
                     org = _get_org(club_id)
