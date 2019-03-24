@@ -297,7 +297,7 @@ agg_age_distribution = {
                     {
                         "$match": {
                             "birth_date": {
-                                "$gt": "1900-01-01T00:00:00.000+0000"
+                                "$gt": datetime.datetime(1900, 1, 1, 0, 0, 0)
                             },
                             "clubs.0": {
                                 "$exists": True
