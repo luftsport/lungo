@@ -285,6 +285,7 @@ agg_merged_from = {
 
 # Age aggregation per club
 # Should be extended to accomodate multiple dimensions
+# ?aggregate={"$club_id": 22976}
 agg_age_distribution = {
     'url': 'persons/age',
     'item_title': 'Persons age aggregation',

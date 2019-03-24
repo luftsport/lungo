@@ -33,6 +33,7 @@ DOMAIN = {
     "persons_search": persons.search_definition,
     "persons_gender": persons.agg_count_gender,
     "persons_merged_from": persons.agg_merged_from,
+    "persons_age_distribution": persons.agg_age_distribution,
 
     # Organization
     "organizations": organizations.definition,
