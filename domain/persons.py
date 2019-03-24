@@ -310,7 +310,7 @@ agg_age_distribution = {
                     {
                         "$project": {
                             "ageInMillis": {
-                                "$subtract": [datetime.datetime.now().isoformat(), "$birth_date"]
+                                "$subtract": [datetime.datetime.utcnow(), "$birth_date"]
                             }
                         }
                     },
