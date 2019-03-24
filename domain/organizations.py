@@ -18,7 +18,7 @@ _schema = {
                         'contact_id': {'type': 'integer'},
                         'contact_information_id': {'type': 'integer'},
                         'country_id': {'type': 'integer'},
-                        'email': {'type': 'list'},
+                        'email': {'type': 'string'}, # Only difference with persons
                         'fax': {'type': 'string'},
                         'phone_home': {'type': 'string'},
                         'phone_mobile': {'type': 'string'},
