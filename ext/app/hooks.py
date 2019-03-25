@@ -159,9 +159,6 @@ def on_function_put(response, original=None) -> None:
         clubs = person.get('clubs', []).copy()
         activities = person.get('activities', []).copy()
 
-        # san_clubs is sanitized clubs
-        san_clubs = []
-
         # Will get all org_type_id's not only 5
         if response.get('type_id', 0) == 10000000:
 
@@ -192,15 +189,9 @@ def on_function_put(response, original=None) -> None:
             # Activities
             # Do not know which club is actually which activity
             # Need to redo all.
-
             for club_id in clubs:
                 try:
                     org = _get_org(club_id)
-                    
-                    if org.get('type_id', 0) != 5:
-                        continue
-                    
-                    san_clubs.append(club_id)
                     # Gets the id of main activity
                     # If None, go for 27 (Luftsport/370)
                     # @TODO see if should be None to pass next
@@ -253,10 +244,10 @@ def on_function_put(response, original=None) -> None:
         # response, last_modified, etag, status =
         if _compare_lists(functions, person.get('functions', [])) is True or \
                 _compare_lists(activities, person.get('activities', [])) is True or \
-                _compare_lists(san_clubs, person.get('clubs', [])) is True:
+                _compare_lists(clubs, person.get('clubs', [])) is True:
 
             resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
-                                                {'functions': functions, 'activities': activities, 'clubs': san_clubs},
+                                                {'functions': functions, 'activities': activities, 'clubs': clubs},
                                                 False, True, **lookup)
             if status != 200:
                 app.logger.error('Patch returned {} for functions, activities, clubs'.format(status))
