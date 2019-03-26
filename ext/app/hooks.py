@@ -13,6 +13,9 @@ from flask import current_app as app
 
 RESOURCE_PERSONS_PROCESS = 'persons_process'
 RESOURCE_FUNCTIONS_PROCESS = 'functions_process'
+RESOURCE_LICENSES_PROCESS = 'licenses_process'
+RESOURCE_COMPETENCES_PROCESS = 'competences_process'
+
 LOCAL_TIMEZONE = "Europe/Oslo"  # UTC
 tz_utc = tz.gettz('UTC')
 tz_local = tz.gettz(LOCAL_TIMEZONE)
@@ -397,15 +400,15 @@ def on_person_after_put(item, original=None):
 def _update_person(item):
     lookup = {'person_id': item['id']}
 
-    competences, _, _, c_status, _ = get_internal('competences', **lookup)
+    competences, _, _, c_status, _ = get_internal(RESOURCE_COMPETENCES_PROCESS, **lookup)
     if c_status == 200:
         on_competence_post(competences.get('_items', []))
 
-    licenses, _, _, l_status, _ = get_internal('licenses', **lookup)
+    licenses, _, _, l_status, _ = get_internal(RESOURCE_LICENSES_PROCESS, **lookup)
     if l_status == 200:
         on_license_post(licenses.get('_items', []))
 
-    functions, _, _, f_status, _ = get_internal('functions', **lookup)
+    functions, _, _, f_status, _ = get_internal(RESOURCE_FUNCTIONS_PROCESS, **lookup)
     app.logger.debug('Functions\n{}'.format(functions))
     if f_status == 200:
         on_function_post(functions.get('_items', []))
