@@ -177,7 +177,7 @@ def on_function_put(response, original=None) -> None:
                     clubs.remove(response.get('active_in_org_id'))
                 except ValueError:
                     pass
-                except:
+                except Exception as e:
                     pass
 
             # Unique list
