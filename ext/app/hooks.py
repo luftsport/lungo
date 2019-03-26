@@ -168,8 +168,8 @@ def on_function_put(response, original=None) -> None:
                 expiry = _fix_naive(expiry)
 
             # If not deleted and is valid expiry add to club list
-            if not response['is_deleted'] and not response['is_passive'] and \
-                            expiry is not None and expiry > _get_now():
+            if response['is_deleted'] is False and response['is_passive'] is False and \
+                    expiry is not None and expiry > _get_now():
 
                 clubs.append(response.get('active_in_org_id'))
             else:
@@ -185,7 +185,6 @@ def on_function_put(response, original=None) -> None:
             # Valid expiry?
             # clubs[:] = [d for d in clubs if d.get('expiry') >= _get_now()]
 
-
             # Activities
             # Do not know which club is actually which activity
             # Need to redo all.
@@ -195,18 +194,23 @@ def on_function_put(response, original=None) -> None:
                     # Gets the id of main activity
                     # If None, go for 27 (Luftsport/370)
                     # @TODO see if should be None to pass next
-                    activity = org.get('main_activity', {}).get('id', 27)
-                    club_activities = org.get('activities', [])
-                    if activity is not None:
-                        # @TODO see if code should be integer? String now.
-                        # activity['code'] = int(activity.get('code', 0))
-                        activities.append(activity)
-                    for act in club_activities:
-                        a = act.get('id', 27)
-                        activities.append(a)
+                    if org.get('type_id', 0) == 14:
+                        activity = org.get('main_activity', {}).get('id', 27)
+                        if activity is not None:
+                            activities.append(activity)
 
-                except:
-                    pass
+                        # club_activities = org.get('activities', [])
+                        # if activity is not None:
+                        #    # @TODO see if code should be integer? String now.
+                        #    # activity['code'] = int(activity.get('code', 0))
+                        #    activities.append(activity)
+                        # for act in club_activities:
+                        #    a = act.get('id', 27)
+                        #    activities.append(a)
+
+                except Exception as e:
+                    app.logger.exception('Error doing orgs for {} in {}'.format(response.get('person_id', 0), club_id))
+
 
             # Unique list of activities
             activities.append(27)
