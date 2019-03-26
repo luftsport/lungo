@@ -209,7 +209,7 @@ def on_function_put(response, original=None) -> None:
                         #    activities.append(a)
 
                 except Exception as e:
-                    #app.logger.exception('Error doing orgs for {} in {}'.format(response.get('person_id', 0), club_id))
+                    app.logger.exception('Error doing orgs for {} in {}'.format(response.get('person_id', 0), club_id))
                     pass
 
 
@@ -255,7 +255,7 @@ def on_function_put(response, original=None) -> None:
                                                 {'functions': functions, 'activities': activities, 'clubs': clubs},
                                                 False, True, **lookup)
             if status != 200:
-                #app.logger.error('Patch returned {} for functions, activities, clubs'.format(status))
+                app.logger.error('Patch returned {} for functions, activities, clubs'.format(status))
                 pass
 
     # Always check and get type name
@@ -271,7 +271,7 @@ def on_function_put(response, original=None) -> None:
                                                     True,
                                                     **{'_id': response.get('_id')})
                 if status != 200:
-                    #app.logger.error('Patch returned {} for function update type_name'.format(status))
+                    app.logger.error('Patch returned {} for function update type_name'.format(status))
                     pass
 
 
@@ -325,7 +325,7 @@ def on_license_put(response, original=None):
             lookup = {'_id': person['_id']}
             resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'licenses': licenses}, False, True, **lookup)
             if status != 200:
-                #app.logger.error('Patch returned {} for license'.format(status))
+                app.logger.error('Patch returned {} for license'.format(status))
                 pass
 
 
@@ -381,7 +381,7 @@ def on_competence_put(response, original=None):
             resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
                                                 **lookup)
             if status != 200:
-                #app.logger.error('Patch returned {} for competence'.format(status))
+                app.logger.error('Patch returned {} for competence'.format(status))
                 pass
 
 
@@ -406,5 +406,6 @@ def _update_person(item):
         on_license_post(licenses.get('_items', []))
 
     functions, _, _, f_status, _ = get_internal('functions', **lookup)
+    app.logger.debug('Functions\n{}'.format(functions))
     if f_status == 200:
         on_function_post(functions.get('_items', []))
