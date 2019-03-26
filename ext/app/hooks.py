@@ -171,8 +171,7 @@ def on_function_put(response, original=None) -> None:
                 expiry = _fix_naive(expiry)
 
             # If not deleted and is valid expiry add to club list
-            if response['is_deleted'] is False and response['is_passive'] is False:
-                # and expiry is not None and expiry > _get_now():
+            if response['is_deleted'] is False and response['is_passive'] is False and expiry is not None and expiry > _get_now():
 
                 clubs.append(response.get('active_in_org_id'))
             else:
