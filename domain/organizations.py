@@ -157,6 +157,7 @@ process_definition = {
         'url': 'regex("[\d{1,9}]+")',
         'field': 'id',
     },
+    'pagination': False,
     'extra_response_fields': ['id'],
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELETE'],
