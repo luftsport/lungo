@@ -18,7 +18,7 @@ _schema = {
                         'contact_id': {'type': 'integer'},
                         'contact_information_id': {'type': 'integer'},
                         'country_id': {'type': 'integer'},
-                        'email': {'type': 'string'}, # Only difference with persons
+                        'email': {'type': 'string'},  # Only difference with persons
                         'fax': {'type': 'string'},
                         'phone_home': {'type': 'string'},
                         'phone_mobile': {'type': 'string'},
@@ -167,6 +167,53 @@ process_definition = {
 
 # Aggregation
 from bson import SON, ObjectId
+
+# ?aggregate={"$org_id": 999999}
+agg_get_children = {
+    'url': '{}/children'.format(RESOURCE_COLLECTION),
+    'item_title': 'Organizations children 3 levels down',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline':
+                [{"$match": {"id": "$org_id"}},
+                 {"$graphLookup": {
+                     "from": RESOURCE_COLLECTION,
+                     "startWith": "$_down.id",
+                     "connectFromField": "_down.id",
+                     "connectToField": "id",
+                     "as": "down",
+                     "maxDepth": 3,
+                     "depthField": "depth"
+                    }
+                 }
+                 ]
+        }
+    }
+}
+
+agg_get_parents = {
+    'url': '{}/parents'.format(RESOURCE_COLLECTION),
+    'item_title': 'Organizations parents 3 levels up',
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline':
+                [{"$match": {"id": "$org_id"}},
+                 {"$graphLookup": {
+                     "from": RESOURCE_COLLECTION,
+                     "startWith": "$_up.id",
+                     "connectFromField": "_up.id",
+                     "connectToField": "id",
+                     "as": "up",
+                     "maxDepth": 3,
+                     "depthField": "depth"
+                    }
+                 }
+                 ]
+        }
+    }
+}
 
 agg_count_types = {
     'url': 'organizations/types/count',

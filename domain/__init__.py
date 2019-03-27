@@ -40,6 +40,8 @@ DOMAIN = {
     "organizations_process": organizations.process_definition,
     "organizations_types": organization_types.definition,
     "organizations_types_count": organizations.agg_count_types,
+    "organizations_get_children": organizations.agg_get_children,
+    "organizations_get_parents": organizations.agg_get_parents,
 
     # Functions
     "functions": functions.definition,
