@@ -21,16 +21,25 @@ NLF_ORG = {27: 'nlf',
 def _get_activities_in_club(org_id):
     activities = []
 
-    children, _, _, status = getitem_internal('organizations_get_children', **{'$org_id': org_id})
-    if status == 200:
-        children = children.json()
-        try:
-            for o in children['_items'][0]['children']:
-                activities.append(o.get('main_activity', {}).get('id', 27))
+    # children, _, _, status = getitem_internal('organizations_get_children', **{'$org_id': org_id})
+    resource = 'organizations_get_children'
+    datasource = app.config['DOMAIN'][resource]['datasource']
+    aggregation = datasource.get('aggregation')
 
-            activities = list(set(activities))
-        except:
-            pass
+    if aggregation:
+        aggregation['pipeline'][0]['$match']['id'] = org_id
+        children, _, _, status, _ = _perform_aggregation(resource,
+                                                         aggregation['pipeline'],
+                                                         aggregation['options'])
+        if status == 200:
+            children = children.json()
+            try:
+                for o in children['_items'][0]['children']:
+                    activities.append(o.get('main_activity', {}).get('id', 27))
+
+                activities = list(set(activities))
+            except:
+                pass
 
     return activities
 
