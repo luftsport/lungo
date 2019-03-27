@@ -71,7 +71,7 @@ def _acl_from_functions(person_id):
     return status, function_acl
 
 
-@ACL.route('/<int:person_id>', methods=['GET'], defaults={'max_results': 10000})
+@ACL.route('/<int:person_id>', methods=['GET'])
 @require_token()
 def acl(person_id):
     status, function_acl = _acl_from_functions(person_id)
@@ -83,7 +83,7 @@ def acl(person_id):
     return eve_abort(status)
 
 
-@ACL.route('/simple/<int:person_id>', methods=['GET'], defaults={'max_results': 10000})
+@ACL.route('/simple/<int:person_id>', methods=['GET'])
 @require_token()
 def acl_simple(person_id):
     status, function_acl = _acl_from_functions(person_id)
@@ -112,7 +112,7 @@ def acl_simple_all():
         pass
 
 
-@ACL.route('/activities/<int:person_id>', methods=['GET'], defaults={'max_results': 10000})
+@ACL.route('/activities/<int:person_id>', methods=['GET'])
 @require_token()
 def acl_activities_person(person_id):
     activities = []
@@ -131,7 +131,7 @@ def acl_activities():
     return eve_response(NLF_ORG, 200)
 
 
-@ACL.route('/clubs', methods=['GET'], defaults={'max_results': 10000})
+@ACL.route('/clubs', methods=['GET'])
 @require_token()
 def acl_clubs_person():
     clubs, _, _, status, _ = get_internal('organizations', **{'type_id': {'$in': [5, 2, 19]}})
@@ -142,7 +142,7 @@ def acl_clubs_person():
     return eve_response([], status)
 
 
-@ACL.route('/clubs', methods=['GET'], defaults={'max_results': 10000})
+@ACL.route('/clubs', methods=['GET'])
 @require_token()
 def acl_clubs():
     clubs, _, _, status, _ = get_internal('organizations', **{'type_id': {'$in': [5, 2, 19]}})
@@ -153,7 +153,7 @@ def acl_clubs():
     return eve_response([], status)
 
 
-@ACL.route('/clubs/activity/<int:activity_id>', methods=['GET'], defaults={'max_results': 10000})
+@ACL.route('/clubs/activity/<int:activity_id>', methods=['GET'])
 @require_token()
 def acl_activities_clubs(activity_id):
     clubs, _, _, status, _ = get_internal('organizations',
@@ -166,7 +166,7 @@ def acl_activities_clubs(activity_id):
     return eve_response([], status)
 
 
-@ACL.route('/roles', methods=['GET'], defaults={'max_results': 10000})
+@ACL.route('/roles', methods=['GET'])
 @require_token()
 def acl_roles():
     functions, _, _, status, _ = get_internal('functions_types_count')
@@ -183,7 +183,7 @@ def acl_roles():
     return eve_response([], status)
 
 
-@ACL.route('/roles/activity/<int:activity_id>', methods=['GET'], defaults={'max_results': 10000})
+@ACL.route('/roles/activity/<int:activity_id>', methods=['GET'])
 @require_token()
 def acl_activity_roles(activity_id):
     clubs, _, _, status, _ = get_internal('organizations',
