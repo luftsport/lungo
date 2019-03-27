@@ -18,6 +18,23 @@ NLF_ORG = {27: 'nlf',
            }
 
 
+def _get_activities_in_club(org_id):
+    activities = []
+
+    children, _, _, status = getitem_internal('organizations_get_children', **{'$org_id': org_id})
+    if status == 200:
+        children = children.json()
+        try:
+            for o in children['_items'][0]['children']:
+                activities.append(o.get('main_activity', {}).get('id', 27))
+
+            activities = list(set(activities))
+        except:
+            pass
+
+    return activities
+
+
 def _acl_from_functions(person_id):
     function_acl = []
 
@@ -33,21 +50,28 @@ def _acl_from_functions(person_id):
 
             org, _, _, fstatus = getitem_internal('organizations', **{'id': f['active_in_org_id']})
 
-            if fstatus == 200 and org.get('type_id', 0) in [5, 2, 19]:  # 2 særforbund, 19 seksjon
+            if fstatus == 200 and org.get('type_id', 0) in [5, 2, 19, 14]:  # 2 særforbund, 19 seksjon, 14 er gren
 
-                function_acl.append({'activity': org.get('main_activity', {'id': 27}).get('id'),
-                                     'club': f['active_in_org_id'],
-                                     'role': f['type_id'],
-                                     'name': f['type_name'],
-                                     'func': f['id']
-                                     })
+                if org.get('type_id', 0) == 5:
+                    activities = _get_activities_in_club(org['id'])
+                else:
+                    activities = [org.get('main_activity', {'id': 27}).get('id')]
+
+                for activity in activities:
+                    function_acl.append({'activity': activity,
+                                         'club': f['active_in_org_id'],
+                                         'role': f['type_id'],
+                                         'name': f['type_name'],
+                                         'func': f['id'],
+                                         'type': org.get('type_id')
+                                         })
 
         return status, function_acl
 
     return status, function_acl
 
 
-@ACL.route('/<int:person_id>', methods=['GET'])
+@ACL.route('/<int:person_id>', methods=['GET'], defaults={'max_results': 10000})
 @require_token()
 def acl(person_id):
     status, function_acl = _acl_from_functions(person_id)
@@ -59,7 +83,7 @@ def acl(person_id):
     return eve_abort(status)
 
 
-@ACL.route('/simple/<int:person_id>', methods=['GET'])
+@ACL.route('/simple/<int:person_id>', methods=['GET'], defaults={'max_results': 10000})
 @require_token()
 def acl_simple(person_id):
     status, function_acl = _acl_from_functions(person_id)
@@ -88,7 +112,7 @@ def acl_simple_all():
         pass
 
 
-@ACL.route('/activities/<int:person_id>', methods=['GET'])
+@ACL.route('/activities/<int:person_id>', methods=['GET'], defaults={'max_results': 10000})
 @require_token()
 def acl_activities_person(person_id):
     activities = []
@@ -107,7 +131,7 @@ def acl_activities():
     return eve_response(NLF_ORG, 200)
 
 
-@ACL.route('/clubs', methods=['GET'])
+@ACL.route('/clubs', methods=['GET'], defaults={'max_results': 10000})
 @require_token()
 def acl_clubs_person():
     clubs, _, _, status, _ = get_internal('organizations', **{'type_id': {'$in': [5, 2, 19]}})
@@ -118,7 +142,7 @@ def acl_clubs_person():
     return eve_response([], status)
 
 
-@ACL.route('/clubs', methods=['GET'])
+@ACL.route('/clubs', methods=['GET'], defaults={'max_results': 10000})
 @require_token()
 def acl_clubs():
     clubs, _, _, status, _ = get_internal('organizations', **{'type_id': {'$in': [5, 2, 19]}})
@@ -129,7 +153,7 @@ def acl_clubs():
     return eve_response([], status)
 
 
-@ACL.route('/clubs/activity/<int:activity_id>', methods=['GET'])
+@ACL.route('/clubs/activity/<int:activity_id>', methods=['GET'], defaults={'max_results': 10000})
 @require_token()
 def acl_activities_clubs(activity_id):
     clubs, _, _, status, _ = get_internal('organizations',
@@ -142,7 +166,7 @@ def acl_activities_clubs(activity_id):
     return eve_response([], status)
 
 
-@ACL.route('/roles', methods=['GET'])
+@ACL.route('/roles', methods=['GET'], defaults={'max_results': 10000})
 @require_token()
 def acl_roles():
     functions, _, _, status, _ = get_internal('functions_types_count')
@@ -159,7 +183,7 @@ def acl_roles():
     return eve_response([], status)
 
 
-@ACL.route('/roles/activity/<int:activity_id>', methods=['GET'])
+@ACL.route('/roles/activity/<int:activity_id>', methods=['GET'], defaults={'max_results': 10000})
 @require_token()
 def acl_activity_roles(activity_id):
     clubs, _, _, status, _ = get_internal('organizations',
@@ -187,7 +211,7 @@ def acl_activity_roles(activity_id):
     return eve_response([], status)
 
 
-@ACL.route('/roles/club/<int:club_id>', methods=['GET'])
+@ACL.route('/roles/club/<int:club_id>', methods=['GET'], )
 @require_token()
 def acl_club_roles(club_id):
     resource = 'functions_types_org_count'
