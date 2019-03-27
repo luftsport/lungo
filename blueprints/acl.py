@@ -32,7 +32,7 @@ def _get_activities_in_club(org_id):
                                                          aggregation['pipeline'],
                                                          aggregation['options'])
         if status == 200:
-            children = children.json()
+
             try:
                 for o in children['_items'][0]['children']:
                     activities.append(o.get('main_activity', {}).get('id', 27))
