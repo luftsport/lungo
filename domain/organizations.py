@@ -182,7 +182,7 @@ agg_get_children = {
                      "startWith": "$_down.id",
                      "connectFromField": "_down.id",
                      "connectToField": "id",
-                     "as": "down",
+                     "as": "children",
                      "maxDepth": 3,
                      "depthField": "depth"
                     }
@@ -205,7 +205,7 @@ agg_get_parents = {
                      "startWith": "$_up.id",
                      "connectFromField": "_up.id",
                      "connectToField": "id",
-                     "as": "up",
+                     "as": "parents",
                      "maxDepth": 3,
                      "depthField": "depth"
                     }
