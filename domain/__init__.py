@@ -9,7 +9,7 @@ import countries, counties
 import licenses_status
 import licenses_types
 import activities
-
+import test
 # import test, test_ref
 
 DOMAIN = {
@@ -34,6 +34,9 @@ DOMAIN = {
     "persons_gender": persons.agg_count_gender,
     "persons_merged_from": persons.agg_merged_from,
     "persons_age_distribution": persons.agg_age_distribution,
+
+    # Persons test
+    "test": test.definition,
 
     # Organization
     "organizations": organizations.definition,
