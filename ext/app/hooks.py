@@ -172,6 +172,7 @@ def on_function_put(response, original=None) -> None:
         # Club member! has_paid_membership?
         memberships = person.get('membership', []).copy()
         clubs = person.get('clubs', []).copy()
+        activities = person.get('activities', []).copy()
 
         # All memberships
         if response.get('type_id', 0) == 10000000:
