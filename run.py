@@ -81,7 +81,8 @@ code', 'stream', 'vary', 'www_authenticate']
 """
 
 from ext.app.hooks import on_function_post, on_license_post, on_competence_post, \
-    on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put
+    on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put, \
+    on_organizations_post, on_organizations_put
 
 
 def after_get_persons(request, response):
@@ -111,6 +112,7 @@ def assign_lookup(resource, request, lookup):
         for key, val in app.auth.resource_lookup.items():
             lookup[key] = val
 
+
 # Should be able to filter out all merged when doing lookup
 # def filter_merged_to(request, lookup):
 #    if any(i in lookup for i in ['id', '_id']) is False:
@@ -125,17 +127,25 @@ app.on_pre_GET += assign_lookup
 # app.on_pre_GET_persons += filter_merged_to
 
 # Hooks to update person object, database layer, AFTER
+# FUNCTIONS
 app.on_inserted_functions_process += on_function_post
 app.on_replaced_functions_process += on_function_put
 
+# LICENSES
 app.on_inserted_licenses_process += on_license_post
 app.on_replaced_licenses_process += on_license_put
 
+# COMPETENCES
 app.on_inserted_competences_process += on_competence_post
 app.on_replaced_competences_process += on_competence_put
 
+# PERSONS
 app.on_inserted_persons_process += on_person_after_post
 app.on_replaced_persons_process += on_person_after_put
+
+# ORGANIZATIONS
+app.on_inserted_organizations_process += on_organizations_post
+app.on_replaced_organizations_process += on_organizations_put
 
 """
 def _run_hook(resource_name, response, op):
