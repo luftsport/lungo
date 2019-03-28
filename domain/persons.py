@@ -28,6 +28,33 @@ _schema = {
                          }
                          },
               },
+    'memberships': {'type': 'list',
+                    'default': [],
+                    'schema': {
+                        'club': {'type': 'integer',
+                                 'data_relation': {
+                                     'resource': 'organizations',
+                                     'field': 'id',
+                                     'embeddable': True,
+                                 }
+                                 },
+                        'discipline': {'type': 'integer',
+                                       'data_relation': {
+                                           'resource': 'organizations',
+                                           'field': 'id',
+                                           'embeddable': True,
+                                       }
+                                       },
+                        'activity': {'type': 'integer',
+                                     'data_relation': {
+                                         'resource': 'activities',
+                                         'field': 'id',
+                                         'embeddable': True,
+                                     }
+                                     },
+                    }
+
+                    },
     'functions': {'type': 'list',
                   'schema': {'type': 'integer',
                              'data_relation': {
@@ -143,7 +170,11 @@ definition = {
     'mongo_indexes': {'person id': ([('id', 1)], {'background': True}),
                       # , 'unique': True gives DuplicateKeyError with versioning
                       'location': ([('address.location.geo', '2dsphere')], {'background': True}),
-                      'clubs': ([('clubs', 1)], {'background': True}),
+                      #'clubs': ([('clubs', 1)], {'background': True}),
+                      'membership': ([('memberships', 1)], {'background': True}),
+                      'group': ([('memberships.group', 1)], {'background': True}),
+                      'discipline': ([('memberships.discipline', 1)], {'background': True}),
+                      'activity': ([('memberships.activity', 1)], {'background': True}),
                       'functions': ([('functions', 1)], {'background': True}),
                       'activities': ([('activities', 1)], {'background': True}),
                       'licenses': ([('licenses', 1)], {'background': True}),
@@ -156,6 +187,14 @@ definition = {
 # Process resource without data_relations
 _schema_process = _schema.copy()
 _schema_process['clubs'] = {'type': 'list'}
+_schema_process['memberships'] = {'type': 'list', 'default': [],
+                                  'schema': {
+                                      'club': {'type': 'integer'},
+                                      'discipline': {'type': 'integer'},
+                                      'activity': {'type': 'integer'}
+                                  }
+                                  }
+
 _schema_process['competences'] = {'type': 'list'}
 _schema_process['functions'] = {'type': 'list'}
 _schema_process['licenses'] = {'type': 'list'}
