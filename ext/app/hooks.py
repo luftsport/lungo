@@ -16,6 +16,7 @@ RESOURCE_PERSONS_PROCESS = 'persons_process'
 RESOURCE_FUNCTIONS_PROCESS = 'functions_process'
 RESOURCE_LICENSES_PROCESS = 'licenses_process'
 RESOURCE_COMPETENCES_PROCESS = 'competences_process'
+RESOURCE_ORGANIZATIONS_PROCESS = 'organizations_process'
 
 LOCAL_TIMEZONE = "Europe/Oslo"  # UTC
 tz_utc = tz.gettz('UTC')
@@ -399,6 +400,15 @@ def on_organizations_put(response, original=None):
                     response['main_activity'] = discipline.get('main_activity')
 
         response['activities'] = list({v['id']: v for v in response['activities']}.values())
+
+        lookup = {'_id': response['_id']}
+        resp, _, _, status = patch_internal(RESOURCE_ORGANIZATIONS_PROCESS,
+                                            {'activities': response['activities'],
+                                             'main_activity':response['main_activity']},
+                                            False, True, **lookup)
+        if status != 200:
+            app.logger.error('Patch returned {} for license'.format(status))
+            pass
 
 
 def on_person_after_post(items):
