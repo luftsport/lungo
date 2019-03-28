@@ -243,7 +243,7 @@ def on_function_put(response, original=None) -> None:
         # response, last_modified, etag, status =
         if _compare_lists(functions, person.get('functions', [])) is True or \
                 _compare_lists(activities, person.get('activities', [])) is True or \
-                _compare_lists(memberships, person.get('memberships', [])) is True:
+                memberships != person.get('memberships', []):
 
             resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
                                                 {'functions': functions, 'activities': activities,
