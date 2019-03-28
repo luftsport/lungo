@@ -170,7 +170,7 @@ def on_function_put(response, original=None) -> None:
     if '_id' in person:
 
         # Club member! has_paid_membership?
-        memberships = person.get('membership', []).copy()
+        memberships = person.get('memberships', []).copy()
         clubs = person.get('clubs', []).copy()
         activities = person.get('activities', []).copy()
 
@@ -243,11 +243,11 @@ def on_function_put(response, original=None) -> None:
         # response, last_modified, etag, status =
         if _compare_lists(functions, person.get('functions', [])) is True or \
                 _compare_lists(activities, person.get('activities', [])) is True or \
-                _compare_lists(memberships, person.get('membership', [])) is True:
+                _compare_lists(memberships, person.get('memberships', [])) is True:
 
             resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
                                                 {'functions': functions, 'activities': activities,
-                                                 'membership': memberships},
+                                                 'memberships': memberships},
                                                 False, True, **lookup)
             if status != 200:
                 app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
