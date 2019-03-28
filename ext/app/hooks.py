@@ -32,6 +32,14 @@ def _get_end_of_january():
 
 
 def _fix_naive(date_time):
+
+    if date_time is not None:
+        if isinstance(date_time, str):
+            try:
+                expiry = parser.parse(date_time)
+            except:
+                expiry = None
+
     if isinstance(date_time, datetime):
         if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
             """self.org_created is naive, no timezone we assume UTC"""
@@ -156,12 +164,8 @@ def on_function_put(response, original=None) -> None:
 
     # Expiry date
     expiry = response.get('to_date', None)
-    if expiry is not None:
-        if isinstance(expiry, str):
-            try:
-                expiry = parser.parse(expiry)
-            except:
-                expiry = None
+
+    expiry = _fix_naive(expiry)
 
     if '_id' in person:
 
@@ -375,12 +379,12 @@ def on_competence_put(response, original=None):
                 pass
 
 
-def on_organization_post(items):
+def on_organizations_post(items):
     for item in items:
-        on_organization_put(item)
+        on_organizations_put(item)
 
 
-def on_organization_put(response):
+def on_organizations_put(response):
     # Only on NIF groups / clubs
     if response.get('type_id', 0) == 6:
 
