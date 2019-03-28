@@ -385,7 +385,7 @@ def on_organizations_post(items):
         on_organizations_put(item)
 
 
-def on_organizations_put(response):
+def on_organizations_put(response, original=None):
     # Only on NIF groups / clubs
     if response.get('type_id', 0) == 6:
 
