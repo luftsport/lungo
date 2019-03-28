@@ -164,8 +164,8 @@ def on_function_put(response, original=None) -> None:
 
     # Expiry date
     expiry = response.get('to_date', None)
-
-    expiry = _fix_naive(expiry)
+    if expiry is not None:
+        expiry = _fix_naive(expiry)
 
     if '_id' in person:
 
