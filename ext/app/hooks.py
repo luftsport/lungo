@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
 from flask import current_app as app
+from dateutil import parser
 
 # import dateutil.parser
 
@@ -155,14 +156,20 @@ def on_function_put(response, original=None) -> None:
 
     # Expiry date
     expiry = response.get('to_date', None)
+    if expiry is not None:
+        if isinstance(expiry, str):
+            try:
+                expiry = parser.parse(expiry)
+            except:
+                expiry = None
 
     if '_id' in person:
 
         # Club member! has_paid_membership?
+        memberships = person.get('membership', []).copy()
         clubs = person.get('clubs', []).copy()
-        activities = person.get('activities', []).copy()
 
-        # Will get all org_type_id's not only 5
+        # All memberships
         if response.get('type_id', 0) == 10000000:
 
             # Set expiry to end year
@@ -170,59 +177,39 @@ def on_function_put(response, original=None) -> None:
                 expiry = _get_end_of_january()
                 expiry = _fix_naive(expiry)
 
-            # If not deleted and is valid expiry add to club list
-            if response['is_deleted'] is False and response['is_passive'] is False and expiry is not None and expiry > _get_now():
+            org = _get_org(response['active_in_org_id'])
 
-                clubs.append(response.get('active_in_org_id'))
+            # Groups = clubs
+            if response['is_deleted'] is False \
+                    and response['is_passive'] is False \
+                    and expiry is not None and expiry > _get_now():
+
+                if org.get('type_id', 0) == 14:
+
+                    for c in org.get('_up', []):
+                        if c['type'] == 6:
+                            memberships.append({'club': c['id'],
+                                                'discipline': response['active_in_org_id'],
+                                                'activity': org.get('main_activity', {}).get('id', 27)})
+
             else:
                 try:
-                    clubs.remove(response.get('active_in_org_id'))
+                    if org.get('type_id', 0) == 14:
+                        for c in org.get('_up', []):
+                            if c['type'] == 6:
+                                for k, v in enumerate(memberships):
+                                    if v['club'] == c['id'] and v['discipline'] == org['id']:
+                                        memberships.pop(k)
+
                 except ValueError:
                     pass
                 except Exception as e:
                     pass
 
-            # Unique list
-            clubs = list(set(clubs))
-            # Valid expiry?
-            # clubs[:] = [d for d in clubs if d.get('expiry') >= _get_now()]
-
-            # Activities
-            # Do not know which club is actually which activity
-            # Need to redo all.
-            for club_id in clubs:
-                try:
-                    org = _get_org(club_id)
-                    # Gets the id of main activity
-                    # If None, go for 27 (Luftsport/370)
-                    # @TODO see if should be None to pass next
-                    if org.get('type_id', 0) == 14:
-                        activity = org.get('main_activity', {}).get('id', 27)
-                        if activity is not None:
-                            activities.append(activity)
-
-                        # club_activities = org.get('activities', [])
-                        # if activity is not None:
-                        #    # @TODO see if code should be integer? String now.
-                        #    # activity['code'] = int(activity.get('code', 0))
-                        #    activities.append(activity)
-                        # for act in club_activities:
-                        #    a = act.get('id', 27)
-                        #    activities.append(a)
-
-                except Exception as e:
-                    app.logger.exception('Error doing orgs for {} in {}'.format(response.get('person_id', 0), club_id))
-                    pass
-
-
-            # Unique list of activities
+            # Activities follows memberships
+            activities = [v['activity'] for v in memberships]
             activities.append(27)
             activities = list(set(activities))
-
-            # List of dicts
-            # activities = list({v['id']: v for v in activities}.values())
-            # Valid expiry?
-            # activities[:] = [d for d in activities if d.get('expiry') >= _get_now()]
 
         # The rest of the functions
         # Considers expiry date, if None then still valid
@@ -241,7 +228,7 @@ def on_function_put(response, original=None) -> None:
             except:
                 pass
 
-        f = list(set(functions))
+        functions = list(set(functions))
         # Valid expiry?
         # f[:] = [d for d in f if d.get('expiry') >= _get_now()]
 
@@ -251,13 +238,14 @@ def on_function_put(response, original=None) -> None:
         # response, last_modified, etag, status =
         if _compare_lists(functions, person.get('functions', [])) is True or \
                 _compare_lists(activities, person.get('activities', [])) is True or \
-                _compare_lists(clubs, person.get('clubs', [])) is True:
+                _compare_lists(memberships, person.get('membership', [])) is True:
 
             resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
-                                                {'functions': functions, 'activities': activities, 'clubs': clubs},
+                                                {'functions': functions, 'activities': activities,
+                                                 'membership': memberships},
                                                 False, True, **lookup)
             if status != 200:
-                app.logger.error('Patch returned {} for functions, activities, clubs'.format(status))
+                app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
                 pass
 
     # Always check and get type name
@@ -385,6 +373,27 @@ def on_competence_put(response, original=None):
             if status != 200:
                 app.logger.error('Patch returned {} for competence'.format(status))
                 pass
+
+
+def on_organization_post(items):
+    for item in items:
+        on_organization_put(item)
+
+
+def on_organization_put(response):
+    # Only on NIF groups / clubs
+    if response.get('type_id', 0) == 6:
+
+        for v in response.get('_down'):
+            if v.get('type') == 14:
+                discipline = _get_org(v.get('id'))
+                if 'activities' in discipline:
+                    for a in discipline['activities']:
+                        response['activities'].append(a)
+                if 'main_activity' in discipline:
+                    response['main_activity'] = discipline.get('main_activity')
+
+        response['activities'] = list({v['id']: v for v in response['activities']}.values())
 
 
 def on_person_after_post(items):
