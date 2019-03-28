@@ -7,12 +7,32 @@ _schema = {
 
     'id': {'type': 'integer', 'unique': True},
     'name': {'type': 'string'},
-    'clubs': {'type': 'list', 'default': [],
-              'schema': {
-                  'group': {'type': 'integer'},
-                  'discipline': {'type': 'integer'},
-                  'activity': {'type': 'integer'},
-              }}
+    'memberships': {'type': 'list', 'default': [],
+                    'schema': {
+                        'club': {'type': 'integer',
+                                 'data_relation': {
+                                     'resource': 'organizations',
+                                     'field': 'id',
+                                     'embeddable': True,
+                                 }
+                                 },
+                        'discipline': {'type': 'integer',
+                                       'data_relation': {
+                                           'resource': 'organizations',
+                                           'field': 'id',
+                                           'embeddable': True,
+                                       }
+                                       },
+                        'activity': {'type': 'integer',
+                                     'data_relation': {
+                                         'resource': 'activities',
+                                         'field': 'id',
+                                         'embeddable': True,
+                                     }
+                                     },
+                    }
+
+                    }
 }
 
 definition = {
@@ -37,5 +57,3 @@ definition = {
                       },
     'schema': _schema
 }
-
-
