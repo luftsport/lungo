@@ -33,7 +33,6 @@ def _get_end_of_january():
 
 
 def _fix_naive(date_time):
-
     if date_time is not None:
         if isinstance(date_time, str):
             try:
@@ -256,19 +255,39 @@ def on_function_put(response, original=None) -> None:
 
     # Always check and get type name
     # Update the function
+
+    function_payload = {}
+
+    # Type name
     if response.get('type_name', None) is None:
+
         function_type = _get_functions_types(response.get('type_id', 0))
         if len(function_type) > 0:
             type_name = function_type.get('name', None)
+
             if type_name is not None:
-                resp, _, _, status = patch_internal(RESOURCE_FUNCTIONS_PROCESS,
-                                                    {'type_name': type_name},
-                                                    False,
-                                                    True,
-                                                    **{'_id': response.get('_id')})
-                if status != 200:
-                    app.logger.error('Patch returned {} for function update type_name'.format(status))
-                    pass
+                function_payload['type_name'] = type_name
+
+    # Org type
+    if response.get('org_type_id', 0) == 0 or response.get('org_id', 0) == 0:
+
+        active_org = _get_org(response['active_in_org_id'])
+
+        # org_id
+        #function_payload['org_id'] = response['active_in_org_id']
+
+        if active_org.get('type_id', 0) > 0:
+            function_payload['org_type_id'] = active_org.get('type_id')
+
+    if len(function_payload) > 0:
+        resp, _, _, status = patch_internal(RESOURCE_FUNCTIONS_PROCESS,
+                                            function_payload,
+                                            False,
+                                            True,
+                                            **{'_id': response.get('_id')})
+        if status != 200:
+            app.logger.error('Patch returned {} for function update type_name'.format(status))
+            pass
 
 
 def on_license_post(items):
@@ -404,7 +423,7 @@ def on_organizations_put(response, original=None):
         lookup = {'_id': response['_id']}
         resp, _, _, status = patch_internal(RESOURCE_ORGANIZATIONS_PROCESS,
                                             {'activities': response['activities'],
-                                             'main_activity':response['main_activity']},
+                                             'main_activity': response['main_activity']},
                                             False, True, **lookup)
         if status != 200:
             app.logger.error('Patch returned {} for license'.format(status))
