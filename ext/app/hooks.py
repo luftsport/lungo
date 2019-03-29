@@ -268,13 +268,18 @@ def on_function_put(response, original=None) -> None:
             if type_name is not None:
                 function_payload['type_name'] = type_name
 
-    # Org type
-    if response.get('org_type_id', 0) == 0 or response.get('org_id', 0) == 0:
+    # org id
+    # Needs to be backwards compatible with active in org id
+    if response.get('org_id', 0) == 0 and response.get('active_in_org_id', 0) > 0:
+        function_payload['org_id'] = response['active_in_org_id']
+
+
+    # Org type, always supplu
+    if response.get('org_type_id', 0) == 0:
 
         active_org = _get_org(response['active_in_org_id'])
 
         # org_id
-        #function_payload['org_id'] = response['active_in_org_id']
 
         if active_org.get('type_id', 0) > 0:
             function_payload['org_type_id'] = active_org.get('type_id')
