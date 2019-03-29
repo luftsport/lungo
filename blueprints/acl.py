@@ -51,7 +51,7 @@ def _acl_from_functions(person_id):
               '$or': [{'to_date': {'$gt': datetime.now().isoformat()}}, {'to_date': {'$exists': False}}]
               }
 
-    functions, _, _, status, _ = get_internal('functions', **lookup)
+    functions, _, _, status, _ = get_internal('functions_process', **lookup)
 
     if status == 200:
 
@@ -143,7 +143,7 @@ def acl_activities():
 @ACL.route('/clubs', methods=['GET'])
 @require_token()
 def acl_clubs_person():
-    clubs, _, _, status, _ = get_internal('organizations', **{'type_id': {'$in': [5, 2, 19]}})
+    clubs, _, _, status, _ = get_internal('organizations_process', **{'type_id': {'$in': [6, 2, 19]}})
 
     if status == 200:
         return eve_response([d['id'] for d in clubs['_items']])
@@ -154,7 +154,7 @@ def acl_clubs_person():
 @ACL.route('/clubs', methods=['GET'])
 @require_token()
 def acl_clubs():
-    clubs, _, _, status, _ = get_internal('organizations', **{'type_id': {'$in': [5, 2, 19]}})
+    clubs, _, _, status, _ = get_internal('organizations', **{'type_id': {'$in': [6, 2, 19]}})
 
     if status == 200:
         return eve_response([d['id'] for d in clubs['_items']])
@@ -165,9 +165,9 @@ def acl_clubs():
 @ACL.route('/clubs/activity/<int:activity_id>', methods=['GET'])
 @require_token()
 def acl_activities_clubs(activity_id):
-    clubs, _, _, status, _ = get_internal('organizations',
-                                          **{'type_id': {'$in': [5, 2, 19]},
-                                             'main.activity.id': activity_id})
+    clubs, _, _, status, _ = get_internal('organizations_process',
+                                          **{'type_id': {'$in': [6, 2, 19]},
+                                             'main_activity.id': activity_id})
 
     if status == 200:
         return eve_response(list(set([d['id'] for d in clubs['_items']])), status)
@@ -195,8 +195,8 @@ def acl_roles():
 @ACL.route('/roles/activity/<int:activity_id>', methods=['GET'])
 @require_token()
 def acl_activity_roles(activity_id):
-    clubs, _, _, status, _ = get_internal('organizations',
-                                          **{'type_id': {'$in': [5, 2, 19]},
+    clubs, _, _, status, _ = get_internal('organizations_process',
+                                          **{'type_id': {'$in': [6, 2, 19]},
                                              'main_activity.id': activity_id})
 
     if status == 200:
