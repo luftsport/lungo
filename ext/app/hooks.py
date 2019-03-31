@@ -6,7 +6,7 @@ from eve.methods.get import get_internal
 from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
-from flask import current_app as app, Response, redirect
+from flask import current_app as app # , Response, redirect
 from dateutil import parser
 import json
 
@@ -36,12 +36,13 @@ def after_get_persons(request, response):
         # redirect('/persons/%s' % d['_merged_to'], code=302)
         # abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
 
-        response = redirect('/api/v1/persons/%s' % d['_merged_to'], code=301)
+        # response = redirect('/api/v1/persons/%s' % d['_merged_to'], code=301)
         #return Response(response=None, status=301, headers={'Location': '/api/v1/persons/%s' % d['_merged_to']})
 
-        # response.headers['Location'] = '/api/v1/persons/%s' % d['_merged_to']
+        response.headers['Location'] = '/api/v1/persons/%s' % d['_merged_to']
         # response.status = 'Moved Permanently'
-        # response.status_code = 301
+        response.status_code = 301
+        response.set_data(None)
         """
         response.set_data(json.dumps({'_status': 'ERR',
                                       '_error': '301 Moved permanently',
