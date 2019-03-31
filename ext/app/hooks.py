@@ -42,7 +42,7 @@ def after_get_persons(request, response):
         response.headers['Location'] = '/api/v1/persons/%s' % d['_merged_to']
         # response.status = 'Moved Permanently'
         response.status_code = 301
-        response.set_data(None)
+        response.set_data('')
         """
         response.set_data(json.dumps({'_status': 'ERR',
                                       '_error': '301 Moved permanently',
