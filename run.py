@@ -82,37 +82,8 @@ code', 'stream', 'vary', 'www_authenticate']
 
 from ext.app.hooks import on_function_post, on_license_post, on_competence_post, \
     on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put, \
-    on_organizations_post, on_organizations_put
+    on_organizations_post, on_organizations_put, after_get_persons, assign_lookup
 
-
-def after_get_persons(request, response):
-    d = json.loads(response.get_data().decode('UTF-8'))
-
-    # me = get_internal('persons', **{'id': 5389166})
-    # patch_internal('persons', {'clubs': [432, 4653]}, False, True, **{'id': 5389166})
-    # print(me)
-
-    # print(dir(response))
-    if '_items' not in d and '_merged_to' in d:
-        # redirect('/persons/%s' % d['_merged_to'], code=302)
-        # abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
-        response.headers['Location'] = '/api/v1/persons/%s' % d['_merged_to']
-        # response.status = 'Moved Permanently'
-        response.status_code = 301
-        """
-        response.set_data(json.dumps({'_status': 'ERR',
-                                      '_error': '301 Moved permanently',
-                                      '_url': '/api/v1/persons/%s' % d['_merged_to'],
-                                      'id': d['_merged_to']}))
-        """
-
-
-def assign_lookup(resource, request, lookup):
-    """If lookup then we do add this"""
-
-    if app.auth.resource_lookup is not None:
-        for key, val in app.auth.resource_lookup.items():
-            lookup[key] = val
 
 
 # Should be able to filter out all merged when doing lookup
@@ -126,6 +97,7 @@ app.on_post_GET_persons += after_get_persons
 
 # All get's get through this one!
 app.on_pre_GET += assign_lookup
+
 # app.on_pre_GET_persons += filter_merged_to
 
 # Hooks to update person object, database layer, AFTER

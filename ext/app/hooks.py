@@ -6,8 +6,9 @@ from eve.methods.get import get_internal
 from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
-from flask import current_app as app
+from flask import current_app as app, Response #, redirect
 from dateutil import parser
+import simplejson as json
 
 # import dateutil.parser
 
@@ -21,6 +22,40 @@ RESOURCE_ORGANIZATIONS_PROCESS = 'organizations_process'
 LOCAL_TIMEZONE = "Europe/Oslo"  # UTC
 tz_utc = tz.gettz('UTC')
 tz_local = tz.gettz(LOCAL_TIMEZONE)
+
+
+def after_get_persons(request, response):
+    d = json.loads(response.get_data().decode('UTF-8'))
+
+    # me = get_internal('persons', **{'id': 5389166})
+    # patch_internal('persons', {'clubs': [432, 4653]}, False, True, **{'id': 5389166})
+    # print(me)
+
+    # print(dir(response))
+    if '_items' not in d and '_merged_to' in d:
+        # redirect('/persons/%s' % d['_merged_to'], code=302)
+        # abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
+
+        # response = redirect('/api/v1/persons/%s' % d['_merged_to'], code=301)
+        response = Response(response=None, status=301, headers={'Location': '/api/v1/persons/%s' % d['_merged_to']})
+
+        # response.headers['Location'] = '/api/v1/persons/%s' % d['_merged_to']
+        # response.status = 'Moved Permanently'
+        # response.status_code = 301
+        """
+        response.set_data(json.dumps({'_status': 'ERR',
+                                      '_error': '301 Moved permanently',
+                                      '_url': '/api/v1/persons/%s' % d['_merged_to'],
+                                      'id': d['_merged_to']}))
+        """
+
+
+def assign_lookup(resource, request, lookup):
+    """If lookup then we do add this"""
+
+    if app.auth.resource_lookup is not None:
+        for key, val in app.auth.resource_lookup.items():
+            lookup[key] = val
 
 
 def _get_end_of_year():
@@ -272,7 +307,6 @@ def on_function_put(response, original=None) -> None:
     # Needs to be backwards compatible with active in org id
     if response.get('org_id', 0) == 0 and response.get('active_in_org_id', 0) > 0:
         function_payload['org_id'] = response['active_in_org_id']
-
 
     # Org type, always supplu
     if response.get('org_type_id', 0) == 0:
