@@ -35,7 +35,8 @@ def _get_activities_in_club(org_id):
 
             try:
                 for o in children['_items'][0]['children']:
-                    activities.append(o.get('main_activity', {}).get('id', 27))
+                    if o.get('type_id', 0) == 14:
+                        activities.append(o.get('main_activity', {}).get('id', 27))
 
                 activities = list(set(activities))
             except:
@@ -59,13 +60,15 @@ def _acl_from_functions(person_id):
 
             org, _, _, fstatus = getitem_internal('organizations', **{'id': f['active_in_org_id']})
 
-            if fstatus == 200 and org.get('type_id', 0) in [5, 2, 19, 14]:  # 2 særforbund, 19 seksjon, 14 er gren
+            if fstatus == 200 and org.get('type_id', 0) in [6, 2, 19, 14]:  # 2 særforbund, 19 seksjon, 14 er gren
 
-                if org.get('type_id', 0) == 5:
+                """ Due to NA
+                if org.get('type_id', 0) == 6:
                     activities = _get_activities_in_club(org['id'])
                 else:
-                    activities = [org.get('main_activity', {'id': 27}).get('id')]
-
+                    activities = [org.get('acitivities', {'id': 27}).get('id')]
+                """
+                activities = [org.get('acitivities', {'id': 27}).get('id')]
                 for activity in activities:
                     function_acl.append({'activity': activity,
                                          'club': f['active_in_org_id'],
@@ -86,7 +89,7 @@ def acl(person_id):
     status, function_acl = _acl_from_functions(person_id)
 
     if status == 200:
-        function_acl = [{'activity': i['activity'], 'club': i['club'], 'role': i['role']} for i in function_acl]
+        # function_acl = [{'activity': i['activity'], 'club': i['club'], 'role': i['role']} for i in function_acl]
         return eve_response(function_acl, 200)
 
     return eve_abort(status)
