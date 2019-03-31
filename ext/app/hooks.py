@@ -39,7 +39,7 @@ def after_get_persons(request, response):
         # response = redirect('/api/v1/persons/%s' % d['_merged_to'], code=301)
         #return Response(response=None, status=301, headers={'Location': '/api/v1/persons/%s' % d['_merged_to']})
 
-        response.headers['Location'] = '/api/v1/persons/%s' % d['_merged_to']
+        response.headers['Location'] = 'https://medlem.nlf.no/api/v1/persons/%s' % d['_merged_to']
         # response.status = 'Moved Permanently'
         response.status_code = 301
         response.set_data('')
