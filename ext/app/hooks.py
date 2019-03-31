@@ -8,7 +8,7 @@ from operator import itemgetter
 from dateutil import tz
 from flask import current_app as app, Response #, redirect
 from dateutil import parser
-import simplejson as json
+import json
 
 # import dateutil.parser
 
