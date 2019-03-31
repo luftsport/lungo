@@ -37,7 +37,7 @@ def after_get_persons(request, response):
         # abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
 
         # response = redirect('/api/v1/persons/%s' % d['_merged_to'], code=301)
-        response = Response(response=None, status=301, headers={'Location': '/api/v1/persons/%s' % d['_merged_to']})
+        return Response(response=None, status=301, headers={'Location': '/api/v1/persons/%s' % d['_merged_to']})
 
         # response.headers['Location'] = '/api/v1/persons/%s' % d['_merged_to']
         # response.status = 'Moved Permanently'
