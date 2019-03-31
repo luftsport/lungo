@@ -66,10 +66,9 @@ def _acl_from_functions(person_id):
                 if org.get('type_id', 0) == 6:
                     activities = _get_activities_in_club(org['id'])
                 else:
-                    activities = [org.get('acitivities', {'id': 27}).get('id')]
+                    activities = [org.get('activities', {'id': 27}).get('id')]
                 """
-                activities = [org.get('acitivities', {'id': 27}).get('id')]
-                for activity in activities:
+                for activity in [v['id'] for v in org.get('activities', [{'id': 27}])]:
                     function_acl.append({'activity': activity,
                                          'club': f['active_in_org_id'],
                                          'role': f['type_id'],
