@@ -447,7 +447,7 @@ def on_organizations_post(items):
 
 def on_organizations_put(response, original=None):
     # Only on NIF groups / clubs
-    if response.get('type_id', 0) == 6:
+    if response.get('type_id', 0) == 6 or len(response.get('activities', [])) == 0:
 
         for v in response.get('_down'):
             if v.get('type') == 14:
