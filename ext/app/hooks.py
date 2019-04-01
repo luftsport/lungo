@@ -210,6 +210,9 @@ def on_function_put(response, original=None) -> None:
         clubs = person.get('clubs', []).copy()
         activities = person.get('activities', []).copy()
 
+        # Always get org
+        org = _get_org(response['active_in_org_id'])
+
         # All memberships
         if response.get('type_id', 0) == 10000000:
 
@@ -218,7 +221,7 @@ def on_function_put(response, original=None) -> None:
                 expiry = _get_end_of_january()
                 expiry = _fix_naive(expiry)
 
-            org = _get_org(response['active_in_org_id'])
+
 
             # Groups = clubs
             if response['is_deleted'] is False \
@@ -270,6 +273,11 @@ def on_function_put(response, original=None) -> None:
                 pass
 
         functions = list(set(functions))
+
+        org_type_id = response.get('org_type_id', None)
+        if org_type_id is None:
+            org_type_id = org.get('type_id', 0)
+
         # Valid expiry?
         # f[:] = [d for d in f if d.get('expiry') >= _get_now()]
 
@@ -279,10 +287,14 @@ def on_function_put(response, original=None) -> None:
         # response, last_modified, etag, status =
         if _compare_lists(functions, person.get('functions', [])) is True or \
                 _compare_lists(activities, person.get('activities', [])) is True or \
-                memberships != person.get('memberships', []):
+                memberships != person.get('memberships', []) or \
+                org_type_id != response.get('org_type_id', None):
 
             resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
-                                                {'functions': functions, 'activities': activities,
+                                                {'functions': functions,
+                                                 'activities': activities,
+                                                 'org_id': response['active_in_org_id'],
+                                                 'org_type_id': org_type_id,
                                                  'memberships': memberships},
                                                 False, True, **lookup)
             if status != 200:
