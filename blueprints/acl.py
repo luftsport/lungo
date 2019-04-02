@@ -49,6 +49,9 @@ def _acl_from_functions(person_id):
     function_acl = []
 
     lookup = {'person_id': person_id,
+              'is_deleted': False,
+              'is_passive': False,
+              'type_is_license': False,
               '$or': [{'to_date': {'$gt': datetime.now().isoformat()}}, {'to_date': {'$exists': False}}]
               }
 
@@ -70,7 +73,7 @@ def _acl_from_functions(person_id):
                 """
                 for activity in [v['id'] for v in org.get('activities', [{'id': 27}])]:
                     function_acl.append({'activity': activity,
-                                         'club': f['active_in_org_id'],
+                                         'org': f['active_in_org_id'],
                                          'role': f['type_id'],
                                          'name': f['type_name'],
                                          'func': f['id'],
@@ -88,7 +91,7 @@ def acl(person_id):
     status, function_acl = _acl_from_functions(person_id)
 
     if status == 200:
-        # function_acl = [{'activity': i['activity'], 'club': i['club'], 'role': i['role']} for i in function_acl]
+        function_acl = [{'activity': i['activity'], 'org': i['org'], 'role': i['role'], 'type': i['type']} for i in function_acl]
         return eve_response(function_acl, 200)
 
     return eve_abort(status)
