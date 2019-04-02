@@ -196,6 +196,7 @@ def on_function_put(response, original=None) -> None:
     :param response: database object
     :return: None
     """
+    org = None
     person = _get_person(response.get('person_id', None))
 
     # Expiry date
@@ -228,6 +229,8 @@ def on_function_put(response, original=None) -> None:
                     and response['is_passive'] is False \
                     and expiry is not None and expiry > _get_now():
 
+                clubs.append(response['active_in_org_id'])
+
                 if org.get('type_id', 0) == 14:
 
                     for c in org.get('_up', []):
@@ -244,62 +247,61 @@ def on_function_put(response, original=None) -> None:
                                 for k, v in enumerate(memberships):
                                     if v['club'] == c['id'] and v['discipline'] == org['id']:
                                         memberships.pop(k)
-
+                    clubs.remove(response['active_in_org_id'])
                 except ValueError:
                     pass
                 except Exception as e:
                     pass
+
+            # Keep clubs
+            clubs = list(set(clubs))
 
             # Activities follows memberships
             activities = [v['activity'] for v in memberships]
             activities.append(27)
             activities = list(set(activities))
 
-            # The rest of the functions
-            # Considers expiry date, if None then still valid
-            functions = person.get('functions', []).copy()
+        # The rest of the functions
+        # Functions ex and including 1000000
+        # Considers expiry date, if None then still valid
+        functions = person.get('functions', []).copy()
 
-            if expiry is not None:
-                expiry = _fix_naive(expiry)
-            else:
-                expiry = _get_end_of_year()
+        if expiry is not None:
+            expiry = _fix_naive(expiry)
+        else:
+            expiry = _get_end_of_year()
 
-            if expiry is None or expiry > _get_now():
-                functions.append(response['id'])
-            else:
-                try:
-                    functions.remove(response.get('id'))
-                except:
-                    pass
+        if expiry is None or expiry > _get_now():
+            functions.append(response['id'])
+        else:
+            try:
+                functions.remove(response.get('id'))
+            except:
+                pass
 
-            functions = list(set(functions))
+        functions = list(set(functions))
 
-            org_type_id = response.get('org_type_id', None)
-            if org_type_id is None:
-                org_type_id = org.get('type_id', 0)
+        # Valid expiry?
+        # f[:] = [d for d in f if d.get('expiry') >= _get_now()]
 
-            # Valid expiry?
-            # f[:] = [d for d in f if d.get('expiry') >= _get_now()]
+        lookup = {'_id': person['_id']}
 
-            lookup = {'_id': person['_id']}
+        # Update person with new values
+        # response, last_modified, etag, status =
+        if _compare_lists(functions, person.get('functions', [])) is True or \
+                _compare_lists(activities, person.get('activities', [])) is True or \
+                memberships != person.get('memberships', []) or \
+                _compare_lists(clubs, person.get('clubs', [])) is True:
 
-            # Update person with new values
-            # response, last_modified, etag, status =
-            if _compare_lists(functions, person.get('functions', [])) is True or \
-                    _compare_lists(activities, person.get('activities', [])) is True or \
-                    memberships != person.get('memberships', []) or \
-                    org_type_id != response.get('org_type_id', None):
-
-                resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
-                                                    {'functions': functions,
-                                                     'activities': activities,
-                                                     'org_id': response['active_in_org_id'],
-                                                     'org_type_id': org_type_id,
-                                                     'memberships': memberships},
-                                                    False, True, **lookup)
-                if status != 200:
-                    app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
-                    pass
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                                {'functions': functions,
+                                                 'clubs': clubs,
+                                                 'activities': activities,
+                                                 'memberships': memberships},
+                                                False, True, **lookup)
+            if status != 200:
+                app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
+                pass
 
     # PURE RESPONSE
     # Update the function
@@ -323,12 +325,12 @@ def on_function_put(response, original=None) -> None:
 
     # Org type, always supply
     if response.get('org_type_id', 0) == 0:
-
-        active_org = _get_org(response['active_in_org_id'])
+        if org is None:
+            org = _get_org(response['active_in_org_id'])
 
         # org_id
-        if active_org.get('type_id', 0) > 0:
-            function_payload['org_type_id'] = active_org.get('type_id')
+        if org.get('type_id', 0) > 0:
+            function_payload['org_type_id'] = org.get('type_id')
 
     if len(function_payload) > 0:
         resp, _, _, status = patch_internal(RESOURCE_FUNCTIONS_PROCESS,
