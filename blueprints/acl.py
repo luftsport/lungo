@@ -72,13 +72,16 @@ def _acl_from_functions(person_id):
                     activities = [org.get('activities', {'id': 27}).get('id')]
                 """
                 for activity in [v['id'] for v in org.get('activities', [{'id': 27}])]:
-                    function_acl.append({'activity': activity,
-                                         'org': f['active_in_org_id'],
-                                         'role': f['type_id'],
-                                         'name': f['type_name'],
-                                         'func': f['id'],
-                                         'type': org.get('type_id')
-                                         })
+                    try:
+                        function_acl.append({'activity': activity,
+                                             'org': f['active_in_org_id'],
+                                             'role': f['type_id'],
+                                             'name': f.get('type_name', 'ukjent'),
+                                             'func': f['id'],
+                                             'type': org.get('type_id')
+                                             })
+                    except:
+                        pass
 
         return status, function_acl
 
