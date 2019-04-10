@@ -30,20 +30,21 @@ ERR = {
 def member_check(activity, person_id):
     if activity in ACTIVITIES.keys() and person_id > 0:
 
-        lookup = {'activities.PathName': 'Luftsport/{}'.format(activity.capitalize()),
+        path_name = 'Luftsport/{}'.format(activity.capitalize())
+
+        lookup = {'activities.PathName': path_name,
                   'Id': person_id}
-        #  '$or': [{'MelwinId': person_id}, {'Id': person_id}]}
 
         members, _, _, status, _ = get_internal('ka_members', **lookup)
 
         try:
 
             if status == 200:
-                if '_items' in members and len(members['_items']) == 1:
 
+                if '_items' in members and len(members['_items']) == 1:
                     parents = []
                     for a in members['_items'][0]['activities']:
-                        if a['PathName'] == "Luftsport/Modellfly":
+                        if a['PathName'] == path_name:
                             for club in a["ParentOrgIds"]:
                                 parents.append(club)
 
@@ -62,7 +63,6 @@ def member_check(activity, person_id):
                                  'id': person_id,
                                  'activity': activity,
                                  '_updated': str(members['_items'][0]['_updated'])
-                                 # datetime.datetime.fromtimestamp(members['_items'][0]['_updated']['$date'])
                                  }, 200)
 
                     ERR['_error']['message'] = 'Membership not registered paid'
@@ -70,7 +70,7 @@ def member_check(activity, person_id):
                     return eve_response(ERR, 402)
 
                 elif len(members['_items']) == 0:
-                    ERR['_error']['message'] = 'Member not found for activity'
+                    ERR['_error']['message'] = 'Member not found or not registered in activity'
                     ERR['_error']['code'] = 404
                     return eve_response(ERR, 404)
         except:
@@ -78,7 +78,7 @@ def member_check(activity, person_id):
 
     ERR['_error']['message'] = 'You do not have access to the resource'
     ERR['_error']['code'] = 403
-    return eve_response(None, 403)
+    return eve_response(ERR, 403)
 
     return eve_response({'valid': False,
                          'full_name': None,
