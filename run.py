@@ -19,6 +19,7 @@ from eve_healthcheck import EveHealthCheck
 from blueprints.syncdaemon import Sync
 from blueprints.fai import Fai
 from blueprints.acl import ACL
+from blueprints.member_check import MemberCheck
 
 # Import blueprints
 # from blueprints.authentication import Authenticate
@@ -64,6 +65,7 @@ app.register_blueprint(swagger, url_prefix=app.globals.get('prefix'))
 app.register_blueprint(Sync, url_prefix="%s/syncdaemon" % app.globals.get('prefix'))
 app.register_blueprint(Fai, url_prefix="%s/fai" % app.globals.get('prefix'))
 app.register_blueprint(ACL, url_prefix="%s/acl" % app.globals.get('prefix'))
+app.register_blueprint(MemberCheck, url_prefix="%s/membercheck" % app.globals.get('prefix'))
 
 # You might want to simply update the eve settings module instead.
 
@@ -83,8 +85,6 @@ code', 'stream', 'vary', 'www_authenticate']
 from ext.app.hooks import on_function_post, on_license_post, on_competence_post, \
     on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put, \
     on_organizations_post, on_organizations_put, after_get_persons, assign_lookup
-
-
 
 # Should be able to filter out all merged when doing lookup
 # def filter_merged_to(request, lookup):
