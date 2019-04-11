@@ -223,7 +223,14 @@ search_definition = {
     'url': 'persons/search',
     'item_title': 'Persons Search',
     'datasource': {'source': RESOURCE_COLLECTION,
-                   'projection': {"_score": {"$meta": "textScore"}, "full_name": 1, "id": 1},
+                   'projection': {
+                       "_score": {"$meta": "textScore"},
+                       "full_name": 1,
+                       "id": 1,
+                       "_updated": 1,
+                       "_created": 1,
+                       "_version": 1
+                   },
                    'default_sort': [("_score", {"$meta": "textScore"})],
                    'filter': {'_merged_to': {'$exists': False}}
                    },
