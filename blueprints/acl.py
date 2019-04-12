@@ -52,7 +52,7 @@ def _acl_from_functions(person_id):
               'is_deleted': False,
               'is_passive': False,
               'type_is_license': False,
-              '$or': [{'to_date': {'$gt': datetime.now().isoformat()}}, {'to_date': {'$exists': False}}]
+              '$or': [{'to_date': {'$gt': '{}Z'.format(datetime.now().isoformat())}}, {'to_date': {'$exists': False}}]
               }
 
     functions, _, _, status, _ = get_internal('functions_process', **lookup)
