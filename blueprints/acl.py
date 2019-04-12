@@ -73,13 +73,14 @@ def _acl_from_functions(person_id):
                 """
                 for activity in [v['id'] for v in org.get('activities', [{'id': 27}])]:
                     try:
-                        function_acl.append({'activity': activity,
-                                             'org': f['active_in_org_id'],
-                                             'role': f['type_id'],
-                                             'name': f.get('type_name', 'ukjent'),
-                                             'func': f['id'],
-                                             'type': org.get('type_id')
-                                             })
+                        if activity in list(NLF_ORG.keys()):
+                            function_acl.append({'activity': activity,
+                                                 'org': f['active_in_org_id'],
+                                                 'role': f['type_id'],
+                                                 'name': f.get('type_name', 'ukjent'),
+                                                 'func': f['id'],
+                                                 'type': org.get('type_id')
+                                                 })
                     except:
                         pass
 
