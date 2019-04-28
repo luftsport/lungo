@@ -426,7 +426,7 @@ def on_competence_put(response, original=None):
         competence = person.get('competences', []).copy()
 
         # Add this competence?
-        if expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
+        if response.get('passed', False) is True and expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
 
             try:
                 competence.append({'id': response.get('id'),
@@ -438,7 +438,8 @@ def on_competence_put(response, original=None):
                 pass
 
         # Always remove stale competences
-        competence[:] = [d for d in competence if _fix_naive(d.get('expiry')) >= _get_now()]
+        # Note that _code is for removing old competences, should be removed
+        competence[:] = [d for d in competence if _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
         # Always unique by id
         competence = list({v['id']: v for v in competence}.values())
