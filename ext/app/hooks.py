@@ -433,7 +433,8 @@ def on_competence_put(response, original=None):
                                    '_code': response.get('_code', None),
                                    'issuer': response.get('approved_by_person_id', None),
                                    'expiry': expiry,
-                                   'paid': response.get('paid_date', None)})
+                                   # 'paid': response.get('paid_date', None)
+                                   })
             except:
                 pass
 
