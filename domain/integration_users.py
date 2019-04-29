@@ -1,4 +1,5 @@
 from bson import SON
+
 RESOURCE_COLLECTION = 'integration_users'
 
 _schema = {'username': {'type': 'string',
@@ -52,6 +53,7 @@ definition = {
 agg_count_clubs = {
     'url': 'integration/users/clubs',
     'item_title': 'Integration Users Clubs',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

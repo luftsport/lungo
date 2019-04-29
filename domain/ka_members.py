@@ -1,4 +1,5 @@
 from bson import SON
+
 RESOURCE_COLLECTION = 'ka_members'
 
 _schema = {
@@ -54,6 +55,7 @@ definition = {
 agg_count_activities = {
     'url': 'ka/members/activities',
     'item_title': 'Members activities aggregation',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -70,6 +72,7 @@ agg_count_activities = {
 agg_count_member_activities = {
     'url': 'ka/members/activities/member',
     'item_title': 'Member activities aggregation',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

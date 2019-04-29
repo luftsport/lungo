@@ -52,6 +52,7 @@ definition = {
 agg_count_entity_types = {
     'url': 'integration/changes/entity/types',
     'item_title': 'Integration Changes Entity Types',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -66,6 +67,7 @@ agg_count_entity_types = {
 agg_count_statuses = {
     'url': 'integration/changes/status',
     'item_title': 'Integration Changes Status',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -80,6 +82,7 @@ agg_count_statuses = {
 agg_count_clubs = {
     'url': 'integration/changes/clubs',
     'item_title': 'Integration Changes Clubs',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -94,6 +97,7 @@ agg_count_clubs = {
 agg_count_change_types = {
     'url': 'integration/changes/change/types',
     'item_title': 'Integration Changes Types',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -109,6 +113,7 @@ agg_count_change_types = {
 agg_count_change_day = {
     'url': 'integration/changes/aggregate/day',
     'item_title': 'Integration Changes Aggregate By Day',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -141,6 +146,7 @@ agg_count_change_day = {
 agg_count_change_hour = {
     'url': 'integration/changes/aggregate/hour',
     'item_title': 'Integration Changes Aggregate By Hour Of Day',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -157,6 +163,7 @@ agg_count_change_hour = {
 agg_count_change_day_hour = {
     'url': 'integration/changes/aggregate/day/hour',
     'item_title': 'Integration Changes Aggregate By Day and hour',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

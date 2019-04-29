@@ -172,6 +172,7 @@ from bson import SON, ObjectId
 agg_get_children = {
     'url': '{}/children'.format(RESOURCE_COLLECTION),
     'item_title': 'Organizations children 3 levels down',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -185,7 +186,7 @@ agg_get_children = {
                      "as": "children",
                      "maxDepth": 3,
                      "depthField": "depth"
-                    }
+                 }
                  }
                  ]
         }
@@ -195,6 +196,7 @@ agg_get_children = {
 agg_get_parents = {
     'url': '{}/parents'.format(RESOURCE_COLLECTION),
     'item_title': 'Organizations parents 3 levels up',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -208,7 +210,7 @@ agg_get_parents = {
                      "as": "parents",
                      "maxDepth": 3,
                      "depthField": "depth"
-                    }
+                 }
                  }
                  ]
         }
@@ -218,6 +220,7 @@ agg_get_parents = {
 agg_count_types = {
     'url': 'organizations/types/count',
     'item_title': 'Organiuzations Types Count',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -231,6 +234,7 @@ agg_count_types = {
 
 agg_parents = {
     'item_title': 'Content Parents Aggregation',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -283,6 +287,7 @@ agg_parents = {
 
 agg_children = {
     'item_title': 'Content Parents Aggregation',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -335,6 +340,7 @@ agg_children = {
 
 agg_siblings = {
     'item_title': 'Content Parents Aggregation',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

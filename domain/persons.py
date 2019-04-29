@@ -170,7 +170,7 @@ definition = {
     'mongo_indexes': {'person id': ([('id', 1)], {'background': True}),
                       # , 'unique': True gives DuplicateKeyError with versioning
                       'location': ([('address.location.geo', '2dsphere')], {'background': True}),
-                      #'clubs': ([('clubs', 1)], {'background': True}),
+                      # 'clubs': ([('clubs', 1)], {'background': True}),
                       'membership': ([('memberships', 1)], {'background': True}),
                       'group': ([('memberships.group', 1)], {'background': True}),
                       'discipline': ([('memberships.discipline', 1)], {'background': True}),
@@ -250,6 +250,7 @@ search_definition = {
 agg_count_gender = {
     'url': 'persons/gender',
     'item_title': 'Persons Gender',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -276,6 +277,7 @@ agg_count_gender = {
 agg_merged_from = {
     'url': 'persons/merged',
     'item_title': 'Persons merged from',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -336,6 +338,7 @@ agg_merged_from = {
 agg_age_distribution = {
     'url': 'persons/age',
     'item_title': 'Persons age aggregation',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

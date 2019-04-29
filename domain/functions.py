@@ -64,7 +64,7 @@ definition = {
                       'type_id': ([('type_id', 1)], {'background': True}),
                       'to_date': ([('to_date', 1)], {'background': True}),
                       'active_in_org_id': (
-                      [('active_in_org_id', 1), ('org_id', 1), ('org_type_id', 1)], {'background': True}),
+                          [('active_in_org_id', 1), ('org_id', 1), ('org_type_id', 1)], {'background': True}),
                       'has_paid_membership': ([('has_paid_membership', 1)], {'background': True}),
                       'type_name': ([('type_name', 'text')], {'background': True})
                       },
@@ -100,6 +100,7 @@ from bson import SON, ObjectId
 agg_count_types = {
     'url': 'functions/types/count',
     'item_title': 'Functions Types Count',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -114,6 +115,7 @@ agg_count_types = {
 agg_count_types_org = {
     'url': 'functions/types/org/count',
     'item_title': 'Functions Types Count',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
@@ -129,6 +131,7 @@ agg_count_types_org = {
 agg_count_types_activity = {
     'url': 'functions/types/activity/count',
     'item_title': 'Functions Types Count',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {

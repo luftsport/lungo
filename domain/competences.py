@@ -76,6 +76,7 @@ process_definition = {
 agg_count_codes = {
     'url': 'competences/codes',
     'item_title': 'Competences Codes',
+    'pagination': False,
     'datasource': {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
