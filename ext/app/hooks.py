@@ -72,9 +72,9 @@ def _fix_naive(date_time):
     if date_time is not None:
         if isinstance(date_time, str):
             try:
-                expiry = parser.parse(date_time)
+                date_time = parser.parse(date_time)
             except:
-                expiry = None
+                date_time = None
 
     if isinstance(date_time, datetime):
         if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
@@ -411,48 +411,50 @@ def on_competence_post(items):
 def on_competence_put(response, original=None):
     """"""
 
-    expiry = response.get('valid_until', None)
+    if response.get('passed', False) is True:
 
-    # Set expiry to end year
-    if expiry is None:
-        expiry = _get_end_of_year()
+        expiry = response.get('valid_until', None)
 
-    expiry = _fix_naive(expiry)
+        # Set expiry to end year
+        if expiry is None:
+            expiry = _get_end_of_year()
 
-    person = _get_person(response.get('person_id', None))
+        expiry = _fix_naive(expiry)
 
-    if '_id' in person:
+        person = _get_person(response.get('person_id', None))
 
-        competence = person.get('competences', []).copy()
+        if '_id' in person:
 
-        # Add this competence?
-        if response.get('passed', False) is True and expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
+            competence = person.get('competences', []).copy()
 
-            try:
-                competence.append({'id': response.get('id'),
-                                   '_code': response.get('_code', None),
-                                   'issuer': response.get('approved_by_person_id', None),
-                                   'expiry': expiry,
-                                   # 'paid': response.get('paid_date', None)
-                                   })
-            except:
-                pass
+            # Add this competence?
+            if expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
 
-        # Always remove stale competences
-        # Note that _code is for removing old competences, should be removed
-        competence[:] = [d for d in competence if _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
+                try:
+                    competence.append({'id': response.get('id'),
+                                       '_code': response.get('_code', None),
+                                       'issuer': response.get('approved_by_person_id', None),
+                                       'expiry': expiry,
+                                       # 'paid': response.get('paid_date', None)
+                                       })
+                except:
+                    pass
 
-        # Always unique by id
-        competence = list({v['id']: v for v in competence}.values())
+            # Always remove stale competences
+            # Note that _code is for removing old competences, should be removed
+            competence[:] = [d for d in competence if _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
-        # Patch if difference
-        if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
-            lookup = {'_id': person['_id']}
-            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
-                                                **lookup)
-            if status != 200:
-                app.logger.error('Patch returned {} for competence'.format(status))
-                pass
+            # Always unique by id
+            competence = list({v['id']: v for v in competence}.values())
+
+            # Patch if difference
+            if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
+                lookup = {'_id': person['_id']}
+                resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
+                                                    **lookup)
+                if status != 200:
+                    app.logger.error('Patch returned {} for competence'.format(status))
+                    pass
 
 
 def on_organizations_post(items):
