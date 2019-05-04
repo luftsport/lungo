@@ -202,7 +202,7 @@ def worker_log(index):
         return eve_response({}, 200)
 
 
-@Sync.route("/worker/restart/<int:index>", methods=['POST'])
+@Sync.route("/worker/reboot/<int:index>", methods=['POST'])
 @require_token()
 def worker_restart(index):
     try:
