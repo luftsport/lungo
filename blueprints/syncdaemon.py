@@ -182,7 +182,7 @@ get_worker_log
 """
 
 
-@Sync.route("/worker/status/<int:index>", defaults={'index': 0}, methods=['GET'])
+@Sync.route("/worker/status/<int:index>", methods=['GET'])
 @require_token()
 def worker_status(index):
     try:
@@ -192,7 +192,7 @@ def worker_status(index):
         return eve_response({}, 200)
 
 
-@Sync.route("/worker/log/<int:index>", defaults={'index': 0}, methods=['GET'])
+@Sync.route("/worker/log/<int:index>", methods=['GET'])
 @require_token()
 def worker_log(index):
     try:
@@ -202,7 +202,7 @@ def worker_log(index):
         return eve_response({}, 200)
 
 
-@Sync.route("/worker/restart/<int:index>", defaults={'index': 0}, methods=['POST'])
+@Sync.route("/worker/restart/<int:index>", methods=['POST'])
 @require_token()
 def worker_restart(index):
     try:
