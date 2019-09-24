@@ -274,6 +274,8 @@ agg_count_gender = {
 
 # Persons merged from
 # http://127.0.0.1:9191/api/v1/persons/merged?aggregate={"$person_id": 7897818}
+
+
 agg_merged_from = {
     'url': 'persons/merged',
     'item_title': 'Persons merged from',
@@ -328,6 +330,7 @@ agg_merged_from = {
         }
     }
 }
+
 # {"$unwind": {"merged_from"}},
 #                {"$group": {"$merged_from._id": None, "merged": {"$push": "$merged_from.id"}}},
 #                {"$project": {"merged": 1, "merged_from": -1}}
@@ -335,6 +338,8 @@ agg_merged_from = {
 # Age aggregation per club
 # Should be extended to accomodate multiple dimensions
 # ?aggregate={"$club_id": 22976}
+
+
 agg_age_distribution = {
     'url': 'persons/age',
     'item_title': 'Persons age aggregation',
@@ -345,21 +350,31 @@ agg_age_distribution = {
             'pipeline':
                 [
                     {
+                        "$match": {"memberships.0": {
+                            "$exists": True
+                            }
+                        }
+                    },
+                    {
+                        "$match": "$where",
+                    },
+                    {
                         "$match": {
+
                             "birth_date": {
                                 "$gt": datetime.datetime(1900, 1, 1, 0, 0, 0)
                             },
                             "_merged_to": {
                                 "$exists": False
                             },
-                            "clubs.0": {
-                                "$exists": True
-                            },
-                            "clubs": {
-                                "$in": ["$club_id"]
-                            }
+
+                            # "clubs": {
+                            #    "$in": ["$org_id"]
+                            # }
                         }
+
                     },
+
                     {
                         "$project": {
                             "ageInMillis": {
