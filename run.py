@@ -121,6 +121,52 @@ app.on_replaced_persons_process += on_person_after_put
 app.on_inserted_organizations_process += on_organizations_post
 app.on_replaced_organizations_process += on_organizations_put
 
+# AGGREGATION
+"""
+def get_match_from_org_id(org_id) -> dict:
+    print('HEIOOOO')
+    print(org_id)
+    activities = [109, 238, 235, 237, 110, 111, 236]
+    NLF_ORG_STRUCTURE = {
+        203030: {'id': 237, 'name': 'Mikrofly', 'code': '376'},
+        203025: {'id': 238, 'name': 'Motorfly', 'code': '377'},
+        90972: {'id': 109, 'name': 'Fallskjerm', 'code': '371'},
+        90969: {'id': 110, 'name': 'HPS', 'code': '372'},
+        90968: {'id': 111, 'name': 'Seilfly', 'code': '373'},
+        203027: {'id': 236, 'name': 'Modellfly', 'code': '375'},
+        203026: {'id': 235, 'name': 'Ballong', 'code': '374'},
+        523382: {'id': 27, 'name': 'Luftsport', 'code': '370'},  # FAI
+    }
+
+    if org_id in list(NLF_ORG_STRUCTURE.keys()):
+        return {"memberships.activity": NLF_ORG_STRUCTURE[org_id]['id']}
+    elif org_id in [376, '376']:
+        return {"memberships.activity": {"$in": activities}}
+    else:
+        return {"$or": [{"memberships.club": org_id}, {"memberships.discipline": org_id}]}
+
+    return {}
+
+
+def on_aggregate(endpoint, pipeline, query):
+    from pprint import pprint
+    print("AGG Query", query)
+    pprint(pipeline)
+
+    if endpoint == 'persons_age_distribution':
+        # pipeline[0]['$match'] = {**pipeline[0]['$match'], **get_match_from_org_id(query['$org_id'])}
+        pprint(pipeline)
+    elif endpoint == 'persons_age_gender_bucket_distribution':
+        # query['$bins'] = range(0, 100, int(query.get('$bins', 5)))
+        query['$bins'] = [0, 4, 6]
+        print("AGG Query", query)
+
+
+app.before_aggregation += on_aggregate
+"""
+
+
+
 """
 def _run_hook(resource_name, response, op):
     if resource_name == 'persons/process':

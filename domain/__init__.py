@@ -34,6 +34,7 @@ DOMAIN = {
     "persons_gender": persons.agg_count_gender,
     "persons_merged_from": persons.agg_merged_from,
     "persons_age_distribution": persons.agg_age_distribution,
+    "persons_age_gender_bucket_distribution": persons.agg_age_gender_bucket_distribution,
 
     # Persons test
     "test": test.definition,

@@ -352,12 +352,12 @@ agg_age_distribution = {
                     {
                         "$match": {"memberships.0": {
                             "$exists": True
-                            }
+                        }
                         }
                     },
-                    {
-                        "$match": "$where",
-                    },
+                    #
+                    #    "$match": "$where",
+                    # },
                     {
                         "$match": {
 
@@ -406,6 +406,66 @@ agg_age_distribution = {
                         "$sort": {
                             "_id": -1
                         }
+                    }
+                ]
+        }
+    }
+}
+
+"""
+Age distribution for genders in 5 year buckets 
+"""
+
+agg_age_gender_bucket_distribution = {
+    'url': 'persons/distribution/pyramid',
+    'item_title': 'Persons age and gender aggregation',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline':
+                [
+                    {
+                        "$match": {
+                            "_merged_to": {
+                                "$exists": False
+                            },
+                            "memberships.0": {
+                                "$exists": True
+                            }
+                        }
+                    },
+                    {
+                        "$project": {
+                            "date": "$birth_date",
+                            "gender": "$gender",
+                            "age": {
+                                "$divide": [
+                                    {
+                                        "$subtract":
+                                            [datetime.datetime.now(), "$birth_date"]},
+                                    31536000000]
+                            }
+                        }
+                    },
+                    {
+                        "$bucket":
+                            {
+                                "groupBy": "$age",
+                                "boundaries": "$bins",
+                                # [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105],
+                                "default": "other",
+                                "output":
+                                    {
+                                        "total": {"$sum": 1},
+                                        "male": {
+                                            "$sum": {"$cond": {"if": {"$eq": ["$gender", "M"]}, "then": 1, "else": 0}}},
+                                        "female": {
+                                            "$sum": {"$cond": {"if": {"$eq": ["$gender", "F"]}, "then": 1, "else": 0}}},
+                                        "other": {
+                                            "$sum": {"$cond": {"if": {"$eq": ["$gender", "U"]}, "then": 1, "else": 0}}},
+                                    }
+                            }
                     }
                 ]
         }
