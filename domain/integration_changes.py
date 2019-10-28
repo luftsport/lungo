@@ -57,9 +57,8 @@ agg_count_entity_types = {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
-                {"$group": {"_id": "$entity_type"}}, # "count": {"$sum": 1}}},
-                {"$sort": SON([("count", -1), ("_id", -1)])},
-                {"$count": "count"}
+                {"$group": {"_id": "$entity_type", "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
             ]
         }
     }
@@ -73,7 +72,7 @@ agg_count_statuses = {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
-                {"$group": {"_id": "$_status", "count": {"$sum": 1}}},
+                {"$group": {"_id": "$_status", "$count": "count"}}, # {"$sum": 1}
                 {"$sort": SON([("count", -1), ("_id", -1)])}
             ]
         }
