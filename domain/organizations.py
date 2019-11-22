@@ -181,14 +181,14 @@ agg_get_org_by_activity_and_org_types = {
                 [
                     {
                         "$match": {
-                            "activities.id": "$activity",
-                            "type_id": {"$in": "$type_ids"}
+                            "activities.id": "$activity", # activity - integer
+                            "type_id": {"$in": "$type_ids"} # type_ids - [integer,..]
                         }
                     },
                     {
                         "$group": {
                             "_id": "$activity",
-                            "orgs": {
+                            "org_ids": {
                                 "$addToSet": "$id"
                             }
                         }
