@@ -97,6 +97,37 @@ process_definition = {
 # Aggregation
 from bson import SON, ObjectId
 
+agg_get_persons_by_type_and_orgs = {
+    'url': 'functions/persons',
+    'item_title': 'Functions Types Count',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline':
+                [
+                    {
+                        "$match": {
+                            "type_id": "$type_id",
+                            "org_id": {"$in": ["$org_ids"]},
+                            "is_deleted": False,
+                            "is_passive": False
+                        }
+                    },
+                    {
+                        "$group": {
+                            "_id": "$type_id",
+                            "persons": {
+                                "$addToSet": "$person_id"
+                            }
+                        }
+                    }
+                ]
+        }
+    }
+}
+
+## STATS ###
 agg_count_types = {
     'url': 'functions/types/count',
     'item_title': 'Functions Types Count',

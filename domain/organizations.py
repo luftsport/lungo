@@ -168,6 +168,36 @@ process_definition = {
 # Aggregation
 from bson import SON, ObjectId
 
+# Orgs by activity
+agg_get_org_by_activity_and_org_types = {
+
+    'url': '{}/activity'.format(RESOURCE_COLLECTION),
+    'item_title': 'Organizations by activity and type_ids',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline':
+                [
+                    {
+                        "$match": {
+                            "activities.id": "$activity",
+                            "type_id": {"$in": "$type_ids"}
+                        }
+                    },
+                    {
+                        "$group": {
+                            "_id": "$activity",
+                            "orgs": {
+                                "$addToSet": "$id"
+                            }
+                        }
+                    }
+                ]
+        }
+    }
+}
+
 # ?aggregate={"$org_id": 999999}
 agg_get_children = {
     'url': '{}/children'.format(RESOURCE_COLLECTION),

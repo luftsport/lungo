@@ -10,6 +10,7 @@ import licenses_status
 import licenses_types
 import activities
 import test
+
 # import test, test_ref
 
 DOMAIN = {
@@ -46,6 +47,7 @@ DOMAIN = {
     "organizations_types_count": organizations.agg_count_types,
     "organizations_get_children": organizations.agg_get_children,
     "organizations_get_parents": organizations.agg_get_parents,
+    "organizations_get_by_activity": organizations.agg_get_org_by_activity_and_org_types,
 
     # Functions
     "functions": functions.definition,
@@ -53,6 +55,7 @@ DOMAIN = {
     "functions_types_count": functions.agg_count_types,
     "functions_types_org_count": functions.agg_count_types_org,
     "functions_types_activity_count": functions.agg_count_types_activity,
+    "functions_get_persons_by_type_and_orgs": functions.agg_get_persons_by_type_and_orgs,
     "functions_types": function_types.definition,
 
     # Competences
