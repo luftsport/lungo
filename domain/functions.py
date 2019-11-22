@@ -109,7 +109,7 @@ agg_get_persons_by_type_and_orgs = {
                     {
                         "$match": {
                             "type_id": "$type_id",
-                            "org_id": {"$in": ["$org_ids"]},
+                            "org_id": {"$in": "$org_ids"},
                             "is_deleted": False,
                             "is_passive": False
                         }
