@@ -339,7 +339,11 @@ agg_merged_from = {
 # Should be extended to accomodate multiple dimensions
 # ?aggregate={"$club_id": 22976}
 
+"""
 
+@param $org_ids list
+@param $activity_ids list off activity ids
+"""
 agg_age_distribution = {
     'url': 'persons/age',
     'item_title': 'Persons age aggregation',
@@ -420,9 +424,9 @@ agg_age_distribution = {
 }
 
 """
-Age distribution for genders in 5 year buckets 
+Age distribution for genders in 5 year buckets
+$bins?
 """
-
 agg_age_gender_bucket_distribution = {
     'url': 'persons/distribution/pyramid',
     'item_title': 'Persons age and gender aggregation',
@@ -448,10 +452,9 @@ agg_age_gender_bucket_distribution = {
                             "gender": "$gender",
                             "age": {
                                 "$divide": [
-                                    {
-                                        "$subtract":
-                                            [datetime.datetime.now(), "$birth_date"]},
-                                    31536000000]
+                                    {"$subtract": [datetime.datetime.utcnow(), "$birth_date"]},
+                                    31536000000
+                                ]
                             }
                         }
                     },
