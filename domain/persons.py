@@ -362,11 +362,17 @@ agg_age_distribution = {
                         "$match": {
 
                             "birth_date": {
-                                "$gt": datetime.datetime(1900, 1, 1, 0, 0, 0)
+                                # "$gt": datetime.datetime(1900, 1, 1, 0, 0, 0)
+                                "$exists": True
+
                             },
                             "_merged_to": {
                                 "$exists": False
                             },
+                            "$or": [
+                                {"memberships.club": {"$in": "$org_ids"}},
+                                {"memberships.discipline": {"$in": "$org_ids"}}
+                            ]
 
                             # "clubs": {
                             #    "$in": ["$org_id"]
