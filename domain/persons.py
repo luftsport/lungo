@@ -371,7 +371,8 @@ agg_age_distribution = {
                             },
                             "$or": [
                                 {"memberships.club": {"$in": "$org_ids"}},
-                                {"memberships.discipline": {"$in": "$org_ids"}}
+                                {"memberships.discipline": {"$in": "$org_ids"}},
+                                {"memberships.activity": {"$in": "$activity_ids"}}
                             ]
 
                             # "clubs": {
