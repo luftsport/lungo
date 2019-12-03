@@ -443,7 +443,12 @@ agg_age_gender_bucket_distribution = {
                             },
                             "memberships.0": {
                                 "$exists": True
-                            }
+                            },
+                            "$or": [
+                                {"memberships.club": {"$in": "$org_ids"}},
+                                {"memberships.discipline": {"$in": "$org_ids"}},
+                                {"memberships.activity": {"$in": "$activity_ids"}}
+                            ]
                         }
                     },
                     {
