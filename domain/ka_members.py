@@ -33,6 +33,7 @@ _schema = {
                   'default': []},
     'Products': {'type': 'list',
                  'default': []},
+    '_merged_to': {'type': 'integer'}
 }
 
 definition = {
