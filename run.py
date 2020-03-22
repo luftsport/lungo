@@ -2,10 +2,10 @@
     Lungo - YAMS!
     =============
 
-    @note: Run as `nohup python run.py >> lungo.log 2>&1&` NB in virtualenv!
+    @note: Run as development `nohup python run.py >> lungo.log 2>&1&` NB in virtualenv!
 
     @author:        Einar Huseby
-    @copyright:     (c) 2014-2018 Norges Luftsportforbund
+    @copyright:     (c) Norges Luftsportforbund
     @license:       GPLV3, see LICENSE for more details.
 """
 
@@ -45,6 +45,7 @@ SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settin
 # app = Eve(settings=SETTINGS_PATH)
 app = Eve(auth=NlfTokenAuth, settings=SETTINGS_PATH)
 # app = Eve(settings=SETTINGS_PATH)
+
 """ Define global settings
 These settings are mirrored from Eve, but should not be!
 @todo: use app.config instead
@@ -66,21 +67,6 @@ app.register_blueprint(Sync, url_prefix="%s/syncdaemon" % app.globals.get('prefi
 app.register_blueprint(Fai, url_prefix="%s/fai" % app.globals.get('prefix'))
 app.register_blueprint(ACL, url_prefix="%s/acl" % app.globals.get('prefix'))
 app.register_blueprint(MemberCheck, url_prefix="%s/membercheck" % app.globals.get('prefix'))
-
-# You might want to simply update the eve settings module instead.
-
-
-"""
-__subclasshook__', '__weakref__', '_ensure_sequence', '_get_mimetype_params', '_on_close', '_status', '_status_code'
-, 'accept_ranges', 'add_etag', 'age', 'allow', 'autocorrect_location_header', 'automatically_set_content_length', 'c
-ache_control', 'calculate_content_length', 'call_on_close', 'charset', 'close', 'content_encoding', 'content_languag
-e', 'content_length', 'content_location', 'content_md5', 'content_range', 'content_type', 'data', 'date', 'default_m
-imetype', 'default_status', 'delete_cookie', 'direct_passthrough', 'expires', 'force_type', 'freeze', 'from_app', 'g
-et_app_iter', 'get_data', 'get_etag', 'get_wsgi_headers', 'get_wsgi_response', 'headers', 'implicit_sequence_convers
-ion', 'is_sequence', 'is_streamed', 'iter_encoded', 'last_modified', 'location', 'make_conditional', 'make_sequence'
-, 'mimetype', 'mimetype_params', 'response', 'retry_after', 'set_cookie', 'set_data', 'set_etag', 'status', 'status_
-code', 'stream', 'vary', 'www_authenticate']
-"""
 
 from ext.app.hooks import on_function_post, on_license_post, on_competence_post, \
     on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put, \
@@ -122,86 +108,6 @@ app.on_inserted_organizations_process += on_organizations_post
 app.on_replaced_organizations_process += on_organizations_put
 
 # AGGREGATION
-"""
-def get_match_from_org_id(org_id) -> dict:
-    print('HEIOOOO')
-    print(org_id)
-    activities = [109, 238, 235, 237, 110, 111, 236]
-    NLF_ORG_STRUCTURE = {
-        203030: {'id': 237, 'name': 'Mikrofly', 'code': '376'},
-        203025: {'id': 238, 'name': 'Motorfly', 'code': '377'},
-        90972: {'id': 109, 'name': 'Fallskjerm', 'code': '371'},
-        90969: {'id': 110, 'name': 'HPS', 'code': '372'},
-        90968: {'id': 111, 'name': 'Seilfly', 'code': '373'},
-        203027: {'id': 236, 'name': 'Modellfly', 'code': '375'},
-        203026: {'id': 235, 'name': 'Ballong', 'code': '374'},
-        523382: {'id': 27, 'name': 'Luftsport', 'code': '370'},  # FAI
-    }
-
-    if org_id in list(NLF_ORG_STRUCTURE.keys()):
-        return {"memberships.activity": NLF_ORG_STRUCTURE[org_id]['id']}
-    elif org_id in [376, '376']:
-        return {"memberships.activity": {"$in": activities}}
-    else:
-        return {"$or": [{"memberships.club": org_id}, {"memberships.discipline": org_id}]}
-
-    return {}
-
-
-def on_aggregate(endpoint, pipeline, query):
-    from pprint import pprint
-    print("AGG Query", query)
-    pprint(pipeline)
-
-    if endpoint == 'persons_age_distribution':
-        # pipeline[0]['$match'] = {**pipeline[0]['$match'], **get_match_from_org_id(query['$org_id'])}
-        pprint(pipeline)
-    elif endpoint == 'persons_age_gender_bucket_distribution':
-        # query['$bins'] = range(0, 100, int(query.get('$bins', 5)))
-        query['$bins'] = [0, 4, 6]
-        print("AGG Query", query)
-
-
-app.before_aggregation += on_aggregate
-"""
-
-
-
-"""
-def _run_hook(resource_name, response, op):
-    if resource_name == 'persons/process':
-        if op == 'inserted':
-            on_person_after_post(response)
-        elif op == 'replaced':
-            on_person_after_put(response)
-    elif resource_name == 'functions/process':
-        if op == 'inserted':
-            on_function_post(response)
-        elif op == 'replaced':
-            on_function_put(response)
-    elif resource_name == 'licenses/process':
-        if op == 'inserted':
-            on_license_post(response)
-        elif op == 'replaced':
-            on_license_put(response)
-    elif resource_name == 'competences/process':
-        if op == 'inserted':
-            on_competence_post(response)
-        elif op == 'replaced':
-            on_competence_put(response)
-
-
-def _on_inserted(resource_name, items):
-    _run_hook(resource_name, items, 'inserted')
-
-
-def _on_replaced(resource_name, item, original):
-    _run_hook(resource_name, item, 'replaced')
-
-
-app.on_inserted += _on_inserted
-app.on_replaced += _on_replaced
-"""
 
 """
 

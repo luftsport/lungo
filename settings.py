@@ -13,11 +13,11 @@ sys.path.insert(0, "domain")
 # Import the apps - DOMAIN definition (app.DOMAIN)
 import domain
 
-__version_info__ = ('0', '0', '1')
+__version_info__ = ('1', '0', '0')
 APP_VERSION = '.'.join(__version_info__)
 APP_AUTHOR = 'Einar Huseby'
 APP_LICENSE = 'MIT'
-APP_COPYRIGHT = '(c) 2018'
+APP_COPYRIGHT = '(c) 2020'
 APP_ALL = ['lungo-member-api']
 
 AUTH_SESSION_LENGHT = 3600  # Seconds
@@ -89,10 +89,11 @@ X_HEADERS = ['Content-Type', 'If-Match']  # Needed for the "Try it out" buttons
     NB: the collection should for any practical purposes be a capped collection so we don't fill it!!!
 
 """
-
 OPLOG = False  # Set it to True to enable the Operations Log. Defaults to False.
 OPLOG_NAME = 'oplog'  # This is the name of the database collection where the Operations Log is stored. Defaults to oplog.
-OPLOG_METHODS = ['DELETE', 'POST', 'PATCH',
+OPLOG_METHODS = ['DELETE',
+                 'POST',
+                 'PATCH',
                  'PUT']  # List of HTTP methods which operations should be logged in the Operations Log. Defaults to ['DELETE', 'POST, 'PATCH', 'PUT'].
 OPLOG_ENDPOINT = None  # 'oplog'  # Name of the Operations Log endpoint. If the endpoint is enabled it can be configured like any other API endpoint. Set it to None to disable the endpoint. Defaults to None.
 OPLOG_AUDIT = True  # Set it to True to enable the audit feature. When audit is enabled client IP and document changes are also logged to the Operations Log. Defaults to True.
@@ -107,7 +108,6 @@ SWAGGER_INFO = {
     'termsOfService': 'See www.nlf.no',
     'contact': {
         'name': 'Einar Huseby',
-        #'email': 'einar.huseby@lintek.no',
         'url': 'https://www.lintek.no'
     },
     'license': {
