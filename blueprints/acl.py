@@ -92,9 +92,12 @@ def _acl_from_functions(person_id):
 @ACL.route('/whoami', methods=['GET'])
 @require_token
 def whoami():
-    token = request.authorization.get('username', None)
-    if token in users.keys():
-        return eve_response(users['token'], 200)
+    try:
+        token = request.authorization.get('username', None)
+        if token in users.keys():
+            return eve_response(users['token'], 200)
+    except:
+        pass
 
     return eve_abort(403)
 
