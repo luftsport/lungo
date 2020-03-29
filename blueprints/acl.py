@@ -1,5 +1,6 @@
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
 from ext.auth.decorators import require_token
+from ext.auth.clients import users
 from ext.app.eve_helper import eve_response, eve_abort
 from eve.methods.get import get_internal, getitem_internal, _perform_aggregation
 from datetime import datetime
@@ -88,6 +89,14 @@ def _acl_from_functions(person_id):
 
     return status, function_acl
 
+@ACL.route('/whoami', methods=['GET'])
+@require_token
+def whoami():
+    token = request.authorization.get('username', None)
+    if token in users.keys():
+        return eve_response(users['token'], 200)
+
+    return eve_abort(403)
 
 @ACL.route('/<int:person_id>', methods=['GET'])
 @require_token()
