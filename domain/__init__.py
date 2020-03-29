@@ -10,6 +10,7 @@ import licenses_status
 import licenses_types
 import activities
 import test
+import payments
 
 # import test, test_ref
 
@@ -68,6 +69,10 @@ DOMAIN = {
     "licenses": licenses.definition,
     "licenses_process": licenses.process_definition,
     "licenses_types": licenses_types.definition,
+
+    # Payments
+    "payments": payments.definition,
+    "payments_process": payments.process_definition,
 
     # Integration Users
     "integration_users": integration_users.definition,
