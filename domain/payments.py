@@ -28,8 +28,8 @@ _schema = {
 }
 
 definition = {
-    'url': 'licenses',
-    'item_title': 'Licenses',
+    'url': 'payments',
+    'item_title': 'Payments',
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'additional_lookup': {
