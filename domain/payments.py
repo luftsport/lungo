@@ -11,7 +11,7 @@ _schema = {
     'fee': {'type': 'float'},
     'fee_org': {'type': 'integer'},
     'invoice_id': {'type': 'integer'},
-    'invoicing_org': 'Korsvoll Idrettslag',
+    'invoicing_org': {'type': 'string'},
     'invoicing_org_id': {'type': 'integer'},
     'net_amount': {'type': 'integer'},
     'paid_date': {'type': 'datetime'},
