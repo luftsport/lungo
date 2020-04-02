@@ -6,8 +6,9 @@ from eve.methods.get import get_internal
 from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
-from flask import current_app as app # , Response, redirect
+from flask import current_app as app  # , Response, redirect
 from dateutil import parser
+from flask import Response, abort
 import json
 
 # import dateutil.parser
@@ -24,31 +25,20 @@ tz_utc = tz.gettz('UTC')
 tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 
-def after_get_persons(request, response):
-    d = json.loads(response.get_data().decode('UTF-8'))
+def after_get_persons(response):
 
-    # me = get_internal('persons', **{'id': 5389166})
-    # patch_internal('persons', {'clubs': [432, 4653]}, False, True, **{'id': 5389166})
-    # print(me)
+    if '_merged_to' in response:
 
-    # print(dir(response))
-    if '_items' not in d and '_merged_to' in d:
-        # redirect('/persons/%s' % d['_merged_to'], code=302)
-        # abort(code=401, description='Permanently moved', response=redirect('/persons/%s' % d['_merged_to'], code=302))
-
-        # response = redirect('/api/v1/persons/%s' % d['_merged_to'], code=301)
-        #return Response(response=None, status=301, headers={'Location': '/api/v1/persons/%s' % d['_merged_to']})
-
-        response.headers['Location'] = 'https://medlem.nlf.no/api/v1/persons/%s' % d['_merged_to']
-        # response.status = 'Moved Permanently'
-        response.status_code = 301
-        response.set_data('')
-        """
-        response.set_data(json.dumps({'_status': 'ERR',
-                                      '_error': '301 Moved permanently',
-                                      '_url': '/api/v1/persons/%s' % d['_merged_to'],
-                                      'id': d['_merged_to']}))
-        """
+        headers = {
+            'Location': '/api/v1/persons/{}'.format(response.get('_merged_to', 0)),
+        }
+        return abort(
+            Response(
+                response=None,
+                status=301,
+                headers=headers
+            )
+        )
 
 
 def assign_lookup(resource, request, lookup):
@@ -210,8 +200,6 @@ def on_function_put(response, original=None) -> None:
         memberships = person.get('memberships', []).copy()
         clubs = person.get('clubs', []).copy()
         activities = person.get('activities', []).copy()
-
-
 
         # All memberships
         if response.get('type_id', 0) == 10000000:
@@ -442,7 +430,8 @@ def on_competence_put(response, original=None):
 
             # Always remove stale competences
             # Note that _code is for removing old competences, should be removed
-            competence[:] = [d for d in competence if _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
+            competence[:] = [d for d in competence if
+                             _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
             # Always unique by id
             competence = list({v['id']: v for v in competence}.values())
