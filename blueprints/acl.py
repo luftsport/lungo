@@ -95,7 +95,10 @@ def whoami():
     try:
         token = request.authorization.get('username', None)
         if token in users.keys():
-            return eve_response(users.get(token, {}), 200)
+            client = users.get(token, {})
+            # Convert keys back to normal url
+            client['resources'] = {k.replace('_', '/'): v for k, v in users[token].get('resources', {}).items()}
+            return eve_response(client, 200)
     except:
         pass
 
