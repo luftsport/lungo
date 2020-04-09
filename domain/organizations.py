@@ -122,6 +122,7 @@ definition = {
                       'type_id': ([('type_id', 1)], {'background': True}),
                       'activities': ([('activities', 1)], {'background': True}),
                       'main_activity': ([('main_activity', 1)], {'background': True}),
+                      'KL Number': ([('nif_organization_number', 1)], {'background': True}),
                       '_up': ([('_up', 1)], {'background': True}),
                       '_down': ([('_down', 1)], {'background': True}),
                       'name': ([('name', 'text')], {'background': True}),

@@ -13,7 +13,7 @@ sys.path.insert(0, "domain")
 # Import the apps - DOMAIN definition (app.DOMAIN)
 import domain
 
-__version_info__ = ('1', '0', '0')
+__version_info__ = ('1', '0', '1')
 APP_VERSION = '.'.join(__version_info__)
 APP_AUTHOR = 'Einar Huseby'
 APP_LICENSE = 'MIT'
@@ -59,7 +59,7 @@ CACHE_CONTROL = 'max-age=20'
 CACHE_EXPIRES = 20
 
 # Support only json response 'eve.render.XMLRenderer'
-RENDERERS = ['eve.render.JSONRenderer']
+RENDERERS = ['eve.render.JSONRenderer', 'eve.render.XMLRenderer']
 
 ALLOW_UNKNOWN = False
 
