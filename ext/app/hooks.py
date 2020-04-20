@@ -26,9 +26,7 @@ tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 
 def after_get_persons(response):
-
     if '_merged_to' in response:
-
         headers = {
             'Location': '/api/v1/persons/{}'.format(response.get('_merged_to', 0)),
         }
@@ -268,6 +266,10 @@ def on_function_put(response, original=None) -> None:
                 pass
 
         functions = list(set(functions))
+
+        # I If we have more than one memberships make unique by discipline
+        if len(memberships) > 1:
+            memberships = list({v['discipline']: v for v in memberships}.values())
 
         # Valid expiry?
         # f[:] = [d for d in f if d.get('expiry') >= _get_now()]
