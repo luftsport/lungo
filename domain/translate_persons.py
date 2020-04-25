@@ -3,7 +3,7 @@ RESOURCE_COLLECTION = 'translate_persons'
 _schema = {
     'person_id': {'type': 'integer',
                   'required': True,
-                  'unique': True},
+                  'unique': False},
     'melwin_id': {'type': 'integer',
                   'required': True,
                   'unique': True},
