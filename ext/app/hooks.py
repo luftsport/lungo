@@ -2,7 +2,7 @@
 To hook all the different changes to our api!
 """
 from eve.methods.patch import patch_internal
-from eve.methods.get import get_internal
+from eve.methods.get import get_internal, getitem_internal
 from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
@@ -526,8 +526,8 @@ def _update_person(item):
         on_function_post(functions.get('_items', []))
 
     try:
-        # Need to get person
-        person, _, _, p_status, _ = get_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['id']})
+        # Need to get personreturn response, last_modified, etag, 200
+        person, _, _, p_status = getitem_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['id']})
         if p_status == 200:
             # Broadcast all
             broadcast({'entity': 'person',
@@ -540,3 +540,4 @@ def _update_person(item):
                        })
     except Exception as e:
         print('[ERR]', e)
+        print(person)
