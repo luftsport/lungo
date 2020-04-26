@@ -11,6 +11,11 @@ from dateutil import parser
 from flask import Response, abort
 import json
 
+from ext.auth.clients import LUNGO_SIO_TOKEN
+from ext.app.decorators import async
+import time
+import socketio
+
 # import dateutil.parser
 
 
@@ -23,6 +28,18 @@ RESOURCE_ORGANIZATIONS_PROCESS = 'organizations_process'
 LOCAL_TIMEZONE = "Europe/Oslo"  # UTC
 tz_utc = tz.gettz('UTC')
 tz_local = tz.gettz(LOCAL_TIMEZONE)
+
+
+@async
+def broadcast(change_data):
+    try:
+        sio = socketio.Client()
+        sio.connect('http://localhost:7000?token={}'.format(LUNGO_SIO_TOKEN))
+        sio.emit('broadcast_change', change_data)
+        time.sleep(0.1)
+        sio.disconnect()
+    except Exception as e:
+        pass
 
 
 def after_get_persons(response):
@@ -454,7 +471,7 @@ def on_organizations_post(items):
 
 
 def on_organizations_put(response, original=None):
-    # Only on NIF groups / clubs
+    # Only on NIF groups / NLF clubs
     if response.get('type_id', 0) == 6 or len(response.get('activities', [])) == 0:
 
         for v in response.get('_down'):
@@ -477,6 +494,11 @@ def on_organizations_put(response, original=None):
             app.logger.error('Patch returned {} for license'.format(status))
             pass
 
+    # Broadcast to all activities and own org
+    broadcast({'entity': 'organization',
+               'entity_id': response['id'],
+               'orgs': list(set([response['id']] + [x['id'] for x in response.get('activities', [])]))
+               })
 
 def on_person_after_post(items):
     for response in items:
@@ -502,3 +524,16 @@ def _update_person(item):
     app.logger.debug('Functions\n{}'.format(functions))
     if f_status == 200:
         on_function_post(functions.get('_items', []))
+
+    try:
+        # Broadcast all
+        broadcast({'entity': 'person',
+                   'entity_id': item['id'],
+                   'orgs': list(set(
+                       [x['activity'] for x in item['memberships']] +
+                       [x['discipline'] for x in item['memberships']] +
+                       [x['club'] for x in item['memberships']]
+                   ))
+                   })
+    except Exception as e:
+        print('[ERR]', e)
