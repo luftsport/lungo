@@ -526,14 +526,17 @@ def _update_person(item):
         on_function_post(functions.get('_items', []))
 
     try:
-        # Broadcast all
-        broadcast({'entity': 'person',
-                   'entity_id': item['id'],
-                   'orgs': list(set(
-                       [x['activity'] for x in item['memberships']] +
-                       [x['discipline'] for x in item['memberships']] +
-                       [x['club'] for x in item['memberships']]
-                   ))
-                   })
+        # Need to get person
+        person, _, _, p_status, _ = get_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['id']})
+        if p_status == 200:
+            # Broadcast all
+            broadcast({'entity': 'person',
+                       'entity_id': item['id'],
+                       'orgs': list(set(
+                           [x['activity'] for x in person['memberships']] +
+                           [x['discipline'] for x in person['memberships']] +
+                           [x['club'] for x in person['memberships']]
+                       ))
+                       })
     except Exception as e:
         print('[ERR]', e)
