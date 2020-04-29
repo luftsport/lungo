@@ -58,7 +58,6 @@ def after_get_persons(response):
 
 def assign_lookup(resource, request, lookup):
     """If lookup then we do add this"""
-
     if app.auth.resource_lookup is not None:
         for key, val in app.auth.resource_lookup.items():
             lookup[key] = val
@@ -499,6 +498,7 @@ def on_organizations_put(response, original=None):
                'entity_id': response['id'],
                'orgs': list(set([response['id']] + [x['id'] for x in response.get('activities', [])]))
                })
+
 
 def on_person_after_post(items):
     for response in items:

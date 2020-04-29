@@ -163,6 +163,7 @@ definition = {
         'url': 'regex("[\d{1,9}]+")',
         'field': 'id',
     },
+    'projection': False,  # To avoid omitting the _merged_to field
     'extra_response_fields': ['id'],
     'versioning': True,
     'resource_methods': ['GET'],
