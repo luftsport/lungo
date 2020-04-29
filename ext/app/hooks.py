@@ -2,7 +2,7 @@
 To hook all the different changes to our api!
 """
 from eve.methods.patch import patch_internal
-from eve.methods.get import get_internal
+from eve.methods.get import get_internal, getitem_internal
 from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
@@ -10,6 +10,11 @@ from flask import current_app as app  # , Response, redirect
 from dateutil import parser
 from flask import Response, abort
 import json
+
+from ext.auth.clients import LUNGO_SIO_TOKEN
+from ext.app.decorators import async
+import time
+import socketio
 
 # import dateutil.parser
 
@@ -25,10 +30,20 @@ tz_utc = tz.gettz('UTC')
 tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 
+@async
+def broadcast(change_data):
+    try:
+        sio = socketio.Client()
+        sio.connect('http://localhost:7000?token={}'.format(LUNGO_SIO_TOKEN))
+        sio.emit('broadcast_change', change_data)
+        time.sleep(0.1)
+        sio.disconnect()
+    except Exception as e:
+        pass
+
+
 def after_get_persons(response):
-
     if '_merged_to' in response:
-
         headers = {
             'Location': '/api/v1/persons/{}'.format(response.get('_merged_to', 0)),
         }
@@ -43,7 +58,6 @@ def after_get_persons(response):
 
 def assign_lookup(resource, request, lookup):
     """If lookup then we do add this"""
-
     if app.auth.resource_lookup is not None:
         for key, val in app.auth.resource_lookup.items():
             lookup[key] = val
@@ -269,6 +283,10 @@ def on_function_put(response, original=None) -> None:
 
         functions = list(set(functions))
 
+        # I If we have more than one memberships make unique by discipline
+        if len(memberships) > 1:
+            memberships = list({v['discipline']: v for v in memberships}.values())
+
         # Valid expiry?
         # f[:] = [d for d in f if d.get('expiry') >= _get_now()]
 
@@ -452,7 +470,7 @@ def on_organizations_post(items):
 
 
 def on_organizations_put(response, original=None):
-    # Only on NIF groups / clubs
+    # Only on NIF groups / NLF clubs
     if response.get('type_id', 0) == 6 or len(response.get('activities', [])) == 0:
 
         for v in response.get('_down'):
@@ -474,6 +492,12 @@ def on_organizations_put(response, original=None):
         if status != 200:
             app.logger.error('Patch returned {} for license'.format(status))
             pass
+
+    # Broadcast to all activities and own org
+    broadcast({'entity': 'organization',
+               'entity_id': response['id'],
+               'orgs': list(set([response['id']] + [x['id'] for x in response.get('activities', [])]))
+               })
 
 
 def on_person_after_post(items):
@@ -500,3 +524,20 @@ def _update_person(item):
     app.logger.debug('Functions\n{}'.format(functions))
     if f_status == 200:
         on_function_post(functions.get('_items', []))
+
+    try:
+        # Need to get personreturn response, last_modified, etag, 200
+        person, _, _, p_status = getitem_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['id']})
+        if p_status == 200:
+            # Broadcast all
+            broadcast({'entity': 'person',
+                       'entity_id': item['id'],
+                       'orgs': list(set(
+                           [x['activity'] for x in person['memberships']] +
+                           [x['discipline'] for x in person['memberships']] +
+                           [x['club'] for x in person['memberships']]
+                       ))
+                       })
+    except Exception as e:
+        print('[ERR]', e)
+        print(person)

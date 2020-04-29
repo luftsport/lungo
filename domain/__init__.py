@@ -11,6 +11,8 @@ import licenses_types
 import activities
 import test
 import payments
+import translate_persons
+import translate_organizations
 
 # import test, test_ref
 
@@ -93,4 +95,10 @@ DOMAIN = {
     "countries": countries.definition,
     "counties": counties.definition,
     "licenses_status": licenses_status.definition,
+
+    # Translations Melwin to NIF Id's
+    "translate_persons": translate_persons.definition,
+    "translate_persons_process": translate_persons.process_definition,
+    "translate_organizations": translate_organizations.definition,
+    "translate_organizations_process": translate_organizations.process_definition,
 }
