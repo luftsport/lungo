@@ -525,7 +525,7 @@ def _get_pmt_group_from_club(org_id):
     return org_id
 
 
-def _get_pmt_year(self, text):
+def _get_pmt_year(text):
     try:
         return date_parse(text, fuzzy=True).year
     except:
@@ -535,7 +535,7 @@ def _get_pmt_year(self, text):
     return datetime.now().year
 
 
-def _get_pmt_type(self, text):
+def _get_pmt_type(text):
     if 'støttemedlem' in text.lower():
         return 'Støttemedlem'
     elif 'ufør' in text.lower():
@@ -554,7 +554,7 @@ def _get_pmt_type(self, text):
     return None
 
 
-def _get_pmt_activity(self, text):
+def _get_pmt_activity(text):
     if 'modellfly' in text.lower():
         return NLF_ORG_STRUCTURE['modellfly']['activity']
     elif 'mikrofly' in text.lower():
@@ -575,7 +575,7 @@ def _get_pmt_activity(self, text):
     return 27
 
 
-def _get_pmt_person_age_membership(self, person):
+def _get_pmt_person_age_membership(person):
     membership = 'Senior'
     age = datetime.now().year - date_parse(person.get('birth_date')).year - 1
 
@@ -593,7 +593,7 @@ def _get_pmt_person_age_membership(self, person):
     return membership
 
 
-def _get_org_id_and_activity(self, club_id):
+def _get_org_id_and_activity(club_id):
     # Get org from org id (5)
     # return org_id and main_activity.id
     org_id = 376
