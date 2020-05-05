@@ -15,7 +15,7 @@ _schema = {
     'invoice_id': {'type': 'integer'},
     'invoicing_org': {'type': 'string'},
     'invoicing_org_id': {'type': 'integer'},
-    'net_amount': {'type': 'integer'},
+    'net_amount': {'type': 'float'},
     'paid_date': {'type': 'datetime'},
     'method_id': {'type': 'integer'},
     'receiver': {'type': 'string'},
@@ -27,6 +27,7 @@ _schema = {
     'person_type': {'type': 'integer'},
     'transaction_id': {'type': 'integer'},
     'unit_cost_net': {'type': 'float'},
+    'org_id': {'type': 'integer'}
 }
 
 definition = {
