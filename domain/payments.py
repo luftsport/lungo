@@ -9,7 +9,7 @@ _schema = {
     'account_number': {'type': 'string'},
     'amount': {'type': 'float'},
     'amount_at_payment_time': {'type': 'float'},
-    'fa_date_time': {'type': 'datetime'},
+    # 'fa_date_time': {'type': 'datetime'}, # Rubbish from NIF
     'fee': {'type': 'float'},
     'fee_org': {'type': 'integer'},
     'invoice_id': {'type': 'integer'},
