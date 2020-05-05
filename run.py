@@ -71,7 +71,8 @@ app.register_blueprint(MemberCheck, url_prefix="%s/membercheck" % app.globals.ge
 from ext.app.hooks import on_function_post, \
     on_license_post, on_competence_post, \
     on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put, \
-    on_organizations_post, on_organizations_put, after_get_persons, on_person_before_put, assign_lookup
+    on_organizations_post, on_organizations_put, after_get_persons, on_person_before_put, assign_lookup, \
+    on_payment_before_post, on_payment_after_put, on_payment_after_post
 
 # Should be able to filter out all merged when doing lookup
 # def filter_merged_to(request, lookup):
@@ -105,6 +106,11 @@ app.on_inserted_persons_process += on_person_after_post
 # On replace(d) / PUT:
 # app.on_replace_persons_process += on_person_before_put  # Use original values and not _update! For later testing!
 app.on_replaced_persons_process += on_person_after_put  # Rebuild person
+
+# PAYMENTS
+app.on_insert_payments_process += on_payment_before_post
+app.on_inserted_payments_process += on_payment_after_post
+
 
 # ORGANIZATIONS
 app.on_inserted_organizations_process += on_organizations_post
