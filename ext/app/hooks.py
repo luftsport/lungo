@@ -6,13 +6,14 @@ from eve.methods.get import get_internal, getitem_internal
 from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
-from flask import current_app as app  # , Response, redirect
 from dateutil import parser
-from flask import Response, abort
+from flask import Response, abort, current_app as app
 import json
 
+from dateutil.parser import parse as date_parse
+
 from ext.auth.clients import LUNGO_SIO_TOKEN
-from ext.app.decorators import async
+from ext.app.decorators import async, debounce
 import time
 import socketio
 
@@ -24,12 +25,24 @@ RESOURCE_FUNCTIONS_PROCESS = 'functions_process'
 RESOURCE_LICENSES_PROCESS = 'licenses_process'
 RESOURCE_COMPETENCES_PROCESS = 'competences_process'
 RESOURCE_ORGANIZATIONS_PROCESS = 'organizations_process'
+RESOURCE_PAYMENTS_PROCESS = 'payments_process'
+
+NLF_ORG_STRUCTURE = {
+    'fallskjerm': {'activity': 109, 'org_id': 90972},
+    'mikrofly': {'activity': 237, 'org_id': 203030},
+    'motorfly': {'activity': 238, 'org_id': 203025},
+    'seilfly': {'activity': 111, 'org_id': 90968},
+    'modellfly': {'activity': 236, 'org_id': 203027},
+    'ballong': {'activity': 235, 'org_id': 203026},
+    'hps': {'activity': 110, 'org_id': 90969},
+}
 
 LOCAL_TIMEZONE = "Europe/Oslo"  # UTC
 tz_utc = tz.gettz('UTC')
 tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 
+@debounce(10)
 @async
 def broadcast(change_data):
     try:
@@ -500,9 +513,285 @@ def on_organizations_put(response, original=None):
                })
 
 
+######## PAYMENTS ###########
+
+def _get_pmt_group_from_club(org_id):
+    org, _, _, status_code = getitem_internal(RESOURCE_ORGANIZATIONS_PROCESS, **{'id': org_id})
+    if status_code == 200:
+        if org.get('type_id', None) == 5:
+            for v in org.get('_down', []):
+                if v.get('type', None) == 6:
+                    return v['id']
+    return org_id
+
+
+def _get_pmt_year(self, text):
+    try:
+        return date_parse(text, fuzzy=True).year
+    except:
+        # Error could not extract a year use todays year!
+        pass
+
+    return datetime.now().year
+
+
+def _get_pmt_type(self, text):
+    if 'støttemedlem' in text.lower():
+        return 'Støttemedlem'
+    elif 'ufør' in text.lower():
+        return 'Ufør'
+    elif 'modellmedlem' in text.lower():
+        return 'Modellmedlem'
+    elif 'æresmedlem' in text.lower():
+        return 'Æresmedlem'
+    elif 'Tandemmedlem' in text.lower():
+        return 'Tandemmedlem'
+    elif 'kroppsfyker' in text.lower():
+        return 'Kroppsfykermedlem'
+    elif 'familie' in text.lower():
+        return 'Familiemedlem'
+
+    return None
+
+
+def _get_pmt_activity(self, text):
+    if 'modellfly' in text.lower():
+        return NLF_ORG_STRUCTURE['modellfly']['activity']
+    elif 'mikrofly' in text.lower():
+        return NLF_ORG_STRUCTURE['mikrofly']['activity']
+    elif 'sportsfly' in text.lower():
+        return NLF_ORG_STRUCTURE['mikrofly']['activity']
+    elif 'fallskjerm' in text.lower():
+        return NLF_ORG_STRUCTURE['fallskjerm']['activity']
+    elif 'motorfly' in text.lower():
+        return NLF_ORG_STRUCTURE['motorfly']['activity']
+    elif 'ballong' in text.lower():
+        return NLF_ORG_STRUCTURE['ballong']['activity']
+    elif 'seilfly' in text.lower():
+        return NLF_ORG_STRUCTURE['seilfly']['activity']
+    elif 'speedglider' in text.lower():
+        return NLF_ORG_STRUCTURE['hps']['activity']
+
+    return 27
+
+
+def _get_pmt_person_age_membership(self, person):
+    membership = 'Senior'
+    age = datetime.now().year - date_parse(person.get('birth_date')).year - 1
+
+    if age <= 12:
+        membership = 'Barn'
+    elif age > 12 and age <= 18:
+        membership = 'Ungdom'
+    elif age > 18 and age <= 25:
+        membership = 'Junior'
+    elif age > 25 and age <= 66:
+        membership = 'Senior'
+    elif age > 66:
+        membership = 'Pensjonist'
+
+    return membership
+
+
+def _get_org_id_and_activity(self, club_id):
+    # Get org from org id (5)
+    # return org_id and main_activity.id
+    org_id = 376
+    activity = 27
+    return org_id, activity
+
+
+def _get_pmt(payment):
+    text = payment.get('product_name', '')
+    year = _get_pmt_year(text)
+
+    activity = _get_pmt_activity(text)
+    org_id = payment['org_id']  # or 376  # The real org_id
+    product_type = None
+    product_type_exception = None
+    product_type_id = payment['product_type_id']
+
+    if product_type_id == 20:
+        # Forbund
+        product_type = 'Forbundskontigent'
+        payment['product_type'] = product_type
+        product_type_exception = _get_pmt_type(text)
+        pass
+    elif product_type_id == 21:
+        # medlemskap klubb
+        product_type = 'Klubbkontigent'
+        payment['product_type'] = product_type
+        org_id = _get_pmt_group_from_club(payment['org_id'])
+        product_type_exception = _get_pmt_type(text)
+    elif product_type_id == 22:
+        # Seksjon
+        activity = _get_pmt_activity(text)
+        product_type = 'Seksjonskontigent'
+        payment['product_type'] = product_type
+        product_type_exception = _get_pmt_type(text)
+    elif product_type_id == 23:
+        payment['product_type'] = 'magazine'
+        # Magazines
+        if 'fritt' in text.lower():
+            product_type = 'Fritt Fall'
+            activity = 109
+        elif 'flynytt' in text.lower():
+            product_type = 'Flynytt'
+            activity = 27
+        elif 'gliding' in text.lower():
+            product_type = 'Nordic Gliding'
+            activity = 111
+        elif 'modell' in text.lower():
+            product_type = 'Modellinformasjon'
+            activity = 236
+        elif 'flukt' in text.lower():
+            product_type = 'Fri Flukt'
+            activity = 110
+
+        # self.value['product_name'] = product_name
+        # product_type = 'magazine' # We know that since 23
+
+        # Magasin
+        pass
+    else:
+        # What just happened?
+        pass
+
+    return org_id, activity, product_type, product_type_exception, product_type_id, year, payment['amount'], payment['paid_date']
+
+
+### PAYMENTS HOOKS ###
+
+def on_payment_before_post(items):
+    # club -> memberships!
+    for k, item in enumerate(items):
+        if item['product_type_id'] == 21:  # Only clubs
+            print(k, item)
+            items[k]['org_id'] = _get_pmt_group_from_club(items[k]['org_id'])
+
+
+def on_payment_after_post(item):
+    pass
+
+
+def on_payment_after_put(item, orginal=None):
+    """Every time some payments comes through, fix person"""
+    # Gets person
+    person, _, _, status_code = getitem_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['person_id']})
+
+    if status_code == 200:
+
+        current_year = datetime.now().year
+
+        # Change to group org_id
+        type_id = item.get('product_type_id', None)
+        text = item['product_name']
+
+        if type_id == 21: # Club Membership
+            # club -> fix memberships!
+            org_id = _get_pmt_group_from_club(item.get('org_id'))
+            changes = False
+            for k, v in enumerate(person.get('memberships', [])):
+                if v['club'] == org_id:
+                    person['memberships'][k]['pmt'] = {
+                        'exception': _get_pmt_type(text),
+                        'year': _get_pmt_year(item['product_name']),
+                        'amount': item['amount'],
+                        'paid': item['paid_date'],
+                        'exception': _get_pmt_type(text),
+                        'type': _get_pmt_person_age_membership(person)
+                    }
+                    changes = True
+
+            if changes is True:
+                resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                                    {'memberships': person['memberships']},
+                                                    False, True, **{'_id': person['_id']})
+                if status != 200:
+                    app.logger.exception('Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
+
+        elif type_id == 23: # Magazines
+
+            magazines = person.get('magazines', [])
+            # Remove old ones
+            magazines = [x for x in magazines if x['year'] >= datetime.now().year]
+
+            year = _get_pmt_year(text)
+            # Magazines
+            if 'fritt' in text.lower():
+                name = 'Fritt Fall'
+            elif 'flynytt' in text.lower():
+                name = 'Flynytt'
+            elif 'gliding' in text.lower():
+                name = 'Nordic Gliding'
+            elif 'modell' in text.lower():
+                name = 'Modellinformasjon'
+            elif 'flukt' in text.lower():
+                name = 'Fri Flukt'
+
+            magazines.append({'name': name, 'year': year, 'paid': item['paid_date'], 'amount': item['amount']})
+
+            # Unique list of dicts
+            magazines = [dict(p) for p in set(tuple(i.items()) for i in magazines)]
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                                {'magazines': magazines},
+                                                False, True, **{'_id': person['_id']})
+            if status != 200:
+                app.logger.exception('Error {} for payment id {}'.format(name, item['id']))
+
+        elif type_id in [20, 22]: # Federation/section
+            # Seksjonsavgifter
+            # federation: [{org_id: 376/ ... activity: 27,235... amount: }]
+            # memberships org_id fra section..
+            fed = person.get('federation', [])
+            # Remove old ones
+            fed = [x for x in fed if x['year'] >= datetime.now().year]
+
+            if type_id == 22:
+                product_type = 'Seksjonskontigent'
+                activity = _get_pmt_activity(text)
+            else:
+                product_type = 'Forbundskontigent'
+                activity = 27
+
+            fed.append({
+                'name': product_type,
+                'activity': activity,
+                'year': _get_pmt_year(text),
+                'paid': item['paid_date'],
+                'amount': item['amount'],
+                'exception': _get_pmt_type(text),
+                'type': _get_pmt_person_age_membership(person)
+            })
+
+            # Unique
+            fed = [dict(p) for p in set(tuple(i.items()) for i in fed)]
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                                {'federation': fed},
+                                                False, True, **{'_id': person['_id']})
+            if status != 200:
+                app.logger.exception('Error {} for payment id {}'.format(product_type, item['id']))
+
 def on_person_after_post(items):
     for response in items:
         _update_person(response)
+
+
+def on_person_before_put(item, original):
+    # if original then use and not rebuild because
+    # functions, competences, licenses, memberships and clubs, activities
+    item['functions'] = original.get('functions', [])
+    item['competences'] = original.get('competences', [])
+    item['licenses'] = original.get('licenses', [])
+
+    item['memberships'] = original.get('memberships', [])
+
+    item['magazines'] = original.get('magazines', [])
+    item['federation'] = original.get('federation', [])
+
+    # @TODO remove - legacy
+    item['clubs'] = original.get('clubs', [])
+    item['activities'] = original.get('activities', [])
 
 
 def on_person_after_put(item, original=None):
@@ -510,6 +799,7 @@ def on_person_after_put(item, original=None):
 
 
 def _update_person(item):
+    """Runs AFTER person replaced"""
     lookup = {'person_id': item['id']}
 
     competences, _, _, c_status, _ = get_internal(RESOURCE_COMPETENCES_PROCESS, **lookup)
@@ -525,8 +815,13 @@ def _update_person(item):
     if f_status == 200:
         on_function_post(functions.get('_items', []))
 
+    payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **lookup)
+    app.logger.debug('Payments\n{}'.format(functions))
+    if f_status == 200:
+        on_payment_after_post(payments.get('_items', []))
+
     try:
-        # Need to get personreturn response, last_modified, etag, 200
+        # Need to get person return response, last_modified, etag, 200
         person, _, _, p_status = getitem_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['id']})
         if p_status == 200:
             # Broadcast all
@@ -539,5 +834,4 @@ def _update_person(item):
                        ))
                        })
     except Exception as e:
-        print('[ERR]', e)
-        print(person)
+        app.logger.exception('Error finishing off person')

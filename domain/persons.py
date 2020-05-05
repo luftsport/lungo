@@ -52,9 +52,12 @@ _schema = {
                                          'embeddable': True,
                                      }
                                      },
+                        'payment': {'type': 'dict'}
                     }
 
                     },
+    'federation': {'type': 'list'},
+    'magazines': {'type': 'list'},
     'functions': {'type': 'list',
                   'schema': {'type': 'integer',
                              'data_relation': {
@@ -109,7 +112,6 @@ _schema = {
                                    'paid': {'type': 'datetime'},
                                }}
                     },
-
     'address': {'type': 'dict',
                 'schema':
                     {
