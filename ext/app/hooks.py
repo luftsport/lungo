@@ -577,7 +577,10 @@ def _get_pmt_activity(text):
 
 def _get_pmt_person_age_membership(person):
     membership = 'Senior'
-    age = datetime.now().year - date_parse(person.get('birth_date')).year - 1
+    try:
+        age = datetime.now().year - person.get('birth_date').year - 1
+    except:
+        age = datetime.now().year - date_parse(person.get('birth_date')).year - 1
 
     if age <= 12:
         membership = 'Barn'
@@ -721,7 +724,6 @@ def on_payment_after_put(item, orginal=None):
 
                 magazines = person.get('magazines', [])
 
-
                 year = _get_pmt_year(text)
                 # Magazines
                 if 'fritt' in text.lower():
@@ -752,7 +754,6 @@ def on_payment_after_put(item, orginal=None):
                 # federation: [{org_id: 376/ ... activity: 27,235... amount: }]
                 # memberships org_id fra section..
                 fed = person.get('federation', [])
-
 
                 if type_id == 22:
                     product_type = 'Seksjonskontigent'
