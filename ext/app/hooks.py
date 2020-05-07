@@ -670,7 +670,6 @@ def on_payment_before_post(items):
     # club -> memberships!
     for k, item in enumerate(items):
         if item['product_type_id'] == 21:  # Only clubs
-            print(k, item)
             items[k]['org_id'] = _get_pmt_group_from_club(items[k]['org_id'])
 
 

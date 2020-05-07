@@ -25,7 +25,7 @@ _schema = {
     'product_type_id': {'type': 'integer'},
     'person_id': {'type': 'integer'},
     'person_type': {'type': 'integer'},
-    'transaction_id': {'type': 'integer'},
+    'payment_id': {'type': 'integer'},
     'unit_cost_net': {'type': 'float'},
     'org_id': {'type': 'integer'}
 }
