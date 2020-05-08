@@ -717,7 +717,7 @@ def on_payment_after_put(item, orginal=None):
                     if v['club'] == org_id:
 
                         if refund is True:
-                            person['memberships'][k]['payment'] = {}
+                            person['memberships'][k].pop('payment', None)
                         else:
                             person['memberships'][k]['payment'] = {
                                 'id': item['id'],
