@@ -61,6 +61,8 @@ CACHE_EXPIRES = 20
 # Support only json response 'eve.render.XMLRenderer'
 RENDERERS = ['eve.render.JSONRenderer', 'eve.render.XMLRenderer']
 
+HATEOAS = False
+
 ALLOW_UNKNOWN = False
 
 # ISO
