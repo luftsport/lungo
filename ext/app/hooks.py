@@ -832,9 +832,6 @@ def on_person_after_post(items):
 
 
 def on_person_before_put(item, original):
-    print('BEFORE')
-    print('ITEM', item)
-    print('ORIG', original)
     # if original then use and not rebuild because
     # functions, competences, licenses, memberships and clubs, activities
     item['functions'] = original.get('functions', [])
@@ -855,9 +852,6 @@ def on_person_before_put(item, original):
 
 def on_person_after_put(item, original=None):
     # _update_person(item)
-    print('AFTER')
-    print('ITEM', item)
-    print('ORIG', original)
     try:
         broadcast({'entity': 'person',
                    'entity_id': item['id'],
