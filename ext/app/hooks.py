@@ -695,20 +695,38 @@ def on_payment_after_put(item, orginal=None):
             type_id = item.get('product_type_id', None)
             text = item['product_name']
 
+            try:
+                item['amount'] = float(item['amount'])
+                item['amount_at_payment_time'] = float(item['amount_at_payment_time'])
+            except:
+                pass
+
+            # Is this a refund?
+            if item['amount_at_payment_time'] + item['amount'] == 0:
+                refund = True
+            else:
+                refund = False
+
+            # Build and insert payments types
+            #
             if type_id == 21:  # Club Membership
                 # club -> fix memberships!
                 org_id = _get_pmt_group_from_club(item.get('org_id'))
                 changes = False
                 for k, v in enumerate(person.get('memberships', [])):
                     if v['club'] == org_id:
-                        person['memberships'][k]['payment'] = {
-                            'exception': _get_pmt_type(text),
-                            'year': _get_pmt_year(item['product_name']),
-                            'amount': item['amount'],
-                            'paid': item['paid_date'],
-                            'exception': _get_pmt_type(text),
-                            'type': _get_pmt_person_age_membership(person)
-                        }
+
+                        if refund is True:
+                            person['memberships'][k]['payment'] = {}
+                        else:
+                            person['memberships'][k]['payment'] = {
+                                'id': item['id'],
+                                'year': _get_pmt_year(item['product_name']),
+                                'exception': _get_pmt_type(text),
+                                'type': _get_pmt_person_age_membership(person),
+                                'amount': item['amount'],
+                                'paid': item['paid_date'],
+                            }
                         changes = True
 
                 if changes is True:
@@ -723,58 +741,83 @@ def on_payment_after_put(item, orginal=None):
 
                 magazines = person.get('magazines', [])
 
-                year = _get_pmt_year(text)
-                # Magazines
-                if 'fritt' in text.lower():
-                    name = 'Fritt Fall'
-                elif 'flynytt' in text.lower():
-                    name = 'Flynytt'
-                elif 'gliding' in text.lower():
-                    name = 'Nordic Gliding'
-                elif 'modell' in text.lower():
-                    name = 'Modellinformasjon'
-                elif 'flukt' in text.lower():
-                    name = 'Fri Flukt'
+                if refund is True:
+                    magazines = [x for x in magazines if x['id'] != item['id']]
+                else:
+                    year = _get_pmt_year(text)
+                    # Magazines
+                    if 'fritt' in text.lower():
+                        name = 'Fritt Fall'
+                    elif 'flynytt' in text.lower():
+                        name = 'Flynytt'
+                    elif 'gliding' in text.lower():
+                        name = 'Nordic Gliding'
+                    elif 'modell' in text.lower():
+                        name = 'Modellinformasjon'
+                    elif 'flukt' in text.lower():
+                        name = 'Fri Flukt'
 
-                magazines.append({'name': name, 'year': year, 'paid': item['paid_date'], 'amount': item['amount']})
+                    magazines.append(
+                        {
+                            'id': item['id'],
+                            'name': name,
+                            'year': year,
+                            # 'paid': item['paid_date'],
+                            # 'amount': item['amount']
+                        }
+                    )
 
                 # Remove old ones
-                magazines = [x for x in magazines if x['year'] >= datetime.now().year]
+                magazines = [x for x in magazines if x['year'] >= datetime.now().year and 'id' in x]
+
                 # Unique list of dicts
-                magazines = [dict(p) for p in set(tuple(i.items()) for i in magazines)]
-                resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
-                                                    {'magazines': magazines},
-                                                    False, True, **{'_id': person['_id']})
+                magazines = list({v['id']: v for v in magazines}.values())
+                # magazines = [dict(p) for p in set(tuple(i.items()) for i in magazines)]
+
+                resp, _, _, status = patch_internal(
+                    RESOURCE_PERSONS_PROCESS,
+                    {'magazines': magazines},
+                    False,
+                    True,
+                    **{'_id': person['_id']}
+                )
+
                 if status != 200:
                     app.logger.exception('Error {} for payment id {}'.format(name, item['id']))
 
             elif type_id in [20, 22]:  # Federation/section
                 # Seksjonsavgifter
-                # federation: [{org_id: 376/ ... activity: 27,235... amount: }]
                 # memberships org_id fra section..
                 fed = person.get('federation', [])
 
-                if type_id == 22:
-                    product_type = 'Seksjonskontigent'
-                    activity = _get_pmt_activity(text)
+                if refund is True:
+                    fed = [x for x in fed if x['id'] != item['id']]
                 else:
-                    product_type = 'Forbundskontigent'
-                    activity = 27
+                    if type_id == 22:
+                        product_type = 'Seksjonskontigent'
+                        activity = _get_pmt_activity(text)
+                    else:
+                        product_type = 'Forbundskontigent'
+                        activity = 27
 
-                fed.append({
-                    'name': product_type,
-                    'activity': activity,
-                    'year': _get_pmt_year(text),
-                    'paid': item['paid_date'],
-                    'amount': item['amount'],
-                    'exception': _get_pmt_type(text),
-                    'type': _get_pmt_person_age_membership(person)
-                })
+                    fed.append({
+                        'id': item['id'],
+                        'name': product_type,
+                        'activity': activity,
+                        'year': _get_pmt_year(text),
+                        'exception': _get_pmt_type(text),
+                        'type': _get_pmt_person_age_membership(person),
+                        'paid': item['paid_date'],
+                        'amount': item['amount'],
+                    })
 
                 # Remove old ones
-                fed = [x for x in fed if x['year'] >= datetime.now().year]
+                fed = [x for x in fed if x['year'] >= datetime.now().year and 'id' in x]
+
                 # Unique
-                fed = [dict(p) for p in set(tuple(i.items()) for i in fed)]
+                fed = list({v['id']: v for v in fed}.values())
+                # fed = [dict(p) for p in set(tuple(i.items()) for i in fed)]
+
                 resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
                                                     {'federation': fed},
                                                     False, True, **{'_id': person['_id']})
