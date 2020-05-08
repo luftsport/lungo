@@ -732,17 +732,18 @@ def on_payment_after_put(item, orginal=None):
                 if changes is True:
                     resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
                                                         {'memberships': person['memberships']},
-                                                        False, True, **{'_id': person['_id']})
+                                                        False,
+                                                        True,
+                                                        **{'_id': person['_id']})
                     if status != 200:
-                        app.logger.exception(
-                            'Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
+                        app.logger.exception('Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
 
             elif type_id == 23:  # Magazines
 
                 magazines = person.get('magazines', [])
 
                 if refund is True:
-                    magazines = [x for x in magazines if x['id'] != item['id']]
+                    magazines = [x for x in magazines if x.get('id', item['id']) != item['id']]
                 else:
                     year = _get_pmt_year(text)
                     # Magazines
@@ -791,7 +792,7 @@ def on_payment_after_put(item, orginal=None):
                 fed = person.get('federation', [])
 
                 if refund is True:
-                    fed = [x for x in fed if x['id'] != item['id']]
+                    fed = [x for x in fed if x.get('id', item['id']) != item['id']]
                 else:
                     if type_id == 22:
                         product_type = 'Seksjonskontigent'
