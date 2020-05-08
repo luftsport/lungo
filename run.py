@@ -104,7 +104,7 @@ app.on_replaced_competences_process += on_competence_put
 # PERSONS
 app.on_inserted_persons_process += on_person_after_post
 # On replace(d) / PUT:
-# app.on_replace_persons_process += on_person_before_put  # Use original values and not _update! For later testing!
+app.on_replace_persons_process += on_person_before_put  # Use original values and not _update! For later testing!
 app.on_replaced_persons_process += on_person_after_put  # Rebuild person
 
 # PAYMENTS
