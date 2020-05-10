@@ -49,7 +49,7 @@ definition = {
     'versioning': False,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
-    'mongo_indexes': {'person id': ([('Id', 1)], {'background': True}),
+    'mongo_indexes': {'person_id': ([('Id', 1)], {'background': True}),
                       'Melwin': ([('MelwinId', 1)], {'background': True}),
                       '_merged_to': ([('_merged_to', 1)], {'background': True}),
                       },

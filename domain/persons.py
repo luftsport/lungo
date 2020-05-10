@@ -170,7 +170,7 @@ definition = {
     'versioning': True,
     'resource_methods': ['GET'],
     'item_methods': ['GET'],
-    'mongo_indexes': {'person id': ([('id', 1)], {'background': True}),
+    'mongo_indexes': {'person_id': ([('id', 1)], {'background': True}),
                       # , 'unique': True gives DuplicateKeyError with versioning
                       'location': ([('address.location.geo', '2dsphere')], {'background': True}),
                       # 'clubs': ([('clubs', 1)], {'background': True}),
