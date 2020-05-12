@@ -8,5 +8,11 @@ cd $WORKING_DIR
 if [ -f gunicorn.pid ];then
         echo "LUNGO is running"
 else
-        echo "NOT RUNNNING!"
+        echo "!!LUNGO is NOT running!"
+fi
+
+if [ -f notification_daemon.pid ];then
+        echo "NOTIFICATION is running"
+else
+        echo "!!NOTIFICATION is NOT running!"
 fi
