@@ -32,40 +32,43 @@ _schema = {
     'memberships': {'type': 'list',
                     'default': [],
                     'schema': {
-                        'club': {
-                            'type': 'integer',
-                            'data_relation': {
-                                'resource': 'organizations',
-                                'field': 'id',
-                                'embeddable': True,
-                            }
-                        },
-                        'discipline': {
-                            'type': 'integer',
-                            'data_relation': {
-                                'resource': 'organizations',
-                                'field': 'id',
-                                'embeddable': True,
-                            }
-                        },
-                        'activity': {
-                            'type': 'integer',
-                            'data_relation': {
-                                'resource': 'activities',
-                                'field': 'id',
-                                'embeddable': True,
-                            }
-                        },
-                        'from_date': {'type': 'datetime'},
-                        'payment': {
-                            'type': 'dict',
-                            'schema': {
-                                'id': {'type': 'integer', 'required': True},
-                                'year': {'type': 'integer'},
-                                'exception': {'type': 'string', 'nullable': True},
-                                'type': {'type': 'string'},
-                                'amount': {'type': 'float'},
-                                'paid': {'type': 'datetime'}
+                        'type': 'dict',
+                        'schema': {
+                            'club': {
+                                'type': 'integer',
+                                'data_relation': {
+                                    'resource': 'organizations',
+                                    'field': 'id',
+                                    'embeddable': True,
+                                }
+                            },
+                            'discipline': {
+                                'type': 'integer',
+                                'data_relation': {
+                                    'resource': 'organizations',
+                                    'field': 'id',
+                                    'embeddable': True,
+                                }
+                            },
+                            'activity': {
+                                'type': 'integer',
+                                'data_relation': {
+                                    'resource': 'activities',
+                                    'field': 'id',
+                                    'embeddable': True,
+                                }
+                            },
+                            'from_date': {'type': 'datetime'},
+                            'payment': {
+                                'type': 'dict',
+                                'schema': {
+                                    'id': {'type': 'integer', 'required': True},
+                                    'year': {'type': 'integer'},
+                                    'exception': {'type': 'string', 'nullable': True},
+                                    'type': {'type': 'string'},
+                                    'amount': {'type': 'float'},
+                                    'paid': {'type': 'datetime'}
+                                }
                             }
                         }
                     }
