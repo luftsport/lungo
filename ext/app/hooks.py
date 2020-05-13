@@ -323,7 +323,6 @@ def on_function_put(response, original=None) -> None:
             if status != 200:
                 app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
 
-
     # PURE RESPONSE
     # Update the function
 
@@ -678,6 +677,11 @@ def on_payment_before_post(items):
 def on_payment_after_post(items):
     for item in items:
         on_payment_after_put(item)
+
+
+def on_payment_before_put(item, orginal=None):
+    if item['product_type_id'] == 21:  # Only clubs
+        item['org_id'] = _get_pmt_group_from_club(item['org_id'])
 
 
 def on_payment_after_put(item, orginal=None):
