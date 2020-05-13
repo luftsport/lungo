@@ -52,6 +52,7 @@ _schema = {
                                          'embeddable': True,
                                      }
                                      },
+                        'from_date': {'type': 'datetime'},
                         'payment': {'type': 'dict'}
                     }
 

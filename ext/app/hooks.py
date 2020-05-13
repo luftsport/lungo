@@ -250,9 +250,12 @@ def on_function_put(response, original=None) -> None:
 
                     for c in org.get('_up', []):
                         if c['type'] == 6:
-                            memberships.append({'club': c['id'],
-                                                'discipline': response['active_in_org_id'],
-                                                'activity': org.get('main_activity', {}).get('id', 27)})
+                            memberships.append({
+                                'club': c['id'],
+                                'discipline': response['active_in_org_id'],
+                                'activity': org.get('main_activity', {}).get('id', 27),
+                                'from_date': response.get('from_date', datetime.utcnow())
+                            })
 
             else:
                 try:
@@ -661,8 +664,14 @@ def _get_pmt(payment):
         # What just happened?
         pass
 
-    return org_id, activity, product_type, product_type_exception, product_type_id, year, payment['amount'], payment[
-        'paid_date']
+    return org_id,\
+           activity,\
+           product_type,\
+           product_type_exception,\
+           product_type_id,\
+           year,\
+           payment['amount'],\
+           payment['paid_date']
 
 
 ### PAYMENTS HOOKS ###
