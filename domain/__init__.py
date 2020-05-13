@@ -13,6 +13,18 @@ import test
 import payments
 import translate_persons
 import translate_organizations
+# Airports OurAirports
+import aip_airports
+import aip_frequencies
+import aip_runways
+import aip_navaids
+import aip_countries
+import aip_regions
+# import openaip_airports
+import aip_airspaces
+# Geo
+import geo_countries
+import geo_admin
 
 # import test, test_ref
 
@@ -101,4 +113,19 @@ DOMAIN = {
     "translate_persons_process": translate_persons.process_definition,
     "translate_organizations": translate_organizations.definition,
     "translate_organizations_process": translate_organizations.process_definition,
+
+    # Airports and stuff
+    "aip_airports": aip_airports.definition,
+    "aip_airspaces": aip_airspaces.definition,
+    "aip_frequencies": aip_frequencies.definition,
+    "aip_runways": aip_runways.definition,
+    "aip_navaids": aip_navaids.definition,
+    "aip_countries": aip_countries.definition,
+    "aip_regions": aip_regions.definition,
+    # "openaip_airports": openaip_airports.definition,
+
+    # Geo
+    "geo_countries": geo_countries.definition,
+    "geo_admin": geo_admin.definition,
+
 }
