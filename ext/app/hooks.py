@@ -317,10 +317,12 @@ def on_function_put(response, original=None) -> None:
                                                  'clubs': clubs,
                                                  'activities': activities,
                                                  'memberships': memberships},
-                                                False, True, **lookup)
+                                                False,
+                                                True,
+                                                **lookup)
             if status != 200:
                 app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
-                pass
+
 
     # PURE RESPONSE
     # Update the function
@@ -725,7 +727,7 @@ def on_payment_after_put(item, orginal=None):
                                 'exception': _get_pmt_type(text),
                                 'type': _get_pmt_person_age_membership(person),
                                 'amount': item['amount'],
-                                'paid': item['paid_date'],
+                                'paid': item['paid_date']
                             }
                         changes = True
 
@@ -736,7 +738,8 @@ def on_payment_after_put(item, orginal=None):
                                                         True,
                                                         **{'_id': person['_id']})
                     if status != 200:
-                        app.logger.exception('Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
+                        app.logger.exception(
+                            'Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
 
             elif type_id == 23:  # Magazines
 
@@ -846,8 +849,6 @@ def on_person_before_put(item, original):
     # @TODO remove - legacy
     item['clubs'] = original.get('clubs', [])
     item['activities'] = original.get('activities', [])
-
-
 
 
 def on_person_after_put(item, original=None):

@@ -107,9 +107,12 @@ app.on_inserted_persons_process += on_person_after_post
 app.on_replace_persons_process += on_person_before_put  # Use original values and not _update! For later testing!
 app.on_replaced_persons_process += on_person_after_put  # Rebuild person
 
-# PAYMENTS
+# PAYMENTS POST
 app.on_insert_payments_process += on_payment_before_post
 app.on_inserted_payments_process += on_payment_after_post
+# PAYMENTS PUT
+app.on_replace_payments_process += on_payment_before_post
+app.on_replaced_payments_process += on_payment_after_put
 
 
 # ORGANIZATIONS
