@@ -40,8 +40,8 @@ DOMAIN = {
     "persons_age_distribution": persons.agg_age_distribution,
     "persons_age_gender_bucket_distribution": persons.agg_age_gender_bucket_distribution,
 
-    # Persons test
-    "test": test.definition,
+    # Persons test for error id
+    # "test": test.definition,
 
     # Organization
     "organizations": organizations.definition,
