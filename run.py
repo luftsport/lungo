@@ -111,7 +111,7 @@ app.on_replaced_persons_process += on_person_after_put  # Rebuild person
 app.on_insert_payments_process += on_payment_before_post
 app.on_inserted_payments_process += on_payment_after_post
 # PAYMENTS PUT
-app.on_replace_payments_process += on_payment_before_post
+app.on_replace_payments_process += on_payment_before_put
 app.on_replaced_payments_process += on_payment_after_put
 
 
