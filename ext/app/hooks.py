@@ -675,7 +675,7 @@ def _get_pmt(payment):
 
 ### PAYMENTS HOOKS ###
 
-def on_payment_before_post(items):
+def on_payment_before_post(items, original=None):
     # club -> memberships!
     for k, item in enumerate(items):
         if item['product_type_id'] == 21:  # Only clubs
@@ -725,7 +725,7 @@ def on_payment_after_put(item, orginal=None):
             #
             if type_id == 21:  # Club Membership
                 # club -> fix memberships!
-                org_id = _get_pmt_group_from_club(item.get('org_id'))
+                org_id = item.get('org_id') # _get_pmt_group_from_club(item.get('org_id'))
                 changes = False
                 for k, v in enumerate(person.get('memberships', [])):
                     if v['club'] == org_id:
