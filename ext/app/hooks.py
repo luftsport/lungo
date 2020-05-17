@@ -520,12 +520,11 @@ def on_organizations_put(response, original=None):
 ######## PAYMENTS ###########
 
 def _get_pmt_group_from_club(org_id):
-    org, _, _, status_code = getitem_internal(RESOURCE_ORGANIZATIONS_PROCESS, **{'id': org_id})
+    lookup = {'parent_id': org_id, 'type_id': 6, 'is_active': True}
+    group, _, _, status_code = getitem_internal(RESOURCE_ORGANIZATIONS_PROCESS, **lookup)
     if status_code == 200:
-        if org.get('type_id', None) == 5:
-            for v in org.get('_down', []):
-                if v.get('type', None) == 6:
-                    return v['id']
+        return group.get('id', org_id)
+
     return org_id
 
 
@@ -664,13 +663,13 @@ def _get_pmt(payment):
         # What just happened?
         pass
 
-    return org_id,\
-           activity,\
-           product_type,\
-           product_type_exception,\
-           product_type_id,\
-           year,\
-           payment['amount'],\
+    return org_id, \
+           activity, \
+           product_type, \
+           product_type_exception, \
+           product_type_id, \
+           year, \
+           payment['amount'], \
            payment['paid_date']
 
 
