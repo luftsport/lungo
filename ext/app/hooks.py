@@ -675,7 +675,7 @@ def _get_pmt(payment):
 
 ### PAYMENTS HOOKS ###
 
-def on_payment_before_post(items, original=None):
+def on_payment_before_post(items):
     # club -> memberships!
     for k, item in enumerate(items):
         if item['product_type_id'] == 21:  # Only clubs
