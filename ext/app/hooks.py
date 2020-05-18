@@ -365,6 +365,10 @@ def on_function_put(response, original=None) -> None:
             app.logger.error('Patch returned {} for function update type_name'.format(status))
             pass
 
+    # Fix payments - always!
+    payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **{'person_id': person, 'org_id': {'$in': clubs}})
+    if p_status == 200:
+        on_payment_after_post(payments.get('_items', []))
 
 def on_license_post(items):
     """pass"""
@@ -753,6 +757,10 @@ def on_payment_after_put(item, orginal=None):
                         app.logger.exception(
                             'Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
 
+
+
+
+
             elif type_id == 23:  # Magazines
 
                 magazines = person.get('magazines', [])
@@ -895,10 +903,12 @@ def _update_person(item):
     if f_status == 200:
         on_function_post(functions.get('_items', []))
 
+    """ In functions for now!
     payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **lookup)
     app.logger.debug('Payments\n{}'.format(functions))
     if f_status == 200:
         on_payment_after_post(payments.get('_items', []))
+    """
 
     try:
         # Need to get person return response, last_modified, etag, 200
