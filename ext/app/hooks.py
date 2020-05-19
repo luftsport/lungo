@@ -366,7 +366,7 @@ def on_function_put(response, original=None) -> None:
             pass
 
     # Fix payments - always!
-    payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **{'person_id': person, 'org_id': {'$in': [x['club'] for x in memberships]}})
+    payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **{'person_id': person['id'], 'org_id': {'$in': [x['club'] for x in memberships]}})
     if p_status == 200:
         on_payment_after_post(payments.get('_items', []))
 
