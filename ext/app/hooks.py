@@ -872,7 +872,7 @@ def on_person_before_put(item, original):
 
 
 def on_person_after_put(item, original=None):
-    # _update_person(item)
+    _update_person(item)
     try:
         broadcast({'entity': 'person',
                    'entity_id': item['id'],
