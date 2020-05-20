@@ -323,6 +323,8 @@ def on_function_put(response, original=None) -> None:
                                             False,
                                             True,
                                             **lookup)
+
+        print('[MEMBERSHIPS]', memberships)
         if status != 200:
             app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
 
