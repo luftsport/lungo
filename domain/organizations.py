@@ -43,8 +43,11 @@ _schema = {
                 },
     # 'ContactId': {'type': 'integer'},
     'created': {'type': 'datetime'},
-    'describing_name': {'type': 'string', 'default': ''},
     'is_active': {'type': 'boolean'},
+    'end_date': {'type': 'datetime'},
+    'end_type_id': {'type': 'integer'},
+    'describing_name': {'type': 'string', 'default': ''},
+
     'local_council_id': {'type': 'integer'},
     'local_council_name': {'type': 'string', 'default': ''},
     'modified': {'type': 'datetime'},
@@ -182,8 +185,8 @@ agg_get_org_by_activity_and_org_types = {
                 [
                     {
                         "$match": {
-                            "activities.id": "$activity", # activity - integer
-                            "type_id": {"$in": "$type_ids"} # type_ids - [integer,..]
+                            "activities.id": "$activity",  # activity - integer
+                            "type_id": {"$in": "$type_ids"}  # type_ids - [integer,..]
                         }
                     },
                     {
