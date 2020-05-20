@@ -148,6 +148,10 @@ def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
         return True  # We do not know if difference
 
 
+def _compare_list_of_dicts_no_id(l1, l2):
+    return [d for d in l1 if d not in l2] == []
+
+
 def _compare_lists(l1, l2) -> bool:
     """Just compare set(list)
     :param l1: list
@@ -251,6 +255,7 @@ def on_function_put(response, original=None) -> None:
                     for c in org.get('_up', []):
                         if c['type'] == 6:
                             memberships.append({
+                                'id': response['id'],
                                 'club': c['id'],
                                 'discipline': response['active_in_org_id'],
                                 'activity': org.get('main_activity', {}).get('id', 27),
@@ -259,12 +264,7 @@ def on_function_put(response, original=None) -> None:
 
             else:
                 try:
-                    if org.get('type_id', 0) == 14:
-                        for c in org.get('_up', []):
-                            if c['type'] == 6:
-                                for k, v in enumerate(memberships):
-                                    if v['club'] == c['id'] and v['discipline'] == org['id']:
-                                        memberships.pop(k)
+                    memberships = [x for x in memberships if x['id'] != response['id']]
                     clubs.remove(response['active_in_org_id'])
                 except ValueError:
                     pass
@@ -308,25 +308,36 @@ def on_function_put(response, original=None) -> None:
 
         lookup = {'_id': person['_id']}
 
-        # Update person with new values
-        # response, last_modified, etag, status =
-        #if _compare_lists(functions, person.get('functions', [])) is True or \
-        #        _compare_lists(activities, person.get('activities', [])) is True or \
-        #        memberships != person.get('memberships', []) or \
-        #        _compare_lists(clubs, person.get('clubs', [])) is True:
-        # Always update
-        resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
-                                            {'functions': functions,
-                                             'clubs': clubs,
-                                             'activities': activities,
-                                             'memberships': memberships},
-                                            False,
-                                            True,
-                                            **lookup)
+        # Update person with new values IF anything is changed
+        if _compare_lists(functions, person.get('functions', [])) is True or \
+                _compare_lists(activities, person.get('activities', [])) is True or \
+                memberships != person.get('memberships', []) or \
+                _compare_lists(clubs, person.get('clubs', [])) is True:
 
-        print('[MEMBERSHIPS]', memberships)
-        if status != 200:
-            app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                                {'functions': functions,
+                                                 'clubs': clubs,
+                                                 'activities': activities,
+                                                 'memberships': memberships},
+                                                False,
+                                                True,
+                                                **lookup)
+
+            if status != 200:
+                app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
+
+            else:
+                # Fix payments
+                # Always run
+                payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
+                                                           **{'person_id': person['id'],
+                                                              'org_id': {
+                                                                  '$in': [x['club'] for x in memberships]
+                                                              }
+                                                              }
+                                                           )
+                if p_status == 200:
+                    on_payment_after_post(payments.get('_items', []))
 
     # PURE RESPONSE
     # Update the function
@@ -367,12 +378,6 @@ def on_function_put(response, original=None) -> None:
             app.logger.error('Patch returned {} for function update type_name'.format(status))
             pass
 
-    # Fix payments
-    # Always run
-    payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **{'person_id': person['id'], 'org_id': {'$in': [x['club'] for x in memberships]}})
-    print('[PAYMENTS]', person['id'], [x['club'] for x in memberships], p_status, payments)
-    if p_status == 200:
-        on_payment_after_post(payments.get('_items', []))
 
 def on_license_post(items):
     """pass"""
@@ -733,7 +738,7 @@ def on_payment_after_put(item, orginal=None):
             #
             if type_id == 21:  # Club Membership
                 # club -> fix memberships!
-                org_id = item.get('org_id') # _get_pmt_group_from_club(item.get('org_id'))
+                org_id = item.get('org_id')  # _get_pmt_group_from_club(item.get('org_id'))
                 changes = False
                 for k, v in enumerate(person.get('memberships', [])):
                     if v['club'] == org_id:

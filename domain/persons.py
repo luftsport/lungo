@@ -34,6 +34,14 @@ _schema = {
                     'schema': {
                         'type': 'dict',
                         'schema': {
+                            'id': {
+                                'type': 'integer',
+                                'data_relation': {
+                                    'resource': 'functions',
+                                    'field': 'id',
+                                    'embeddable': True,
+                                }
+                            },
                             'club': {
                                 'type': 'integer',
                                 'data_relation': {
