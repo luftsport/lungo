@@ -310,21 +310,21 @@ def on_function_put(response, original=None) -> None:
 
         # Update person with new values
         # response, last_modified, etag, status =
-        if _compare_lists(functions, person.get('functions', [])) is True or \
-                _compare_lists(activities, person.get('activities', [])) is True or \
-                memberships != person.get('memberships', []) or \
-                _compare_lists(clubs, person.get('clubs', [])) is True:
-
-            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
-                                                {'functions': functions,
-                                                 'clubs': clubs,
-                                                 'activities': activities,
-                                                 'memberships': memberships},
-                                                False,
-                                                True,
-                                                **lookup)
-            if status != 200:
-                app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
+        #if _compare_lists(functions, person.get('functions', [])) is True or \
+        #        _compare_lists(activities, person.get('activities', [])) is True or \
+        #        memberships != person.get('memberships', []) or \
+        #        _compare_lists(clubs, person.get('clubs', [])) is True:
+        # Always update
+        resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                            {'functions': functions,
+                                             'clubs': clubs,
+                                             'activities': activities,
+                                             'memberships': memberships},
+                                            False,
+                                            True,
+                                            **lookup)
+        if status != 200:
+            app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
 
     # PURE RESPONSE
     # Update the function
@@ -365,8 +365,10 @@ def on_function_put(response, original=None) -> None:
             app.logger.error('Patch returned {} for function update type_name'.format(status))
             pass
 
-    # Fix payments - always!
+    # Fix payments
+    # Always run
     payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **{'person_id': person['id'], 'org_id': {'$in': [x['club'] for x in memberships]}})
+    print('[PAYMENTS]', person['id'], [x['club'] for x in memberships], p_status, payments)
     if p_status == 200:
         on_payment_after_post(payments.get('_items', []))
 
