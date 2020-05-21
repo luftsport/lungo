@@ -65,7 +65,7 @@ agg_count_and_sort_errors = {
             'pipeline': [
                 {"$match": {"_status": "error"}},
                 {"$group": {"_id": "$_issues.exception", "count": {"$sum": 1}}},
-                {"$sort": {SON([("count", -1), ("_id", -1)])}}
+                {"$sort": SON([("count", -1), ("_id", -1)])}
             ]
         }
     }
