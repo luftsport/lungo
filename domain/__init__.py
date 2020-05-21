@@ -101,6 +101,7 @@ DOMAIN = {
     "integration_changes_aggregate_day": integration_changes.agg_count_change_day,
     "integration_changes_aggregate_hour": integration_changes.agg_count_change_hour,
     "integration_changes_aggregate_day_hour": integration_changes.agg_count_change_day_hour,
+    "integration_changes_aggregate_errors_group": integration_changes.agg_count_and_sort_errors,
 
     # Resources
     "activities": activities.definition,
