@@ -19,6 +19,7 @@ _schema = {
     'birth_date': {'type': 'datetime'},
     'date_of_death': {'type': 'datetime'},
     'nationality_id': {'type': 'integer'},
+    'primary_email': {'type': 'string'},
     'clubs': {'type': 'list',
               'schema': {'type': 'integer',
                          'data_relation': {
@@ -170,6 +171,8 @@ definition = {
     'item_methods': ['GET'],
     'mongo_indexes': {'person id': ([('id', 1)], {'background': True}),
                       # , 'unique': True gives DuplicateKeyError with versioning
+                      # 'primary_email': ([('primary_email', 'text')], {'background': True}),
+                      'primary_email': ([('primary_email', 1)], {'background': True}),
                       'location': ([('address.location.geo', '2dsphere')], {'background': True}),
                       # 'clubs': ([('clubs', 1)], {'background': True}),
                       'membership': ([('memberships', 1)], {'background': True}),
