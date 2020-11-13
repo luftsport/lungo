@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
 from dateutil import parser
-from flask import Response, abort, current_app as app
+from flask import Response, request as flask_request, abort, current_app as app
 import json
 
 from dateutil.parser import parse as date_parse
@@ -16,6 +16,7 @@ from ext.auth.clients import LUNGO_SIO_TOKEN
 from ext.app.decorators import async, debounce
 import time
 import socketio
+
 
 # import dateutil.parser
 
@@ -124,6 +125,30 @@ def _get_person(person_id) -> dict:
                 return person['_items'][0]
 
     return {}
+
+
+def _get_merged_from(person_id) -> list:
+    """Get person ids merged to this person id
+
+    :param person_id:
+    :return:
+    """
+    merged_from_ids = []
+    try:
+        flask_request.add({"aggregate": {"$person_id": person_id}})
+        merged_from, _, _, merged_status, _ = get_internal(RESOURCE_MERGED_FROM)
+
+        if merged_status == 200:
+            merged_from_ids = merged_from.get('_items', [])[0].get('merged_from', [])
+
+            app.logger.info('Merged from returned {} results, {}'.format(len(merged_from_ids), merged_from_ids))
+
+
+    except Exception as e:
+        app.logger.exception('Get internal aggregation merged from with status {}'.format(merged_status))
+        app.logger.error('Heres the result: {}'.format(merged_from))
+
+    return merged_from_ids
 
 
 def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
@@ -333,23 +358,10 @@ def on_function_put(response, original=None) -> None:
                 # Always run
                 # Get all duplicate person_id's via /persons/merged?aggregate={"$person_id": person['id']} ?? list(set(merged_from+person['id'])) sjekk at id er id!
                 # persons/merged?aggregate={"$person_id":person['id']}
-                merged_from_ids = []
-                try:
-                    merged_from, _, _, merged_status, _ = get_internal(RESOURCE_MERGED_FROM, **{"aggregate": {"$person_id": person['id']}})
-
-                    if merged_status == 200:
-                        merged_from_ids = merged_from.get('_items', [])[0].get('merged_from', [])
-
-                        app.logger.info('Merged from returned {} results, {}'.format(len(merged_from_ids), merged_from_ids))
-
-
-                except Exception as e:
-                    app.logger.exception('Get internal aggregation merged from with status {}'.format(merged_status))
-                    app.logger.error('Heres the result: {}'.format(merged_from))
 
                 payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
                                                            **{
-                                                               'person_id': {'$in': list(set([person['id']] + merged_from_ids))},
+                                                               'person_id': {'$in': list(set([person['id']] + _get_merged_from(person['id'])))},
                                                                'org_id': {
                                                                    '$in': [x['club'] for x in memberships]
                                                                }
