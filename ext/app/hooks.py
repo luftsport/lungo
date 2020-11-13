@@ -338,7 +338,7 @@ def on_function_put(response, original=None) -> None:
                     merged_from, _, _, merged_status, _ = get_internal(RESOURCE_MERGED_FROM, **{"aggregate": {"$person_id": person['id']}})
 
                     if merged_status == 200:
-                        merged_from_ids = merged_from.get('_items', []).get('merged_from', [])
+                        merged_from_ids = merged_from.get('_items', [])[0].get('merged_from', [])
 
                         app.logger.info('Merged from returned {} results, {}'.format(len(merged_from_ids), merged_from_ids))
 
