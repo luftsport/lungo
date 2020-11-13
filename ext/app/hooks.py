@@ -340,9 +340,11 @@ def on_function_put(response, original=None) -> None:
                     if merged_status == 200:
                         merged_from_ids = merged_from.get('_items', []).get('merged_from', [])
 
+                        app.logger.info('Merged from returned {} results, {}'.format(len(merged_from_ids), merged_from_ids))
+
 
                 except Exception as e:
-                    pass
+                    app.logger.error('Get internal aggregation merged from with status {}'.format(merged_status))
 
                 payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
                                                            **{
