@@ -355,7 +355,11 @@ def on_function_put(response, original=None) -> None:
                                                               }
                                                            )
                 if p_status == 200:
-                    on_payment_after_post(payments.get('_items', []))
+
+                    payments = payments.get('_items', [])
+                    for p in payments:
+                        p.update({'person_id': person['id']})
+                    on_payment_after_post(payments)
 
     # PURE RESPONSE
     # Update the function
