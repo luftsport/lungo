@@ -26,6 +26,8 @@ RESOURCE_LICENSES_PROCESS = 'licenses_process'
 RESOURCE_COMPETENCES_PROCESS = 'competences_process'
 RESOURCE_ORGANIZATIONS_PROCESS = 'organizations_process'
 RESOURCE_PAYMENTS_PROCESS = 'payments_process'
+RESOURCE_MERGED_FROM = 'persons_merged_from'
+
 
 NLF_ORG_STRUCTURE = {
     'fallskjerm': {'activity': 109, 'org_id': 90972},
@@ -329,11 +331,25 @@ def on_function_put(response, original=None) -> None:
             else:
                 # Fix payments
                 # Always run
+                # Get all duplicate person_id's via /persons/merged?aggregate={"$person_id": person['id']} ?? list(set(merged_from+person['id'])) sjekk at id er id!
+                # persons/merged?aggregate={"$person_id":person['id']}
+                merged_from_ids = []
+                try:
+                    merged_from, _, _, merged_status, _ = get_internal(RESOURCE_MERGED_FROM, **{"aggregate": {"$person_id": person['id']}})
+
+                    if merged_status == 200:
+                        merged_from_ids = merged_from.get('_items', []).get('merged_from', [])
+
+
+                except Exception as e:
+                    pass
+
                 payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
-                                                           **{'person_id': person['id'],
-                                                              'org_id': {
-                                                                  '$in': [x['club'] for x in memberships]
-                                                              }
+                                                           **{
+                                                               'person_id': {'$in': list(set([person['id']] + merged_from_ids))},
+                                                               'org_id': {
+                                                                   '$in': [x['club'] for x in memberships]
+                                                               }
                                                               }
                                                            )
                 if p_status == 200:
