@@ -344,7 +344,7 @@ def on_function_put(response, original=None) -> None:
 
 
                 except Exception as e:
-                    app.logger.error('Get internal aggregation merged from with status {}'.format(merged_status))
+                    app.logger.exception('Get internal aggregation merged from with status {}'.format(merged_status))
 
                 payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
                                                            **{
