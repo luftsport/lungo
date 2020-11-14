@@ -147,12 +147,12 @@ def _get_merged_from(person_id) -> list:
         persons = app.data.driver.db[datasource]
 
         result = list(persons.aggregate(pipeline))
+        
+        if len(result) == 1:
+            result = result[0]
+            merged_from_ids = result.get('merged_from', [])
 
         app.logger.error('Results: {}'.format(result))
-
-        if result:
-            merged_from_ids = result.get('_items', [])[0].get('merged_from', [])
-
     except Exception as e:
         app.logger.exception('Aggregation with database layer failed')
 
@@ -173,7 +173,7 @@ def _get_merged_from(person_id) -> list:
 
     
     """
-
+    app.logger.error('Merged from ids is: {}'.format(merged_from_ids))
     return merged_from_ids
 
 def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
