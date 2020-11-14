@@ -155,7 +155,6 @@ def _get_merged_from(person_id) -> list:
     except Exception as e:
         app.logger.exception('Aggregation with database layer failed for person_id {}'.format(person_id))
 
-    app.logger.error('Merged from ids is: {}'.format(merged_from_ids))
     return merged_from_ids
 
 def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
