@@ -360,11 +360,7 @@ def on_function_put(response, original=None) -> None:
                 app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
 
             else:
-                # Fix payments
-                # Always run
-                # Get all duplicate person_id's via /persons/merged?aggregate={"$person_id": person['id']} ?? list(set(merged_from+person['id'])) sjekk at id er id!
-                # persons/merged?aggregate={"$person_id":person['id']}
-
+                # Fix payments all payments from merged person id's
                 payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
                                                            **{
                                                                'person_id': {'$in': list(set([person['id']] + _get_merged_from(person['id'])))},
