@@ -146,7 +146,9 @@ def _get_merged_from(person_id) -> list:
 
         persons = app.data.driver.db[datasource]
 
-        result = persons.aggregate(pipeline)
+        result = list(persons.aggregate(pipeline))
+
+        app.logger.error('Results: {}'.format(result))
 
         if result:
             merged_from_ids = result.get('_items', [])[0].get('merged_from', [])
