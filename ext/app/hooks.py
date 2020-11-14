@@ -139,6 +139,9 @@ def _get_merged_from(person_id) -> list:
         merged_from_ids = []
 
         pipeline = agg_merged_from.get('datasource', {}).get('aggregation', {}).get('pipeline', [])
+        pipeline[0]["$match"]["id"] = person_id
+        pipeline[2]["$graphLookup"]["startWith"] = person_id
+
         datasource = agg_merged_from.get('datasource', {}).get('source', RESOURCE_COLLECTION)
 
         persons = app.data.driver.db[datasource]
