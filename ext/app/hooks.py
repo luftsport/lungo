@@ -133,7 +133,25 @@ def _get_merged_from(person_id) -> list:
     :param person_id:
     :return:
     """
-    merged_from_ids = []
+    try:
+        from domain.persons import agg_merged_from, RESOURCE_COLLECTION
+
+        merged_from_ids = []
+
+        pipeline = agg_merged_from.get('datasource', {}).get('aggregation', {}).get('pipeline', [])
+        datasource = agg_merged_from.get('datasource', {}).get('source', RESOURCE_COLLECTION)
+
+        persons = app.data.driver.db[datasource]
+
+        result = persons.aggregate(pipeline)
+
+        if result:
+            merged_from_ids = result.get('_items', [])[0].get('merged_from', [])
+
+    except Exception as e:
+        app.logger.exception('Aggregation with database layer failed')
+
+    """
     try:
         flask_request.add({"aggregate": {"$person_id": person_id}})
         merged_from, _, _, merged_status, _ = get_internal(RESOURCE_MERGED_FROM)
@@ -148,8 +166,10 @@ def _get_merged_from(person_id) -> list:
         app.logger.exception('Get internal aggregation merged from with status {}'.format(merged_status))
         app.logger.error('Heres the result: {}'.format(merged_from))
 
-    return merged_from_ids
+    
+    """
 
+    return merged_from_ids
 
 def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
     """Sorts lists then compares on the given id in the dicts
