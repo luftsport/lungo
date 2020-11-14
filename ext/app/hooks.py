@@ -147,32 +147,14 @@ def _get_merged_from(person_id) -> list:
         persons = app.data.driver.db[datasource]
 
         result = list(persons.aggregate(pipeline))
-        
+
         if len(result) == 1:
             result = result[0]
             merged_from_ids = result.get('merged_from', [])
 
-        app.logger.error('Results: {}'.format(result))
     except Exception as e:
-        app.logger.exception('Aggregation with database layer failed')
+        app.logger.exception('Aggregation with database layer failed for person_id {}'.format(person_id))
 
-    """
-    try:
-        flask_request.add({"aggregate": {"$person_id": person_id}})
-        merged_from, _, _, merged_status, _ = get_internal(RESOURCE_MERGED_FROM)
-
-        if merged_status == 200:
-            merged_from_ids = merged_from.get('_items', [])[0].get('merged_from', [])
-
-            app.logger.info('Merged from returned {} results, {}'.format(len(merged_from_ids), merged_from_ids))
-
-
-    except Exception as e:
-        app.logger.exception('Get internal aggregation merged from with status {}'.format(merged_status))
-        app.logger.error('Heres the result: {}'.format(merged_from))
-
-    
-    """
     app.logger.error('Merged from ids is: {}'.format(merged_from_ids))
     return merged_from_ids
 
