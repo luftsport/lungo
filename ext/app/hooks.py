@@ -365,7 +365,7 @@ def on_function_put(response, original=None) -> None:
                                                            **{
                                                                'person_id': {'$in': list(set([person['id']] + _get_merged_from(person['id'])))},
                                                                'org_id': {
-                                                                   '$in': [x['club'] for x in memberships]
+                                                                   '$in': [x['club'] for x in memberships] + [v['org_id'] for k,v in NLF_ORG_STRUCTURE.items() if NLF_ORG_STRUCTURE[k]['activity'] in [val['activity'] for val in memberships]] + [376]
                                                                }
                                                               }
                                                            )
