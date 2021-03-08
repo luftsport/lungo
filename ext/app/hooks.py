@@ -71,6 +71,29 @@ def after_get_persons(response):
             )
         )
 
+    # Remove secret values
+    if response.get('address', {}).get('secret_email', False) is True:
+        response['address']['email'] = []
+        response['address'].pop('contact_id', None)
+        response['address'].pop('contact_information_id', None)
+        response['address'].pop('country_id', None)
+        response['address'].pop('street_address', None)
+        response['address'].pop('zip_code', None)
+        response['address'].pop('location', None)
+
+    if response.get('address', {}).get('secret_email', False) is True:
+        response['address']['email'] = []
+        response.pop('primary_email', None)
+
+    if response.get('address', {}).get('secret_phone_home', False) is True:
+        response['address'].pop('phone_home', None)
+
+    if response.get('address', {}).get('secret_phone_mobile', False) is True:
+        response['address'].pop('phone_mobile', None)
+
+    if response.get('address', {}).get('secret_phone_work', False) is True:
+        response['address'].pop('phone_work', None)
+
 
 def assign_lookup(resource, request, lookup):
     """If lookup then we do add this"""
