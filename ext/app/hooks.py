@@ -488,47 +488,48 @@ def on_competence_put(response, original=None):
 
         expiry = response.get('valid_until', None)
 
-        # Set expiry to end year
+        # Always require an expiry date!
         if expiry is None:
-            expiry = _get_end_of_year()
+            # expiry = _get_end_of_year()
+            pass
+        else:
+            expiry = _fix_naive(expiry)
 
-        expiry = _fix_naive(expiry)
+            person = _get_person(response.get('person_id', None))
 
-        person = _get_person(response.get('person_id', None))
+            if '_id' in person:
 
-        if '_id' in person:
+                competence = person.get('competences', []).copy()
 
-            competence = person.get('competences', []).copy()
+                # Add this competence?
+                if expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
 
-            # Add this competence?
-            if expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
+                    try:
+                        competence.append({'id': response.get('id'),
+                                           '_code': response.get('_code', None),
+                                           'issuer': response.get('approved_by_person_id', None),
+                                           'expiry': expiry,
+                                           # 'paid': response.get('paid_date', None)
+                                           })
+                    except:
+                        pass
 
-                try:
-                    competence.append({'id': response.get('id'),
-                                       '_code': response.get('_code', None),
-                                       'issuer': response.get('approved_by_person_id', None),
-                                       'expiry': expiry,
-                                       # 'paid': response.get('paid_date', None)
-                                       })
-                except:
-                    pass
+                # Always remove stale competences
+                # Note that _code is for removing old competences, should be removed
+                competence[:] = [d for d in competence if
+                                 _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
-            # Always remove stale competences
-            # Note that _code is for removing old competences, should be removed
-            competence[:] = [d for d in competence if
-                             _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
+                # Always unique by id
+                competence = list({v['id']: v for v in competence}.values())
 
-            # Always unique by id
-            competence = list({v['id']: v for v in competence}.values())
-
-            # Patch if difference
-            if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
-                lookup = {'_id': person['_id']}
-                resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
-                                                    **lookup)
-                if status != 200:
-                    app.logger.error('Patch returned {} for competence'.format(status))
-                    pass
+                # Patch if difference
+                if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
+                    lookup = {'_id': person['_id']}
+                    resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
+                                                        **lookup)
+                    if status != 200:
+                        app.logger.error('Patch returned {} for competence'.format(status))
+                        pass
 
 
 def on_organizations_post(items):
