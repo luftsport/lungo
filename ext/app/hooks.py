@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
 from dateutil import parser
-from flask import Response, abort, current_app as app
+from flask import Response, request as flask_request, abort, current_app as app
 import json
 
 from dateutil.parser import parse as date_parse
@@ -16,6 +16,7 @@ from ext.auth.clients import LUNGO_SIO_TOKEN
 from ext.app.decorators import async, debounce
 import time
 import socketio
+
 
 # import dateutil.parser
 
@@ -26,6 +27,8 @@ RESOURCE_LICENSES_PROCESS = 'licenses_process'
 RESOURCE_COMPETENCES_PROCESS = 'competences_process'
 RESOURCE_ORGANIZATIONS_PROCESS = 'organizations_process'
 RESOURCE_PAYMENTS_PROCESS = 'payments_process'
+RESOURCE_MERGED_FROM = 'persons_merged_from'
+
 
 NLF_ORG_STRUCTURE = {
     'fallskjerm': {'activity': 109, 'org_id': 90972},
@@ -123,6 +126,36 @@ def _get_person(person_id) -> dict:
 
     return {}
 
+
+def _get_merged_from(person_id) -> list:
+    """Get person ids merged to this person id
+
+    :param person_id:
+    :return:
+    """
+    try:
+        from domain.persons import agg_merged_from, RESOURCE_COLLECTION
+
+        merged_from_ids = []
+
+        pipeline = agg_merged_from.get('datasource', {}).get('aggregation', {}).get('pipeline', [])
+        pipeline[0]["$match"]["id"] = person_id
+        pipeline[2]["$graphLookup"]["startWith"] = person_id
+
+        datasource = agg_merged_from.get('datasource', {}).get('source', RESOURCE_COLLECTION)
+
+        persons = app.data.driver.db[datasource]
+
+        result = list(persons.aggregate(pipeline))
+
+        if len(result) == 1:
+            result = result[0]
+            merged_from_ids = result.get('merged_from', [])
+
+    except Exception as e:
+        app.logger.exception('Aggregation with database layer failed for person_id {}'.format(person_id))
+
+    return merged_from_ids
 
 def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
     """Sorts lists then compares on the given id in the dicts
@@ -327,17 +360,21 @@ def on_function_put(response, original=None) -> None:
                 app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
 
             else:
-                # Fix payments
-                # Always run
+                # Fix payments all payments from merged person id's
                 payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
-                                                           **{'person_id': person['id'],
-                                                              'org_id': {
-                                                                  '$in': [x['club'] for x in memberships]
-                                                              }
+                                                           **{
+                                                               'person_id': {'$in': list(set([person['id']] + _get_merged_from(person['id'])))},
+                                                               'org_id': {
+                                                                   '$in': [x['club'] for x in memberships] + [v['org_id'] for k,v in NLF_ORG_STRUCTURE.items() if NLF_ORG_STRUCTURE[k]['activity'] in [val['activity'] for val in memberships]] + [376]
+                                                               }
                                                               }
                                                            )
                 if p_status == 200:
-                    on_payment_after_post(payments.get('_items', []))
+
+                    payments = payments.get('_items', [])
+                    for p in payments:
+                        p.update({'person_id': person['id']})
+                    on_payment_after_post(payments)
 
     # PURE RESPONSE
     # Update the function
@@ -451,47 +488,48 @@ def on_competence_put(response, original=None):
 
         expiry = response.get('valid_until', None)
 
-        # Set expiry to end year
+        # Always require an expiry date!
         if expiry is None:
-            expiry = _get_end_of_year()
+            # expiry = _get_end_of_year()
+            pass
+        else:
+            expiry = _fix_naive(expiry)
 
-        expiry = _fix_naive(expiry)
+            person = _get_person(response.get('person_id', None))
 
-        person = _get_person(response.get('person_id', None))
+            if '_id' in person:
 
-        if '_id' in person:
+                competence = person.get('competences', []).copy()
 
-            competence = person.get('competences', []).copy()
+                # Add this competence?
+                if expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
 
-            # Add this competence?
-            if expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
+                    try:
+                        competence.append({'id': response.get('id'),
+                                           '_code': response.get('_code', None),
+                                           'issuer': response.get('approved_by_person_id', None),
+                                           'expiry': expiry,
+                                           # 'paid': response.get('paid_date', None)
+                                           })
+                    except:
+                        pass
 
-                try:
-                    competence.append({'id': response.get('id'),
-                                       '_code': response.get('_code', None),
-                                       'issuer': response.get('approved_by_person_id', None),
-                                       'expiry': expiry,
-                                       # 'paid': response.get('paid_date', None)
-                                       })
-                except:
-                    pass
+                # Always remove stale competences
+                # Note that _code is for removing old competences, should be removed
+                competence[:] = [d for d in competence if
+                                 _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
-            # Always remove stale competences
-            # Note that _code is for removing old competences, should be removed
-            competence[:] = [d for d in competence if
-                             _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
+                # Always unique by id
+                competence = list({v['id']: v for v in competence}.values())
 
-            # Always unique by id
-            competence = list({v['id']: v for v in competence}.values())
-
-            # Patch if difference
-            if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
-                lookup = {'_id': person['_id']}
-                resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
-                                                    **lookup)
-                if status != 200:
-                    app.logger.error('Patch returned {} for competence'.format(status))
-                    pass
+                # Patch if difference
+                if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
+                    lookup = {'_id': person['_id']}
+                    resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
+                                                        **lookup)
+                    if status != 200:
+                        app.logger.error('Patch returned {} for competence'.format(status))
+                        pass
 
 
 def on_organizations_post(items):

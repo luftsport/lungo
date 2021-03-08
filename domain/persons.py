@@ -342,7 +342,7 @@ agg_merged_from = {
                         "connectToField": "_merged_to",
                         "as": "merged_from",
                         "maxDepth": 100,
-                        "depthField": "depthField"
+                        "depthField": "depth"
                     }
                 },
                 {
