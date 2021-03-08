@@ -72,12 +72,12 @@ def after_get_persons(response):
         )
 
     # Remove secret values
-    if response.get('address', {}).get('secret_email', False) is True:
-        response['address']['email'] = []
+    if response.get('address', {}).get('secret_address', False) is True:
         response['address'].pop('contact_id', None)
         response['address'].pop('contact_information_id', None)
         response['address'].pop('country_id', None)
         response['address'].pop('street_address', None)
+        response['address'].pop('city', None)
         response['address'].pop('zip_code', None)
         response['address'].pop('location', None)
 
