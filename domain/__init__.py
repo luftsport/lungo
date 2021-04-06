@@ -76,8 +76,9 @@ DOMAIN = {
     # Competences
     "competences": competences.definition,
     "competences_process": competences.process_definition,
-    "competences_types": competences_types.definition,
     "competences_codes": competences.agg_count_codes,
+    "competences_types_count": competences.agg_count_types,
+    "competences_types": competences_types.definition,
 
     # Licenses
     "licenses": licenses.definition,
