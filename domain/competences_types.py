@@ -2,7 +2,7 @@ RESOURCE_COLLECTION = 'competences_types'
 
 _schema = {
 
-    'attributes': {'type': 'list'},
+    'attributes': {'type': 'dict'},
     'categories': {'type': 'list'},
     'checked_by': {'type': 'string'},  # String?
     'children': {'type': 'list'},
@@ -25,6 +25,7 @@ _schema = {
     'modified': {'type': 'string'},
     'organisations': {'type': 'list'},
     'pre_requisites': {'type': 'list'},
+    'prequisites_text': {'type': 'string'},
     'short_description': {'type': 'string'},
     'sports': {'type': 'list'},
     'title': {'type': 'string'},
@@ -47,6 +48,7 @@ definition = {
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'mongo_indexes': {'type_id': ([('id', 1)], {'background': True}),
+                      'type': ([('meta_type', 1)], {'background': True}),
                       'title': ([('title', 'text')], {'background': True})
                       },
     'schema': _schema
