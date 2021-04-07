@@ -137,7 +137,14 @@ _schema = {
                                   'embeddable': True,
                               }
                               },
-                       '_code': {'type': 'integer'},
+                       'type_id': {'type': 'integer',
+                                   'data_relation': {
+                                       'resource': 'competences_types',
+                                       'field': 'id',
+                                       'embeddable': True,
+                                   }
+                                   },
+                       '_code': {'type': 'string'},
                        'issuer': {'type': 'integer'},
                        'expiry': {'type': 'datetime'},
                        'paid': {'type': 'datetime'},
