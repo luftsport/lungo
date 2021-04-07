@@ -1,3 +1,4 @@
+from bson import SON
 RESOURCE_COLLECTION = 'competences_types'
 
 _schema = {
@@ -51,5 +52,23 @@ definition = {
                       'type': ([('meta_type', 1)], {'background': True}),
                       'title': ([('title', 'text')], {'background': True})
                       },
+    'allow_unknown': True,
     'schema': _schema
+}
+
+
+# Aggregations
+agg_count_meta_types = {
+    'url': 'competences/types/meta/count',
+    'item_title': 'Competences Meta Types',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$group": {"_id": "$meta_type", "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
 }

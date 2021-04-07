@@ -97,7 +97,7 @@ agg_count_types = {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
-                {"$group": {"_id": "$meta_type", "count": {"$sum": 1}}},
+                {"$group": {"_id": "$type_id", "count": {"$sum": 1}}},
                 {"$sort": SON([("count", -1), ("_id", -1)])}
             ]
         }
