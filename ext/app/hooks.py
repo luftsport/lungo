@@ -29,6 +29,10 @@ RESOURCE_ORGANIZATIONS_PROCESS = 'organizations_process'
 RESOURCE_PAYMENTS_PROCESS = 'payments_process'
 RESOURCE_MERGED_FROM = 'persons_merged_from'
 
+# meta types which are considered "kompetanse"
+COMPETENCE_META_TYPES = ['Kompetansedefinisjon']
+# If True, will always run the patch on person object and not verify changes exists
+ALWAYS_PATCH = True
 
 NLF_ORG_STRUCTURE = {
     'fallskjerm': {'activity': 109, 'org_id': 90972},
@@ -492,6 +496,16 @@ def on_license_put(response, original=None):
                 app.logger.error('Patch returned {} for license'.format(status))
                 pass
 
+def _get_competence_type_meta_type(type_id):
+    try:
+        competence_type, _, _, status, _ = get_internal('competences_types', **{'id': type_id})
+        if status == 200:
+            if '_items' in competence_type and len(competence_type['_items']) == 1:
+                return competence_type['_items'][0]['meta_type']
+    except Exception as e:
+        pass
+
+    return None
 
 def on_competence_post(items):
     """Competence fields:
@@ -523,14 +537,20 @@ def on_competence_put(response, original=None):
 
     if '_id' in person:
 
-        competence = person.get('competences', []).copy()
+        competences = person.get('competences', []).copy()
+
+        # Always remove existing:
+        competences = [x for x in competences if x['id'] != response['id']]
+
+        competence_meta_type = _get_competence_type_meta_type(response.get('type_id', 0))
 
         # Add this competence
-        if passed is True and expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
+        if competence_meta_type in COMPETENCE_META_TYPES and expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
 
             try:
-                competence.append({'id': response.get('id'),
-                                   '_code': response.get('_code', None),
+                competences.append({'id': response.get('id'),
+                                   '_code': response.get('_code', response.get('title', 'Ukjent')),
+                                   'type_id': response.get('type_id', 0),
                                    'issuer': response.get('approved_by_person_id', None),
                                    'expiry': expiry,
                                    # 'paid': response.get('paid_date', None)
@@ -540,23 +560,23 @@ def on_competence_put(response, original=None):
 
         # Always remove stale competences
         # Note that _code is for removing old competences, should be removed
-        competence[:] = [d for d in competence if
+        competences[:] = [d for d in competences if
                          _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
         # If competence exiry is None or competence not passed
         if expiry is None or passed is False:
             try:
-                competence[:] = [d for d in competence if d.get('id', 0) != response.get('id')]
+                competences[:] = [d for d in competences if d.get('id', 0) != response.get('id')]
             except Exception as e:
                 app.logger.exceptin('Error removing competence from person')
 
         # Always unique by id
-        competence = list({v['id']: v for v in competence}.values())
+        competences = list({v['id']: v for v in competences}.values())
 
         # Patch if difference
-        if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
+        if ALWAYS_PATCH is True or _compare_list_of_dicts(competences, person.get('competences', [])) is True:
             lookup = {'_id': person['_id']}
-            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competences}, False, True,
                                                 **lookup)
             if status != 200:
                 app.logger.error('Patch returned {} for competence'.format(status))
