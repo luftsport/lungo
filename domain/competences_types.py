@@ -1,4 +1,5 @@
 from bson import SON
+
 RESOURCE_COLLECTION = 'competences_types'
 
 _schema = {
@@ -10,7 +11,8 @@ _schema = {
     'code': {'type': 'string'},
     'colorcode': {'type': 'string'},
     'id': {'type': 'integer',
-           'required': True},
+           'required': True,
+           'unique': True},
     'meta_type': {'type': 'string'},
     'type_id': {'type': 'integer'},
     'type_sa_id': {'type': 'integer'},
@@ -55,7 +57,6 @@ definition = {
     'allow_unknown': True,
     'schema': _schema
 }
-
 
 # Aggregations
 agg_count_meta_types = {
