@@ -563,8 +563,8 @@ def on_competence_put(response, original=None):
         competences[:] = [d for d in competences if
                          _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
-        # If competence exiry is None or competence not passed
-        if expiry is None or passed is False:
+        # If competence exiry is None # or competence not passed
+        if expiry is None: # or passed is False:
             try:
                 competences[:] = [d for d in competences if d.get('id', 0) != response.get('id')]
             except Exception as e:
