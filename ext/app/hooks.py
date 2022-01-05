@@ -563,7 +563,7 @@ def on_competence_put(response, original=None):
         competences[:] = [d for d in competences if
                          _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
-        # If competence exiry is None # or competence not passed
+        # If competence valid_to is None # or competence not passed
         if expiry is None: # or passed is False:
             try:
                 competences[:] = [d for d in competences if d.get('id', 0) != response.get('id')]
@@ -868,6 +868,7 @@ def on_payment_after_put(item, orginal=None):
                 else:
                     year = _get_pmt_year(text)
                     # Magazines
+                    name = "Unknown Name"
                     if 'fritt' in text.lower():
                         name = 'Fritt Fall'
                     elif 'flynytt' in text.lower():
