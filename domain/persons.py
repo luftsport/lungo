@@ -263,6 +263,36 @@ process_definition = {
     'schema': _schema_process
 }
 
+# Knips
+# Custom endpoint
+knips_definition = {
+
+    'url': 'persons/knips',
+    'item_title': 'Persons Knips',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   'filter': {
+                       '_merged_to': {'$exists': False},
+                       'date_of_death': {'$exists': False}
+
+                   },
+                   'projection': {'id': 1,
+                                  'first_name': 1,
+                                  'last_name': 1,
+                                  'birth_date': 1,
+                                  'primary_email': 1
+                                  }
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'pagination': False,
+    'extra_response_fields': ['id'],
+    'resource_methods': ['GET'],
+    'item_methods': ['GET'],
+    'schema': _schema
+}
+
 # Search
 search_definition = {
     'url': 'persons/search',

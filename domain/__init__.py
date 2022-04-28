@@ -52,6 +52,10 @@ DOMAIN = {
     "persons_age_distribution": persons.agg_age_distribution,
     "persons_age_gender_bucket_distribution": persons.agg_age_gender_bucket_distribution,
 
+    # Custom Persons
+    # Knips:
+    "persons_knips": persons.knips_definition,
+
     # Persons test for error id
     # "test": test.definition,
 
