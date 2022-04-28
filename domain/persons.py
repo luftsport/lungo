@@ -210,7 +210,7 @@ definition = {
     'versioning': True,
     'resource_methods': ['GET'],
     'item_methods': ['GET'],
-    'mongo_indexes': {'person_id': ([('id', 1)], {'background': True}),
+    'mongo_indexes': {# 'person_id': ([('id', 1)], {'background': True}),
                       # , 'unique': True gives DuplicateKeyError with versioning
                       # 'primary_email': ([('primary_email', 'text')], {'background': True}),
                       'primary_email': ([('primary_email', 1)], {'background': True}),
@@ -286,7 +286,7 @@ knips_definition = {
         'url': 'regex("[\d{1,9}]+")',
         'field': 'id',
     },
-    'pagination': False,
+    'pagination': True,
     'extra_response_fields': ['id'],
     'resource_methods': ['GET'],
     'item_methods': ['GET'],
