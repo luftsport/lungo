@@ -50,6 +50,11 @@ definition = {
     'url': 'functions',
     'item_title': 'functions',
     'datasource': {'source': RESOURCE_COLLECTION,
+                   'filter': {
+                       # Show active by default
+                       'is_passive': False,
+                       'is_deleted': False
+                   }
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
