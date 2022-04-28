@@ -51,7 +51,8 @@ definition = {
     'item_title': 'functions',
     'datasource': {'source': RESOURCE_COLLECTION,
                    'filter': {
-                       # Show active by default
+                       # Show only active by default
+                       # @TODO move to hook and add filter if not set
                        'is_passive': False,
                        'is_deleted': False
                    }
