@@ -274,6 +274,7 @@ def on_function_post(items) -> None:
 
 def on_function_put(response, original=None) -> None:
     """
+    @TODO functions excluding memberships to same schema as competences
     :param response: database object
     :return: None
     """
