@@ -63,12 +63,11 @@ def broadcast(change_data):
 
 
 def after_get_persons(response):
-    from pprint import pprint
-    print(app)
-    print(response)
     if '_merged_to' in response:
+
+        # replace id with _merged_to
         headers = {
-            'Location': '/api/v1/persons/{}'.format(response.get('_merged_to', 0)),
+            'Location': '{}'.format(flask_request.path).replace(response.get('id', 0), response.get('_merged_to', 0))
         }
         return abort(
             Response(
