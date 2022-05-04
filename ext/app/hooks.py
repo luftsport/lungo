@@ -67,7 +67,7 @@ def after_get_persons(response):
 
         # replace id with _merged_to
         headers = {
-            'Location': '{}'.format(flask_request.path).replace(response.get('id', 0), response.get('_merged_to', 0))
+            'Location': '{}'.format(flask_request.path).replace(str(response.get('id', 0)), str(response.get('_merged_to', 0)))
         }
         return abort(
             Response(
