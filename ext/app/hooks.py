@@ -63,10 +63,10 @@ def broadcast(change_data):
 
 
 def after_get_persons(response):
+    from pprint import pprint
+    print(app)
+    print(response)
     if '_merged_to' in response:
-        from pprint import pprint
-        print(app)
-        print(response)
         headers = {
             'Location': '/api/v1/persons/{}'.format(response.get('_merged_to', 0)),
         }
