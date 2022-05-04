@@ -283,7 +283,8 @@ knips_definition = {
                                   'federation': 1,
                                   'memberships': 1,
                                   'activities': 1,
-                                  'functions': 1
+                                  'functions': 1,
+                                  '_merged_to': 1
                                   }
                    },
     'additional_lookup': {
