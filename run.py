@@ -82,6 +82,7 @@ from ext.app.hooks import on_function_post, \
 
 # After GET'ing a merged person
 app.on_fetched_item_persons += after_get_persons
+app.on_fetched_item_persons_knips += after_get_persons
 
 # All get's get through this one!
 app.on_pre_GET += assign_lookup

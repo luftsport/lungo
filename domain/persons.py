@@ -273,13 +273,17 @@ knips_definition = {
                    'filter': {
                        '_merged_to': {'$exists': False},
                        'date_of_death': {'$exists': False}
-
                    },
                    'projection': {'id': 1,
                                   'first_name': 1,
                                   'last_name': 1,
                                   'birth_date': 1,
-                                  'primary_email': 1
+                                  'primary_email': 1,
+                                  'competences': 1,
+                                  'federation': 1,
+                                  'memberships': 1,
+                                  'activities': 1,
+                                  'functions': 1
                                   }
                    },
     'additional_lookup': {
