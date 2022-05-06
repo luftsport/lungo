@@ -284,7 +284,8 @@ knips_definition = {
                                   'memberships': 1,
                                   'activities': 1,
                                   'functions': 1,
-                                  '_merged_to': 1
+                                  '_merged_to': 1,
+                                  'address.phone_mobile': 1
                                   }
                    },
     'additional_lookup': {
