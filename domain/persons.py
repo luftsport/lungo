@@ -271,7 +271,7 @@ knips_definition = {
     'item_title': 'Persons Knips',
     'datasource': {'source': RESOURCE_COLLECTION,
                    'filter': {
-                       # '_merged_to': {'$exists': False},
+                       '_merged_to': {'$exists': False},
                        'date_of_death': {'$exists': False}
                    },
                    'projection': {'id': 1,
