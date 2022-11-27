@@ -17,7 +17,6 @@ from ext.app.decorators import _async, debounce
 import time
 import socketio
 
-
 # import dateutil.parser
 
 
@@ -62,12 +61,40 @@ def broadcast(change_data):
         pass
 
 
+def _add_payment_for_next_year(memberships) -> list:
+    """
+    Adding missing payments when members pay for next year before year end
+    :param memberships: list of membership dicts
+    :return: memberships
+    """
+    _payment = {
+        "id": 9999999999,
+        "year": 2022,
+        "exception": None,
+        "type": "Senior",
+        "amount": 0.0,
+        "paid": "2022-11-01T00:00:00.000000Z"
+    }
+    try:
+        _start_date = datetime.datetime(datetime.datetime.utcnow().year, 11, 1).replace(tzinfo=tz_utc)
+
+        for k, v in enumerate(memberships.copy()):
+            if 'payment' not in v:
+                _date = parser.parse(v['from_date'])
+                if _date > _start_date:
+                    memberships[k]['payment'] = _payment
+    except:
+        pass
+
+    return memberships
+
+
 def after_get_persons(response):
     if '_merged_to' in response:
-
         # replace id with _merged_to
         headers = {
-            'Location': '{}'.format(flask_request.path).replace(str(response.get('id', 0)), str(response.get('_merged_to', 0)))
+            'Location': '{}'.format(flask_request.path).replace(str(response.get('id', 0)),
+                                                                str(response.get('_merged_to', 0)))
         }
         return abort(
             Response(
@@ -76,6 +103,8 @@ def after_get_persons(response):
                 headers=headers
             )
         )
+    # Modify memberships add missing payments
+    response['memberships'] = _add_payment_for_next_year(response.get('memberships', []))
 
     # Remove secret values
     if response.get('address', {}).get('secret_address', False) is True:
@@ -185,6 +214,7 @@ def _get_merged_from(person_id) -> list:
         app.logger.exception('Aggregation with database layer failed for person_id {}'.format(person_id))
 
     return merged_from_ids
+
 
 def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
     """Sorts lists then compares on the given id in the dicts
@@ -393,11 +423,17 @@ def on_function_put(response, original=None) -> None:
                 # Fix payments all payments from merged person id's
                 payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
                                                            **{
-                                                               'person_id': {'$in': list(set([person['id']] + _get_merged_from(person['id'])))},
+                                                               'person_id': {'$in': list(
+                                                                   set([person['id']] + _get_merged_from(
+                                                                       person['id'])))},
                                                                'org_id': {
-                                                                   '$in': [x['club'] for x in memberships] + [v['org_id'] for k,v in NLF_ORG_STRUCTURE.items() if NLF_ORG_STRUCTURE[k]['activity'] in [val['activity'] for val in memberships]] + [376]
+                                                                   '$in': [x['club'] for x in memberships] + [
+                                                                       v['org_id'] for k, v in NLF_ORG_STRUCTURE.items()
+                                                                       if NLF_ORG_STRUCTURE[k]['activity'] in [
+                                                                           val['activity'] for val in memberships]] + [
+                                                                              376]
                                                                }
-                                                              }
+                                                           }
                                                            )
                 if p_status == 200:
 
@@ -499,6 +535,7 @@ def on_license_put(response, original=None):
                 app.logger.error('Patch returned {} for license'.format(status))
                 pass
 
+
 def _get_competence_type_meta_type(type_id):
     try:
         competence_type, _, _, status, _ = get_internal('competences_types', **{'id': type_id})
@@ -509,6 +546,7 @@ def _get_competence_type_meta_type(type_id):
         pass
 
     return None
+
 
 def on_competence_post(items):
     """Competence fields:
@@ -530,10 +568,10 @@ def on_competence_put(response, original=None):
     expiry = response.get('valid_until', None)
 
     # Always require an expiry date!
-    #if expiry is None:
+    # if expiry is None:
     #    # expiry = _get_end_of_year()
     #    pass
-    #else:
+    # else:
     expiry = _fix_naive(expiry)
 
     person = _get_person(response.get('person_id', None))
@@ -548,26 +586,27 @@ def on_competence_put(response, original=None):
         competence_meta_type = _get_competence_type_meta_type(response.get('type_id', 0))
 
         # Add this competence
-        if competence_meta_type in COMPETENCE_META_TYPES and expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
+        if competence_meta_type in COMPETENCE_META_TYPES and expiry is not None and isinstance(expiry,
+                                                                                               datetime) and expiry >= _get_now():
 
             try:
                 competences.append({'id': response.get('id'),
-                                   '_code': response.get('_code', response.get('title', 'Ukjent')),
-                                   'type_id': response.get('type_id', 0),
-                                   'issuer': response.get('approved_by_person_id', None),
-                                   'expiry': expiry,
-                                   # 'paid': response.get('paid_date', None)
-                                   })
+                                    '_code': response.get('_code', response.get('title', 'Ukjent')),
+                                    'type_id': response.get('type_id', 0),
+                                    'issuer': response.get('approved_by_person_id', None),
+                                    'expiry': expiry,
+                                    # 'paid': response.get('paid_date', None)
+                                    })
             except:
                 pass
 
         # Always remove stale competences
         # Note that _code is for removing old competences, should be removed
         competences[:] = [d for d in competences if
-                         _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
+                          _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
         # If competence valid_to is None # or competence not passed
-        if expiry is None: # or passed is False:
+        if expiry is None:  # or passed is False:
             try:
                 competences[:] = [d for d in competences if d.get('id', 0) != response.get('id')]
             except Exception as e:
@@ -985,7 +1024,7 @@ def on_person_after_put(item, original=None):
                    ))
                    })
     except Exception as e:
-        app.logger.exception('Something did not work out!')
+        app.logger.exception('Broadcast of item with id {} did not work out!'.format(item['id']))
 
 
 def _update_person(item):
