@@ -76,7 +76,7 @@ def _add_payment_for_next_year(memberships) -> list:
         "paid": "2022-11-01T00:00:00.000000Z"
     }
     try:
-        _start_date = datetime.datetime(datetime.datetime.utcnow().year, 11, 1).replace(tzinfo=tz_utc)
+        _start_date = datetime(datetime.utcnow().year, 11, 1).replace(tzinfo=tz_utc)
 
         for k, v in enumerate(memberships.copy()):
             if 'payment' not in v:
@@ -84,7 +84,7 @@ def _add_payment_for_next_year(memberships) -> list:
                 if _date > _start_date:
                     memberships[k]['payment'] = _payment
     except Exception as e:
-        app.logger.error('Error adding payment to memberships for person')
+        app.logger.error('Error adding next years payment to memberships for person', e)
 
     return memberships
 
