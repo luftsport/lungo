@@ -83,8 +83,8 @@ def _add_payment_for_next_year(memberships) -> list:
                 _date = parser.parse(v['from_date'])
                 if _date > _start_date:
                     memberships[k]['payment'] = _payment
-    except:
-        pass
+    except Exception as e:
+        app.logger.error('Error adding payment to memberships for person')
 
     return memberships
 
@@ -104,7 +104,8 @@ def after_get_persons(response):
             )
         )
     # Modify memberships add missing payments
-    response['memberships'] = _add_payment_for_next_year(response.get('memberships', []))
+    if len(response.get('memberships', [])) > 0:
+        response['memberships'] = _add_payment_for_next_year(response.get('memberships', []))
 
     # Remove secret values
     if response.get('address', {}).get('secret_address', False) is True:
