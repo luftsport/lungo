@@ -13,7 +13,7 @@ import json
 from dateutil.parser import parse as date_parse
 
 from ext.auth.clients import LUNGO_SIO_TOKEN
-from ext.app.decorators import async, debounce
+from ext.app.decorators import _async, debounce
 import time
 import socketio
 
@@ -50,7 +50,7 @@ tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 
 @debounce(10)
-@async
+@_async
 def broadcast(change_data):
     try:
         sio = socketio.Client()
