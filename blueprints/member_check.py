@@ -8,6 +8,7 @@ MemberCheck = Blueprint('Member check by person id', __name__)
 
 ACTIVITIES = {
     'mikrofly': 237,
+    'sportsfly': 237,
     'motorfly': 238,
     'fallskjerm': 109,
     'hps': 110,
