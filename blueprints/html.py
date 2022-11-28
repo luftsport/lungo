@@ -15,15 +15,15 @@ def _html_page(content):
 def _bullet_orgs(orgs):
     r = ''
     for org in orgs:
-        r = r + '<li>{} {}</li>'.format(org['id'], org['name'])
+        r = '{r}<li>{} {}</li>'.format(r, org['id'], org['name'])
 
     return f'<ul>{r}</ul>'
 
 
-@Html.route('/list/<string:activity>', methods=['GET'])
+@Html.route('/organizations/list/<string:activity>', methods=['GET'])
 def list_orgs(activity):
     if activity in ACTIVITIES.keys():
         lookup = {"type_id": 6, "main_activity.id": ACTIVITIES[activity]}
         orgs, _, _, status, _ = get_internal('organizations', **lookup)
 
-        return _html_page(_bullet_orgs(orgs))
+        return _html_page(_bullet_orgs(orgs.get('_items', [])))
