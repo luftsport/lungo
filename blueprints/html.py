@@ -15,7 +15,7 @@ def _html_page(content):
 def _bullet_orgs(orgs):
     r = ''
     for org in orgs:
-        r = '{r}<li>{} {}</li>'.format(r, org['id'], org['name'])
+        r = '{}<li>{} {}</li>'.format(r, org['id'], org['name'])
 
     return f'<ul>{r}</ul>'
 
