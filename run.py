@@ -20,6 +20,7 @@ from blueprints.syncdaemon import Sync
 from blueprints.fai import Fai
 from blueprints.acl import ACL
 from blueprints.member_check import MemberCheck
+from blueprints.html import Html
 
 # Import blueprints
 # from blueprints.authentication import Authenticate
@@ -67,6 +68,9 @@ app.register_blueprint(Sync, url_prefix="%s/syncdaemon" % app.globals.get('prefi
 app.register_blueprint(Fai, url_prefix="%s/fai" % app.globals.get('prefix'))
 app.register_blueprint(ACL, url_prefix="%s/acl" % app.globals.get('prefix'))
 app.register_blueprint(MemberCheck, url_prefix="%s/membercheck" % app.globals.get('prefix'))
+
+# Blueprint returning html
+app.register_blueprint(Html, url_prefix="%s/html" % app.globals.get('prefix'))
 
 from ext.app.hooks import on_function_post, \
     on_license_post, on_competence_post, \
