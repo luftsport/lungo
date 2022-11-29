@@ -138,7 +138,7 @@ def after_get_person(response):
 
 
 def after_get_persons(response):
-    for key, item in enumerate(response.get('_items', [])):
+    for key, item in enumerate(response.get('_items', []).copy()):
         response['_items'][key] = _after_get_person(response['_items'][key])
 
 
