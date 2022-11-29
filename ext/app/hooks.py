@@ -88,8 +88,8 @@ def _add_payment_for_next_year(memberships) -> list:
     return memberships
 
 
-def after_get_persons(response):
-    if '_merged_to' in response:
+def after_get_person(response, single_item_response=True):
+    if is_item is True and '_merged_to' in response:
         # replace id with _merged_to
         headers = {
             'Location': '{}'.format(flask_request.path).replace(str(response.get('id', 0)),
@@ -128,6 +128,11 @@ def after_get_persons(response):
 
     if response.get('address', {}).get('secret_phone_work', False) is True:
         response['address'].pop('phone_work', None)
+
+
+def after_get_persons(response):
+    for key, item in enumerate(response.get('_items', [])):
+        response['_items'][key] = after_get_person(item, single_item_response=False)
 
 
 def assign_lookup(resource, request, lookup):
