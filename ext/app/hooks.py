@@ -88,8 +88,39 @@ def _add_payment_for_next_year(memberships) -> list:
     return memberships
 
 
-def after_get_person(response, single_item_response=True):
-    if is_item is True and '_merged_to' in response:
+def _after_get_person(item):
+    # Modify memberships add missing payments
+    if len(item.get('memberships', [])) > 0:
+        item['memberships'] = _add_payment_for_next_year(item.get('memberships', []))
+
+    # Remove secret values
+    if item.get('address', {}).get('secret_address', False) is True:
+        item['address'].pop('contact_id', None)
+        item['address'].pop('contact_information_id', None)
+        item['address'].pop('country_id', None)
+        item['address'].pop('street_address', None)
+        item['address'].pop('city', None)
+        item['address'].pop('zip_code', None)
+        item['address'].pop('location', None)
+
+    if item.get('address', {}).get('secret_email', False) is True:
+        item['address']['email'] = []
+        item.pop('primary_email', None)
+
+    if item.get('address', {}).get('secret_phone_home', False) is True:
+        item['address'].pop('phone_home', None)
+
+    if item.get('address', {}).get('secret_phone_mobile', False) is True:
+        item['address'].pop('phone_mobile', None)
+
+    if item.get('address', {}).get('secret_phone_work', False) is True:
+        item['address'].pop('phone_work', None)
+
+    return item
+
+
+def after_get_person(response):
+    if '_merged_to' in response:
         # replace id with _merged_to
         headers = {
             'Location': '{}'.format(flask_request.path).replace(str(response.get('id', 0)),
@@ -102,37 +133,13 @@ def after_get_person(response, single_item_response=True):
                 headers=headers
             )
         )
-    # Modify memberships add missing payments
-    if len(response.get('memberships', [])) > 0:
-        response['memberships'] = _add_payment_for_next_year(response.get('memberships', []))
 
-    # Remove secret values
-    if response.get('address', {}).get('secret_address', False) is True:
-        response['address'].pop('contact_id', None)
-        response['address'].pop('contact_information_id', None)
-        response['address'].pop('country_id', None)
-        response['address'].pop('street_address', None)
-        response['address'].pop('city', None)
-        response['address'].pop('zip_code', None)
-        response['address'].pop('location', None)
-
-    if response.get('address', {}).get('secret_email', False) is True:
-        response['address']['email'] = []
-        response.pop('primary_email', None)
-
-    if response.get('address', {}).get('secret_phone_home', False) is True:
-        response['address'].pop('phone_home', None)
-
-    if response.get('address', {}).get('secret_phone_mobile', False) is True:
-        response['address'].pop('phone_mobile', None)
-
-    if response.get('address', {}).get('secret_phone_work', False) is True:
-        response['address'].pop('phone_work', None)
+    return _after_get_person(response)
 
 
 def after_get_persons(response):
     for key, item in enumerate(response.get('_items', [])):
-        response['_items'][key] = after_get_person(item, single_item_response=False)
+        response['_items'][key] = _after_get_person(response['_items'][key])
 
 
 def assign_lookup(resource, request, lookup):
