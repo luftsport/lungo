@@ -89,7 +89,9 @@ app.on_inserted_persons_process += on_person_after_post
 app.on_replace_persons_process += on_person_before_put  # Use original values and not _update! For later testing!
 app.on_replaced_persons_process += on_person_after_put  # Rebuild person
 # After GET'ing a merged person
+app.on_fetched_persons += after_get_persons
 app.on_fetched_item_persons += after_get_person
+app.on_fetched_persons_knips += after_get_persons
 app.on_fetched_item_persons_knips += after_get_person
 
 # All get's get through this one!
@@ -116,7 +118,6 @@ app.on_inserted_payments_process += on_payment_after_post
 # PAYMENTS PUT
 app.on_replace_payments_process += on_payment_before_put
 app.on_replaced_payments_process += on_payment_after_put
-
 
 # ORGANIZATIONS
 app.on_inserted_organizations_process += on_organizations_post
