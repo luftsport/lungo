@@ -75,7 +75,8 @@ app.register_blueprint(Html, url_prefix="%s/html" % app.globals.get('prefix'))
 from ext.app.hooks import on_function_post, \
     on_license_post, on_competence_post, \
     on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put, \
-    on_organizations_post, on_organizations_put, after_get_person,after_get_persons, on_person_before_put, assign_lookup, \
+    on_organizations_post, on_organizations_put, after_get_person, after_get_persons, on_person_before_put, \
+    assign_lookup, \
     on_payment_before_post, on_payment_after_put, on_payment_after_post, on_payment_before_put
 
 # Should be able to filter out all merged when doing lookup
@@ -89,9 +90,9 @@ app.on_inserted_persons_process += on_person_after_post
 app.on_replace_persons_process += on_person_before_put  # Use original values and not _update! For later testing!
 app.on_replaced_persons_process += on_person_after_put  # Rebuild person
 # After GET'ing a merged person
-app.on_fetched_persons += after_get_persons
+app.on_fetched_resource_persons += after_get_persons
 app.on_fetched_item_persons += after_get_person
-app.on_fetched_persons_knips += after_get_persons
+app.on_fetched_resource_persons_knips += after_get_persons
 app.on_fetched_item_persons_knips += after_get_person
 
 # All get's get through this one!
