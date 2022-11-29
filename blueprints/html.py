@@ -23,7 +23,7 @@ def _bullet_orgs(orgs):
 @Html.route('/organizations/list/<string:activity>', methods=['GET'])
 def list_orgs(activity):
     if activity in ACTIVITIES.keys():
-        lookup = {"type_id": 6, "main_activity.id": ACTIVITIES[activity]}
+        lookup = {"type_id": 6, "main_activity.id": ACTIVITIES[activity], "is_active": True}
         orgs, _, _, status, _ = get_internal('organizations', **lookup)
 
         return _html_page(_bullet_orgs(orgs.get('_items', [])))
