@@ -19,7 +19,6 @@ import socketio
 
 # import dateutil.parser
 
-
 RESOURCE_PERSONS_PROCESS = 'persons_process'
 RESOURCE_FUNCTIONS_PROCESS = 'functions_process'
 RESOURCE_LICENSES_PROCESS = 'licenses_process'
