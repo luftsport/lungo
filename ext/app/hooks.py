@@ -932,6 +932,8 @@ def on_payment_after_put(item, orginal=None):
                         name = 'Modellinformasjon'
                     elif 'flukt' in text.lower():
                         name = 'Fri Flukt'
+                    else:
+                        name = text
 
                     magazines.append(
                         {
