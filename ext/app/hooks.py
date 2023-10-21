@@ -8,7 +8,7 @@ from operator import itemgetter
 from dateutil import tz
 from flask import current_app as app  # , Response, redirect
 from dateutil import parser
-from flask import Response, abort
+from flask import Response, abort, request as flask_request
 import json
 
 from ext.auth.clients import LUNGO_SIO_TOKEN
@@ -30,7 +30,9 @@ tz_utc = tz.gettz('UTC')
 tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 
-@async
+@ async
+
+
 def broadcast(change_data):
     try:
         sio = socketio.Client()
@@ -45,9 +47,10 @@ def broadcast(change_data):
 def after_get_persons(response):
     if '_merged_to' in response:
         headers = {
-            'Location': '/api/v1/persons/{}'.format(response.get('_merged_to', 0)),
+            '{}'.format(flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)),
+                                                                             str(response.get('_merged_to', 0))))
         }
-        return abort(
+        abort(
             Response(
                 response=None,
                 status=301,
