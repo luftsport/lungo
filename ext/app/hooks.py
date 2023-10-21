@@ -6,6 +6,7 @@ from eve.methods.get import get_internal, getitem_internal
 from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
+from flask import current_app as app  # , Response, redirect
 from dateutil import parser
 from flask import Response, request as flask_request, abort, current_app as app
 import json
@@ -13,10 +14,9 @@ import json
 from dateutil.parser import parse as date_parse
 
 from ext.auth.clients import LUNGO_SIO_TOKEN
-from ext.app.decorators import async, debounce
+from ext.app.decorators import _async, debounce
 import time
 import socketio
-
 
 # import dateutil.parser
 
@@ -46,7 +46,7 @@ tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 
 @debounce(10)
-@async
+@_async
 def broadcast(change_data):
     try:
         sio = socketio.Client()
@@ -61,9 +61,10 @@ def broadcast(change_data):
 def after_get_persons(response):
     if '_merged_to' in response:
         headers = {
-            'Location': '/api/v1/persons/{}'.format(response.get('_merged_to', 0)),
+            '{}'.format(flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)),
+                                                                             str(response.get('_merged_to', 0))))
         }
-        return abort(
+        abort(
             Response(
                 response=None,
                 status=301,

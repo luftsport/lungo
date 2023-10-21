@@ -15,7 +15,6 @@ import domain
 
 from version import __version_info__
 APP_VERSION = '.'.join(__version_info__)
-
 APP_AUTHOR = 'Einar Huseby'
 APP_LICENSE = 'MIT'
 APP_COPYRIGHT = '(c) 2020'
@@ -108,7 +107,7 @@ EMBEDDING = True
 SWAGGER_INFO = {
     'title': 'LUNGO - NLF Membership API',
     'version': APP_VERSION,
-    'description': 'Release: Spruce Goose',
+    'description': 'Release: Vin Fiz',
     'termsOfService': 'See www.nlf.no',
     'contact': {
         'name': 'Einar Huseby',

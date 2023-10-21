@@ -10,7 +10,7 @@ from threading import Thread
 from datetime import datetime
 
 
-def async(f):
+def _async(f):
     """ An async decorator
     Will spawn a seperate thread executing whatever call you have
     """
