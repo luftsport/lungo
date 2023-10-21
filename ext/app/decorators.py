@@ -12,7 +12,7 @@ from inspect import signature
 import time
 
 
-def async(f):
+def _async(f):
     """ An async decorator
     Will spawn a seperate thread executing whatever call you have
     """

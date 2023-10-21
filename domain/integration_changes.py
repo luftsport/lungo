@@ -15,7 +15,7 @@ _schema = {
                  'unique': True,
                  'required': True},
     '_status': {'type': 'string'},
-    '_issues': {'type': 'dict'},
+    '_issues': {'type': 'list'},
     '_realm': {'type': 'string',
                'allowed': ['DST', 'PROD'],
                'required': True},

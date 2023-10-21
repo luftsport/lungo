@@ -137,7 +137,14 @@ _schema = {
                                   'embeddable': True,
                               }
                               },
-                       '_code': {'type': 'integer'},
+                       'type_id': {'type': 'integer',
+                                   'data_relation': {
+                                       'resource': 'competences_types',
+                                       'field': 'id',
+                                       'embeddable': True,
+                                   }
+                                   },
+                       '_code': {'type': 'string'},
                        'issuer': {'type': 'integer'},
                        'expiry': {'type': 'datetime'},
                        'paid': {'type': 'datetime'},
@@ -203,7 +210,7 @@ definition = {
     'versioning': True,
     'resource_methods': ['GET'],
     'item_methods': ['GET'],
-    'mongo_indexes': {'person_id': ([('id', 1)], {'background': True}),
+    'mongo_indexes': {# 'person_id': ([('id', 1)], {'background': True}),
                       # , 'unique': True gives DuplicateKeyError with versioning
                       # 'primary_email': ([('primary_email', 'text')], {'background': True}),
                       'primary_email': ([('primary_email', 1)], {'background': True}),
@@ -254,6 +261,42 @@ process_definition = {
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'schema': _schema_process
+}
+
+# Knips
+# Custom endpoint
+knips_definition = {
+
+    'url': 'persons/knips',
+    'item_title': 'Persons Knips',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   'filter': {
+                       '_merged_to': {'$exists': False},
+                       'date_of_death': {'$exists': False}
+                   },
+                   'projection': {'id': 1,
+                                  'first_name': 1,
+                                  'last_name': 1,
+                                  'birth_date': 1,
+                                  'primary_email': 1,
+                                  'competences': 1,
+                                  'federation': 1,
+                                  'memberships': 1,
+                                  'activities': 1,
+                                  'functions': 1,
+                                  '_merged_to': 1,
+                                  'address.phone_mobile': 1
+                                  }
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'pagination': True,
+    'extra_response_fields': ['id'],
+    'resource_methods': ['GET'],
+    'item_methods': ['GET'],
+    'schema': _schema
 }
 
 # Search

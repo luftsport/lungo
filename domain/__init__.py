@@ -52,6 +52,10 @@ DOMAIN = {
     "persons_age_distribution": persons.agg_age_distribution,
     "persons_age_gender_bucket_distribution": persons.agg_age_gender_bucket_distribution,
 
+    # Custom Persons
+    # Knips:
+    "persons_knips": persons.knips_definition,
+
     # Persons test for error id
     # "test": test.definition,
 
@@ -76,8 +80,12 @@ DOMAIN = {
     # Competences
     "competences": competences.definition,
     "competences_process": competences.process_definition,
-    "competences_types": competences_types.definition,
     "competences_codes": competences.agg_count_codes,
+    "competences_types_count": competences.agg_count_types,
+    "competences_persons_count": competences.agg_count_persons,
+    # Competences Types
+    "competences_types": competences_types.definition,
+    "competences_types_meta_count": competences_types.agg_count_meta_types,
 
     # Licenses
     "licenses": licenses.definition,

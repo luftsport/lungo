@@ -6,7 +6,6 @@ from eve.methods.get import get_internal, getitem_internal
 from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
-from flask import current_app as app  # , Response, redirect
 from dateutil import parser
 from flask import Response, request as flask_request, abort, current_app as app
 import json
@@ -17,6 +16,7 @@ from ext.auth.clients import LUNGO_SIO_TOKEN
 from ext.app.decorators import _async, debounce
 import time
 import socketio
+
 
 # import dateutil.parser
 
@@ -29,6 +29,10 @@ RESOURCE_ORGANIZATIONS_PROCESS = 'organizations_process'
 RESOURCE_PAYMENTS_PROCESS = 'payments_process'
 RESOURCE_MERGED_FROM = 'persons_merged_from'
 
+# meta types which are considered "kompetanse"
+COMPETENCE_META_TYPES = ['Kompetansedefinisjon']
+# If True, will always run the patch on person object and not verify changes exists
+ALWAYS_PATCH = True
 
 NLF_ORG_STRUCTURE = {
     'fallskjerm': {'activity': 109, 'org_id': 90972},
@@ -58,13 +62,72 @@ def broadcast(change_data):
         pass
 
 
-def after_get_persons(response):
+def _add_payment_for_next_year(memberships) -> list:
+    """
+    Adding missing payments when members pay for next year before year end
+    :param memberships: list of membership dicts
+    :return: memberships
+    """
+    _payment = {
+        "id": 9999999999,
+        "year": 2022,
+        "exception": None,
+        "type": "Senior",
+        "amount": 0.0,
+        "paid": "2022-11-01T00:00:00.000000Z"
+    }
+    try:
+        _start_date = datetime(datetime.utcnow().year, 11, 1).replace(tzinfo=tz_utc)
+
+        for k, v in enumerate(memberships.copy()):
+            if 'payment' not in v and 'from_date' in v:
+                if v['from_date'] > _start_date:
+                    memberships[k]['payment'] = _payment
+    except Exception as e:
+        app.logger.error('Error adding next years payment to memberships for person', e)
+
+    return memberships
+
+
+def _after_get_person(item):
+    # Modify memberships add missing payments
+    if len(item.get('memberships', [])) > 0:
+        item['memberships'] = _add_payment_for_next_year(item.get('memberships', []))
+
+    # Remove secret values
+    if item.get('address', {}).get('secret_address', False) is True:
+        item['address'].pop('contact_id', None)
+        item['address'].pop('contact_information_id', None)
+        item['address'].pop('country_id', None)
+        item['address'].pop('street_address', None)
+        item['address'].pop('city', None)
+        item['address'].pop('zip_code', None)
+        item['address'].pop('location', None)
+
+    if item.get('address', {}).get('secret_email', False) is True:
+        item['address']['email'] = []
+        item.pop('primary_email', None)
+
+    if item.get('address', {}).get('secret_phone_home', False) is True:
+        item['address'].pop('phone_home', None)
+
+    if item.get('address', {}).get('secret_phone_mobile', False) is True:
+        item['address'].pop('phone_mobile', None)
+
+    if item.get('address', {}).get('secret_phone_work', False) is True:
+        item['address'].pop('phone_work', None)
+
+    return item
+
+
+def after_get_person(response):
     if '_merged_to' in response:
+        # replace id with _merged_to
         headers = {
-            '{}'.format(flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)),
-                                                                             str(response.get('_merged_to', 0))))
+            'Location': '{}'.format(flask_request.path).replace(str(response.get('id', 0)),
+                                                                str(response.get('_merged_to', 0)))
         }
-        abort(
+        return abort(
             Response(
                 response=None,
                 status=301,
@@ -72,28 +135,12 @@ def after_get_persons(response):
             )
         )
 
-    # Remove secret values
-    if response.get('address', {}).get('secret_address', False) is True:
-        response['address'].pop('contact_id', None)
-        response['address'].pop('contact_information_id', None)
-        response['address'].pop('country_id', None)
-        response['address'].pop('street_address', None)
-        response['address'].pop('city', None)
-        response['address'].pop('zip_code', None)
-        response['address'].pop('location', None)
+    return _after_get_person(response)
 
-    if response.get('address', {}).get('secret_email', False) is True:
-        response['address']['email'] = []
-        response.pop('primary_email', None)
 
-    if response.get('address', {}).get('secret_phone_home', False) is True:
-        response['address'].pop('phone_home', None)
-
-    if response.get('address', {}).get('secret_phone_mobile', False) is True:
-        response['address'].pop('phone_mobile', None)
-
-    if response.get('address', {}).get('secret_phone_work', False) is True:
-        response['address'].pop('phone_work', None)
+def after_get_persons(response):
+    for key, item in enumerate(response.get('_items', []).copy()):
+        response['_items'][key] = _after_get_person(response['_items'][key])
 
 
 def assign_lookup(resource, request, lookup):
@@ -271,6 +318,7 @@ def on_function_post(items) -> None:
 
 def on_function_put(response, original=None) -> None:
     """
+    @TODO functions excluding memberships to same schema as competences
     :param response: database object
     :return: None
     """
@@ -494,6 +542,18 @@ def on_license_put(response, original=None):
                 pass
 
 
+def _get_competence_type_meta_type(type_id):
+    try:
+        competence_type, _, _, status, _ = get_internal('competences_types', **{'id': type_id})
+        if status == 200:
+            if '_items' in competence_type and len(competence_type['_items']) == 1:
+                return competence_type['_items'][0]['meta_type']
+    except Exception as e:
+        pass
+
+    return None
+
+
 def on_competence_post(items):
     """Competence fields:
 
@@ -514,50 +574,57 @@ def on_competence_put(response, original=None):
     expiry = response.get('valid_until', None)
 
     # Always require an expiry date!
-    #if expiry is None:
+    # if expiry is None:
     #    # expiry = _get_end_of_year()
     #    pass
-    #else:
+    # else:
     expiry = _fix_naive(expiry)
 
     person = _get_person(response.get('person_id', None))
 
     if '_id' in person:
 
-        competence = person.get('competences', []).copy()
+        competences = person.get('competences', []).copy()
+
+        # Always remove existing:
+        competences = [x for x in competences if x['id'] != response['id']]
+
+        competence_meta_type = _get_competence_type_meta_type(response.get('type_id', 0))
 
         # Add this competence
-        if passed is True and expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
+        if competence_meta_type in COMPETENCE_META_TYPES and expiry is not None and isinstance(expiry,
+                                                                                               datetime) and expiry >= _get_now():
 
             try:
-                competence.append({'id': response.get('id'),
-                                   '_code': response.get('_code', None),
-                                   'issuer': response.get('approved_by_person_id', None),
-                                   'expiry': expiry,
-                                   # 'paid': response.get('paid_date', None)
-                                   })
+                competences.append({'id': response.get('id'),
+                                    '_code': response.get('_code', response.get('title', 'Ukjent')),
+                                    'type_id': response.get('type_id', 0),
+                                    'issuer': response.get('approved_by_person_id', None),
+                                    'expiry': expiry,
+                                    # 'paid': response.get('paid_date', None)
+                                    })
             except:
                 pass
 
         # Always remove stale competences
         # Note that _code is for removing old competences, should be removed
-        competence[:] = [d for d in competence if
-                         _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
+        competences[:] = [d for d in competences if
+                          _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
-        # If competence exiry is None or competence not passed
-        if expiry is None or passed is False:
+        # If competence valid_to is None # or competence not passed
+        if expiry is None:  # or passed is False:
             try:
-                competence[:] = [d for d in competence if d.get('id', 0) != response.get('id')]
+                competences[:] = [d for d in competences if d.get('id', 0) != response.get('id')]
             except Exception as e:
                 app.logger.exceptin('Error removing competence from person')
 
         # Always unique by id
-        competence = list({v['id']: v for v in competence}.values())
+        competences = list({v['id']: v for v in competences}.values())
 
         # Patch if difference
-        if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
+        if ALWAYS_PATCH is True or _compare_list_of_dicts(competences, person.get('competences', [])) is True:
             lookup = {'_id': person['_id']}
-            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competences}, False, True,
                                                 **lookup)
             if status != 200:
                 app.logger.error('Patch returned {} for competence'.format(status))
@@ -849,6 +916,7 @@ def on_payment_after_put(item, orginal=None):
                 else:
                     year = _get_pmt_year(text)
                     # Magazines
+                    name = "Unknown Name"
                     if 'fritt' in text.lower():
                         name = 'Fritt Fall'
                     elif 'flynytt' in text.lower():
@@ -859,6 +927,8 @@ def on_payment_after_put(item, orginal=None):
                         name = 'Modellinformasjon'
                     elif 'flukt' in text.lower():
                         name = 'Fri Flukt'
+                    else:
+                        name = text
 
                     magazines.append(
                         {
@@ -962,7 +1032,7 @@ def on_person_after_put(item, original=None):
                    ))
                    })
     except Exception as e:
-        app.logger.exception('Something did not work out!')
+        app.logger.exception('Broadcast of item with id {} did not work out!'.format(item['id']))
 
 
 def _update_person(item):
