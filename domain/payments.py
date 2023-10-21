@@ -4,16 +4,18 @@ _schema = {
     'id': {'type': 'integer',
            'required': True,
            'unique': True},
+    'kid': {'type': 'string',
+            'unique': False},
     'account_number': {'type': 'string'},
     'amount': {'type': 'float'},
     'amount_at_payment_time': {'type': 'float'},
-    'fa_date_time': {'type': 'datetime'},
+    # 'fa_date_time': {'type': 'datetime'}, # Rubbish from NIF
     'fee': {'type': 'float'},
     'fee_org': {'type': 'integer'},
     'invoice_id': {'type': 'integer'},
     'invoicing_org': {'type': 'string'},
     'invoicing_org_id': {'type': 'integer'},
-    'net_amount': {'type': 'integer'},
+    'net_amount': {'type': 'float'},
     'paid_date': {'type': 'datetime'},
     'method_id': {'type': 'integer'},
     'receiver': {'type': 'string'},
@@ -23,8 +25,9 @@ _schema = {
     'product_type_id': {'type': 'integer'},
     'person_id': {'type': 'integer'},
     'person_type': {'type': 'integer'},
-    'transaction_id': {'type': 'integer'},
+    'payment_id': {'type': 'integer'},
     'unit_cost_net': {'type': 'float'},
+    'org_id': {'type': 'integer'}
 }
 
 definition = {
@@ -41,6 +44,7 @@ definition = {
     'resource_methods': ['GET'],
     'item_methods': ['GET'],
     'mongo_indexes': {'payment_id': ([('id', 1)], {'background': True}),
+                      'kid_nr': ([('kid', 1)], {'background': True}),
                       'method_id': ([('method_id', 1)], {'background': True}),
                       'receiver': ([('receiver_org_id', 1)], {'background': True}),
                       'paid_date': ([('paid_date', 1)], {'background': True}),

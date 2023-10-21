@@ -14,9 +14,6 @@ sys.path.insert(0, "domain")
 import domain
 
 from version import __version_info__
-
-APP_VERSION = '.'.join(__version_info__)
-
 APP_VERSION = '.'.join(__version_info__)
 APP_AUTHOR = 'Einar Huseby'
 APP_LICENSE = 'MIT'
@@ -32,6 +29,7 @@ MONGO_PASSWORD = ''
 MONGO_DBNAME = 'ka'
 # Use default 30s?
 MONGO_CONNECT_TIMEOUT_MS = 200
+MONGO_REPLICA_SET = "rs"
 
 APP_HOST = '127.0.0.1'
 APP_PORT = 9191
@@ -63,6 +61,8 @@ CACHE_EXPIRES = 20
 
 # Support only json response 'eve.render.XMLRenderer'
 RENDERERS = ['eve.render.JSONRenderer', 'eve.render.XMLRenderer']
+
+HATEOAS = False
 
 ALLOW_UNKNOWN = False
 
@@ -107,7 +107,7 @@ EMBEDDING = True
 SWAGGER_INFO = {
     'title': 'LUNGO - NLF Membership API',
     'version': APP_VERSION,
-    'description': 'Release: Spruce Goose',
+    'description': 'Release: Vin Fiz',
     'termsOfService': 'See www.nlf.no',
     'contact': {
         'name': 'Einar Huseby',

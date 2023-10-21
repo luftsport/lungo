@@ -15,7 +15,7 @@ _schema = {
                  'unique': True,
                  'required': True},
     '_status': {'type': 'string'},
-    '_issues': {'type': 'dict'},
+    '_issues': {'type': 'list'},
     '_realm': {'type': 'string',
                'allowed': ['DST', 'PROD'],
                'required': True},
@@ -52,6 +52,25 @@ definition = {
 }
 
 # Aggregations
+
+# Group and count error messages!
+# "$_issues.exception" and "$_issues.message" latter only for early changes
+agg_count_and_sort_errors = {
+    'url': 'integration/changes/aggregate/errors/group',
+    'item_title': 'Integration Changes Errors Grouped and Sorted',
+    'pagination': True, # Many documents!!
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$match": {"_status": "error"}},
+                {"$group": {"_id": "$_issues.exception", "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
+}
+
 agg_count_entity_types = {
     'url': 'integration/changes/entity/types',
     'item_title': 'Integration Changes Entity Types',
@@ -75,7 +94,7 @@ agg_count_statuses = {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
-                {"$group": {"_id": "$_status", "count": {"$sum": 1}}}, # {"$sum": 1}
+                {"$group": {"_id": "$_status", "count": {"$sum": 1}}},  # {"$sum": 1}
                 {"$sort": SON([("count", -1), ("_id", -1)])}
             ]
         }

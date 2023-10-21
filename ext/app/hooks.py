@@ -6,15 +6,17 @@ from eve.methods.get import get_internal, getitem_internal
 from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
-from flask import current_app as app  # , Response, redirect
 from dateutil import parser
-from flask import Response, abort, request as flask_request
+from flask import Response, request as flask_request, abort, current_app as app
 import json
 
+from dateutil.parser import parse as date_parse
+
 from ext.auth.clients import LUNGO_SIO_TOKEN
-from ext.app.decorators import async
+from ext.app.decorators import _async, debounce
 import time
 import socketio
+
 
 # import dateutil.parser
 
@@ -24,15 +26,31 @@ RESOURCE_FUNCTIONS_PROCESS = 'functions_process'
 RESOURCE_LICENSES_PROCESS = 'licenses_process'
 RESOURCE_COMPETENCES_PROCESS = 'competences_process'
 RESOURCE_ORGANIZATIONS_PROCESS = 'organizations_process'
+RESOURCE_PAYMENTS_PROCESS = 'payments_process'
+RESOURCE_MERGED_FROM = 'persons_merged_from'
+
+# meta types which are considered "kompetanse"
+COMPETENCE_META_TYPES = ['Kompetansedefinisjon']
+# If True, will always run the patch on person object and not verify changes exists
+ALWAYS_PATCH = True
+
+NLF_ORG_STRUCTURE = {
+    'fallskjerm': {'activity': 109, 'org_id': 90972},
+    'mikrofly': {'activity': 237, 'org_id': 203030},
+    'motorfly': {'activity': 238, 'org_id': 203025},
+    'seilfly': {'activity': 111, 'org_id': 90968},
+    'modellfly': {'activity': 236, 'org_id': 203027},
+    'ballong': {'activity': 235, 'org_id': 203026},
+    'hps': {'activity': 110, 'org_id': 90969},
+}
 
 LOCAL_TIMEZONE = "Europe/Oslo"  # UTC
 tz_utc = tz.gettz('UTC')
 tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 
-@ async
-
-
+@debounce(10)
+@_async
 def broadcast(change_data):
     try:
         sio = socketio.Client()
@@ -44,19 +62,85 @@ def broadcast(change_data):
         pass
 
 
-def after_get_persons(response):
+def _add_payment_for_next_year(memberships) -> list:
+    """
+    Adding missing payments when members pay for next year before year end
+    :param memberships: list of membership dicts
+    :return: memberships
+    """
+    _payment = {
+        "id": 9999999999,
+        "year": 2022,
+        "exception": None,
+        "type": "Senior",
+        "amount": 0.0,
+        "paid": "2022-11-01T00:00:00.000000Z"
+    }
+    try:
+        _start_date = datetime(datetime.utcnow().year, 11, 1).replace(tzinfo=tz_utc)
+
+        for k, v in enumerate(memberships.copy()):
+            if 'payment' not in v and 'from_date' in v:
+                if v['from_date'] > _start_date:
+                    memberships[k]['payment'] = _payment
+    except Exception as e:
+        app.logger.error('Error adding next years payment to memberships for person', e)
+
+    return memberships
+
+
+def _after_get_person(item):
+    # Modify memberships add missing payments
+    if len(item.get('memberships', [])) > 0:
+        item['memberships'] = _add_payment_for_next_year(item.get('memberships', []))
+
+    # Remove secret values
+    if item.get('address', {}).get('secret_address', False) is True:
+        item['address'].pop('contact_id', None)
+        item['address'].pop('contact_information_id', None)
+        item['address'].pop('country_id', None)
+        item['address'].pop('street_address', None)
+        item['address'].pop('city', None)
+        item['address'].pop('zip_code', None)
+        item['address'].pop('location', None)
+
+    if item.get('address', {}).get('secret_email', False) is True:
+        item['address']['email'] = []
+        item.pop('primary_email', None)
+
+    if item.get('address', {}).get('secret_phone_home', False) is True:
+        item['address'].pop('phone_home', None)
+
+    if item.get('address', {}).get('secret_phone_mobile', False) is True:
+        item['address'].pop('phone_mobile', None)
+
+    if item.get('address', {}).get('secret_phone_work', False) is True:
+        item['address'].pop('phone_work', None)
+
+    return item
+
+
+def after_get_person(response):
     if '_merged_to' in response:
+        # replace id with _merged_to
         headers = {
-            '{}'.format(flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)),
-                                                                             str(response.get('_merged_to', 0))))
+            'Location': '{}'.format(flask_request.path).replace(str(response.get('id', 0)),
+                                                                str(response.get('_merged_to', 0)))
         }
-        abort(
+        return abort(
             Response(
                 response=None,
                 status=301,
                 headers=headers
             )
         )
+
+    return _after_get_person(response)
+
+
+def after_get_persons(response):
+    for key, item in enumerate(response.get('_items', []).copy()):
+        response['_items'][key] = _after_get_person(response['_items'][key])
 
 
 def assign_lookup(resource, request, lookup):
@@ -114,6 +198,36 @@ def _get_person(person_id) -> dict:
     return {}
 
 
+def _get_merged_from(person_id) -> list:
+    """Get person ids merged to this person id
+
+    :param person_id:
+    :return:
+    """
+    try:
+        from domain.persons import agg_merged_from, RESOURCE_COLLECTION
+
+        merged_from_ids = []
+
+        pipeline = agg_merged_from.get('datasource', {}).get('aggregation', {}).get('pipeline', [])
+        pipeline[0]["$match"]["id"] = person_id
+        pipeline[2]["$graphLookup"]["startWith"] = person_id
+
+        datasource = agg_merged_from.get('datasource', {}).get('source', RESOURCE_COLLECTION)
+
+        persons = app.data.driver.db[datasource]
+
+        result = list(persons.aggregate(pipeline))
+
+        if len(result) == 1:
+            result = result[0]
+            merged_from_ids = result.get('merged_from', [])
+
+    except Exception as e:
+        app.logger.exception('Aggregation with database layer failed for person_id {}'.format(person_id))
+
+    return merged_from_ids
+
 def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
     """Sorts lists then compares on the given id in the dicts
     :param l1: list of dicts
@@ -136,6 +250,10 @@ def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
             return False  # They are equal
     except:
         return True  # We do not know if difference
+
+
+def _compare_list_of_dicts_no_id(l1, l2):
+    return [d for d in l1 if d not in l2] == []
 
 
 def _compare_lists(l1, l2) -> bool:
@@ -200,6 +318,7 @@ def on_function_post(items) -> None:
 
 def on_function_put(response, original=None) -> None:
     """
+    @TODO functions excluding memberships to same schema as competences
     :param response: database object
     :return: None
     """
@@ -240,18 +359,17 @@ def on_function_put(response, original=None) -> None:
 
                     for c in org.get('_up', []):
                         if c['type'] == 6:
-                            memberships.append({'club': c['id'],
-                                                'discipline': response['active_in_org_id'],
-                                                'activity': org.get('main_activity', {}).get('id', 27)})
+                            memberships.append({
+                                'id': response['id'],
+                                'club': c['id'],
+                                'discipline': response['active_in_org_id'],
+                                'activity': org.get('main_activity', {}).get('id', 27),
+                                'from_date': response.get('from_date', datetime.utcnow())
+                            })
 
             else:
                 try:
-                    if org.get('type_id', 0) == 14:
-                        for c in org.get('_up', []):
-                            if c['type'] == 6:
-                                for k, v in enumerate(memberships):
-                                    if v['club'] == c['id'] and v['discipline'] == org['id']:
-                                        memberships.pop(k)
+                    memberships = [x for x in memberships if x['id'] != response['id']]
                     clubs.remove(response['active_in_org_id'])
                 except ValueError:
                     pass
@@ -295,8 +413,7 @@ def on_function_put(response, original=None) -> None:
 
         lookup = {'_id': person['_id']}
 
-        # Update person with new values
-        # response, last_modified, etag, status =
+        # Update person with new values IF anything is changed
         if _compare_lists(functions, person.get('functions', [])) is True or \
                 _compare_lists(activities, person.get('activities', [])) is True or \
                 memberships != person.get('memberships', []) or \
@@ -307,10 +424,29 @@ def on_function_put(response, original=None) -> None:
                                                  'clubs': clubs,
                                                  'activities': activities,
                                                  'memberships': memberships},
-                                                False, True, **lookup)
+                                                False,
+                                                True,
+                                                **lookup)
+
             if status != 200:
                 app.logger.error('Patch returned {} for functions, activities, memberships'.format(status))
-                pass
+
+            else:
+                # Fix payments all payments from merged person id's
+                payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
+                                                           **{
+                                                               'person_id': {'$in': list(set([person['id']] + _get_merged_from(person['id'])))},
+                                                               'org_id': {
+                                                                   '$in': [x['club'] for x in memberships] + [v['org_id'] for k,v in NLF_ORG_STRUCTURE.items() if NLF_ORG_STRUCTURE[k]['activity'] in [val['activity'] for val in memberships]] + [376]
+                                                               }
+                                                              }
+                                                           )
+                if p_status == 200:
+
+                    payments = payments.get('_items', [])
+                    for p in payments:
+                        p.update({'person_id': person['id']})
+                    on_payment_after_post(payments)
 
     # PURE RESPONSE
     # Update the function
@@ -406,6 +542,18 @@ def on_license_put(response, original=None):
                 pass
 
 
+def _get_competence_type_meta_type(type_id):
+    try:
+        competence_type, _, _, status, _ = get_internal('competences_types', **{'id': type_id})
+        if status == 200:
+            if '_items' in competence_type and len(competence_type['_items']) == 1:
+                return competence_type['_items'][0]['meta_type']
+    except Exception as e:
+        pass
+
+    return None
+
+
 def on_competence_post(items):
     """Competence fields:
 
@@ -419,52 +567,68 @@ def on_competence_post(items):
 
 def on_competence_put(response, original=None):
     """"""
+    # Should be reenabled when all have populated?
+    # if response.get('passed', False) is True:
 
-    if response.get('passed', False) is True:
+    passed = response.get('passed', False)
+    expiry = response.get('valid_until', None)
 
-        expiry = response.get('valid_until', None)
+    # Always require an expiry date!
+    # if expiry is None:
+    #    # expiry = _get_end_of_year()
+    #    pass
+    # else:
+    expiry = _fix_naive(expiry)
 
-        # Set expiry to end year
-        if expiry is None:
-            expiry = _get_end_of_year()
+    person = _get_person(response.get('person_id', None))
 
-        expiry = _fix_naive(expiry)
+    if '_id' in person:
 
-        person = _get_person(response.get('person_id', None))
+        competences = person.get('competences', []).copy()
 
-        if '_id' in person:
+        # Always remove existing:
+        competences = [x for x in competences if x['id'] != response['id']]
 
-            competence = person.get('competences', []).copy()
+        competence_meta_type = _get_competence_type_meta_type(response.get('type_id', 0))
 
-            # Add this competence?
-            if expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
+        # Add this competence
+        if competence_meta_type in COMPETENCE_META_TYPES and expiry is not None and isinstance(expiry,
+                                                                                               datetime) and expiry >= _get_now():
 
-                try:
-                    competence.append({'id': response.get('id'),
-                                       '_code': response.get('_code', None),
-                                       'issuer': response.get('approved_by_person_id', None),
-                                       'expiry': expiry,
-                                       # 'paid': response.get('paid_date', None)
-                                       })
-                except:
-                    pass
+            try:
+                competences.append({'id': response.get('id'),
+                                    '_code': response.get('_code', response.get('title', 'Ukjent')),
+                                    'type_id': response.get('type_id', 0),
+                                    'issuer': response.get('approved_by_person_id', None),
+                                    'expiry': expiry,
+                                    # 'paid': response.get('paid_date', None)
+                                    })
+            except:
+                pass
 
-            # Always remove stale competences
-            # Note that _code is for removing old competences, should be removed
-            competence[:] = [d for d in competence if
-                             _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
+        # Always remove stale competences
+        # Note that _code is for removing old competences, should be removed
+        competences[:] = [d for d in competences if
+                          _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
 
-            # Always unique by id
-            competence = list({v['id']: v for v in competence}.values())
+        # If competence valid_to is None # or competence not passed
+        if expiry is None:  # or passed is False:
+            try:
+                competences[:] = [d for d in competences if d.get('id', 0) != response.get('id')]
+            except Exception as e:
+                app.logger.exceptin('Error removing competence from person')
 
-            # Patch if difference
-            if _compare_list_of_dicts(competence, person.get('competence', [])) is True:
-                lookup = {'_id': person['_id']}
-                resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competence}, False, True,
-                                                    **lookup)
-                if status != 200:
-                    app.logger.error('Patch returned {} for competence'.format(status))
-                    pass
+        # Always unique by id
+        competences = list({v['id']: v for v in competences}.values())
+
+        # Patch if difference
+        if ALWAYS_PATCH is True or _compare_list_of_dicts(competences, person.get('competences', [])) is True:
+            lookup = {'_id': person['_id']}
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS, {'competences': competences}, False, True,
+                                                **lookup)
+            if status != 200:
+                app.logger.error('Patch returned {} for competence'.format(status))
+                pass
 
 
 def on_organizations_post(items):
@@ -503,16 +667,376 @@ def on_organizations_put(response, original=None):
                })
 
 
+######## PAYMENTS ###########
+
+def _get_pmt_group_from_club(org_id):
+    lookup = {'parent_id': org_id, 'type_id': 6, 'is_active': True}
+    group, _, _, status_code = getitem_internal(RESOURCE_ORGANIZATIONS_PROCESS, **lookup)
+    if status_code == 200:
+        return group.get('id', org_id)
+
+    return org_id
+
+
+def _get_pmt_year(text):
+    try:
+        return date_parse(text, fuzzy=True).year
+    except:
+        # Error could not extract a year use todays year!
+        pass
+
+    return datetime.now().year
+
+
+def _get_pmt_type(text):
+    if 'støttemedlem' in text.lower():
+        return 'Støttemedlem'
+    elif 'ufør' in text.lower():
+        return 'Ufør'
+    elif 'modellmedlem' in text.lower():
+        return 'Modellmedlem'
+    elif 'æresmedlem' in text.lower():
+        return 'Æresmedlem'
+    elif 'Tandemmedlem' in text.lower():
+        return 'Tandemmedlem'
+    elif 'kroppsfyker' in text.lower():
+        return 'Kroppsfykermedlem'
+    elif 'familie' in text.lower():
+        return 'Familiemedlem'
+
+    return None
+
+
+def _get_pmt_activity(text):
+    if 'modellfly' in text.lower():
+        return NLF_ORG_STRUCTURE['modellfly']['activity']
+    elif 'mikrofly' in text.lower():
+        return NLF_ORG_STRUCTURE['mikrofly']['activity']
+    elif 'sportsfly' in text.lower():
+        return NLF_ORG_STRUCTURE['mikrofly']['activity']
+    elif 'fallskjerm' in text.lower():
+        return NLF_ORG_STRUCTURE['fallskjerm']['activity']
+    elif 'motorfly' in text.lower():
+        return NLF_ORG_STRUCTURE['motorfly']['activity']
+    elif 'ballong' in text.lower():
+        return NLF_ORG_STRUCTURE['ballong']['activity']
+    elif 'seilfly' in text.lower():
+        return NLF_ORG_STRUCTURE['seilfly']['activity']
+    elif 'speedglider' in text.lower():
+        return NLF_ORG_STRUCTURE['hps']['activity']
+
+    return 27
+
+
+def _get_pmt_person_age_membership(person):
+    membership = 'Senior'
+    try:
+        age = datetime.now().year - person.get('birth_date').year - 1
+    except:
+        age = datetime.now().year - date_parse(person.get('birth_date')).year - 1
+
+    if age <= 12:
+        membership = 'Barn'
+    elif age > 12 and age <= 18:
+        membership = 'Ungdom'
+    elif age > 18 and age <= 25:
+        membership = 'Junior'
+    elif age > 25 and age <= 66:
+        membership = 'Senior'
+    elif age > 66:
+        membership = 'Pensjonist'
+
+    return membership
+
+
+def _get_org_id_and_activity(club_id):
+    # Get org from org id (5)
+    # return org_id and main_activity.id
+    org_id = 376
+    activity = 27
+    return org_id, activity
+
+
+def _get_pmt(payment):
+    text = payment.get('product_name', '')
+    year = _get_pmt_year(text)
+
+    activity = _get_pmt_activity(text)
+    org_id = payment['org_id']  # or 376  # The real org_id
+    product_type = None
+    product_type_exception = None
+    product_type_id = payment['product_type_id']
+
+    if product_type_id == 20:
+        # Forbund
+        product_type = 'Forbundskontigent'
+        payment['product_type'] = product_type
+        product_type_exception = _get_pmt_type(text)
+        pass
+    elif product_type_id == 21:
+        # medlemskap klubb
+        product_type = 'Klubbkontigent'
+        payment['product_type'] = product_type
+        org_id = _get_pmt_group_from_club(payment['org_id'])
+        product_type_exception = _get_pmt_type(text)
+    elif product_type_id == 22:
+        # Seksjon
+        activity = _get_pmt_activity(text)
+        product_type = 'Seksjonskontigent'
+        payment['product_type'] = product_type
+        product_type_exception = _get_pmt_type(text)
+    elif product_type_id == 23:
+        payment['product_type'] = 'magazine'
+        # Magazines
+        if 'fritt' in text.lower():
+            product_type = 'Fritt Fall'
+            activity = 109
+        elif 'flynytt' in text.lower():
+            product_type = 'Flynytt'
+            activity = 27
+        elif 'gliding' in text.lower():
+            product_type = 'Nordic Gliding'
+            activity = 111
+        elif 'modell' in text.lower():
+            product_type = 'Modellinformasjon'
+            activity = 236
+        elif 'flukt' in text.lower():
+            product_type = 'Fri Flukt'
+            activity = 110
+
+        # self.value['product_name'] = product_name
+        # product_type = 'magazine' # We know that since 23
+
+        # Magasin
+        pass
+    else:
+        # What just happened?
+        pass
+
+    return org_id, \
+           activity, \
+           product_type, \
+           product_type_exception, \
+           product_type_id, \
+           year, \
+           payment['amount'], \
+           payment['paid_date']
+
+
+### PAYMENTS HOOKS ###
+
+def on_payment_before_post(items):
+    # club -> memberships!
+    for k, item in enumerate(items):
+        if item['product_type_id'] == 21:  # Only clubs
+            items[k]['org_id'] = _get_pmt_group_from_club(items[k]['org_id'])
+
+
+def on_payment_after_post(items):
+    for item in items:
+        on_payment_after_put(item)
+
+
+def on_payment_before_put(item, orginal=None):
+    if item['product_type_id'] == 21:  # Only clubs
+        item['org_id'] = _get_pmt_group_from_club(item['org_id'])
+
+
+def on_payment_after_put(item, orginal=None):
+    """Every time some payments comes through, fix person"""
+
+    # Only this year?
+    if _get_pmt_year(item['product_name']) >= datetime.now().year:
+
+        # Gets person
+        person, _, _, status_code = getitem_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['person_id']})
+
+        if status_code == 200:
+
+            current_year = datetime.now().year
+
+            # Change to group org_id
+            type_id = item.get('product_type_id', None)
+            text = item['product_name']
+
+            try:
+                item['amount'] = float(item['amount'])
+                item['amount_at_payment_time'] = float(item['amount_at_payment_time'])
+            except:
+                pass
+
+            # Is this a refund?
+            if item['amount_at_payment_time'] + item['amount'] == 0:
+                refund = True
+            else:
+                refund = False
+
+            # Build and insert payments types
+            #
+            if type_id == 21:  # Club Membership
+                # club -> fix memberships!
+                org_id = item.get('org_id')  # _get_pmt_group_from_club(item.get('org_id'))
+                changes = False
+                for k, v in enumerate(person.get('memberships', [])):
+                    if v['club'] == org_id:
+
+                        if refund is True:
+                            person['memberships'][k].pop('payment', None)
+                        else:
+                            person['memberships'][k]['payment'] = {
+                                'id': item['id'],
+                                'year': _get_pmt_year(item['product_name']),
+                                'exception': _get_pmt_type(text),
+                                'type': _get_pmt_person_age_membership(person),
+                                'amount': item['amount'],
+                                'paid': item['paid_date']
+                            }
+                        changes = True
+
+                if changes is True:
+                    resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                                        {'memberships': person['memberships']},
+                                                        False,
+                                                        True,
+                                                        **{'_id': person['_id']})
+                    if status != 200:
+                        app.logger.exception(
+                            'Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
+
+
+
+
+
+            elif type_id == 23:  # Magazines
+
+                magazines = person.get('magazines', [])
+
+                if refund is True:
+                    magazines = [x for x in magazines if x.get('id', item['id']) != item['id']]
+                else:
+                    year = _get_pmt_year(text)
+                    # Magazines
+                    name = "Unknown Name"
+                    if 'fritt' in text.lower():
+                        name = 'Fritt Fall'
+                    elif 'flynytt' in text.lower():
+                        name = 'Flynytt'
+                    elif 'gliding' in text.lower():
+                        name = 'Nordic Gliding'
+                    elif 'modell' in text.lower():
+                        name = 'Modellinformasjon'
+                    elif 'flukt' in text.lower():
+                        name = 'Fri Flukt'
+                    else:
+                        name = text
+
+                    magazines.append(
+                        {
+                            'id': item['id'],
+                            'name': name,
+                            'year': year,
+                            # 'paid': item['paid_date'],
+                            # 'amount': item['amount']
+                        }
+                    )
+
+                # Remove old ones
+                magazines = [x for x in magazines if x['year'] >= datetime.now().year and 'id' in x]
+
+                # Unique list of dicts
+                magazines = list({v['id']: v for v in magazines}.values())
+                # magazines = [dict(p) for p in set(tuple(i.items()) for i in magazines)]
+
+                resp, _, _, status = patch_internal(
+                    RESOURCE_PERSONS_PROCESS,
+                    {'magazines': magazines},
+                    False,
+                    True,
+                    **{'_id': person['_id']}
+                )
+
+                if status != 200:
+                    app.logger.exception('Error {} for payment id {}'.format(name, item['id']))
+
+            elif type_id in [20, 22]:  # Federation/section
+                # Seksjonsavgifter
+                # memberships org_id fra section..
+                fed = person.get('federation', [])
+
+                if refund is True:
+                    fed = [x for x in fed if x.get('id', item['id']) != item['id']]
+                else:
+                    if type_id == 22:
+                        product_type = 'Seksjonskontigent'
+                        activity = _get_pmt_activity(text)
+                    else:
+                        product_type = 'Forbundskontigent'
+                        activity = 27
+
+                    fed.append({
+                        'id': item['id'],
+                        'name': product_type,
+                        'activity': activity,
+                        'year': _get_pmt_year(text),
+                        'exception': _get_pmt_type(text),
+                        'type': _get_pmt_person_age_membership(person),
+                        'paid': item['paid_date'],
+                        'amount': item['amount'],
+                    })
+
+                # Remove old ones
+                fed = [x for x in fed if x['year'] >= datetime.now().year and 'id' in x]
+
+                # Unique
+                fed = list({v['id']: v for v in fed}.values())
+                # fed = [dict(p) for p in set(tuple(i.items()) for i in fed)]
+
+                resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                                    {'federation': fed},
+                                                    False, True, **{'_id': person['_id']})
+                if status != 200:
+                    app.logger.exception('Error {} for payment id {}'.format(product_type, item['id']))
+
+
 def on_person_after_post(items):
     for response in items:
         _update_person(response)
 
 
+def on_person_before_put(item, original):
+    # if original then use and not rebuild because
+    # functions, competences, licenses, memberships and clubs, activities
+    item['functions'] = original.get('functions', [])
+    item['competences'] = original.get('competences', [])
+    item['licenses'] = original.get('licenses', [])
+
+    item['memberships'] = original.get('memberships', [])
+
+    item['magazines'] = original.get('magazines', [])
+    item['federation'] = original.get('federation', [])
+
+    # @TODO remove - legacy
+    item['clubs'] = original.get('clubs', [])
+    item['activities'] = original.get('activities', [])
+
+
 def on_person_after_put(item, original=None):
     _update_person(item)
+    try:
+        broadcast({'entity': 'person',
+                   'entity_id': item['id'],
+                   'orgs': list(set(
+                       [x['activity'] for x in item['memberships']] +
+                       [x['discipline'] for x in item['memberships']] +
+                       [x['club'] for x in item['memberships']]
+                   ))
+                   })
+    except Exception as e:
+        app.logger.exception('Broadcast of item with id {} did not work out!'.format(item['id']))
 
 
 def _update_person(item):
+    """Runs AFTER person replaced"""
     lookup = {'person_id': item['id']}
 
     competences, _, _, c_status, _ = get_internal(RESOURCE_COMPETENCES_PROCESS, **lookup)
@@ -528,8 +1052,15 @@ def _update_person(item):
     if f_status == 200:
         on_function_post(functions.get('_items', []))
 
+    """ In functions for now!
+    payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **lookup)
+    app.logger.debug('Payments\n{}'.format(functions))
+    if f_status == 200:
+        on_payment_after_post(payments.get('_items', []))
+    """
+
     try:
-        # Need to get personreturn response, last_modified, etag, 200
+        # Need to get person return response, last_modified, etag, 200
         person, _, _, p_status = getitem_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['id']})
         if p_status == 200:
             # Broadcast all
@@ -542,5 +1073,4 @@ def _update_person(item):
                        ))
                        })
     except Exception as e:
-        print('[ERR]', e)
-        print(person)
+        app.logger.exception('Error finishing off person')

@@ -21,137 +21,178 @@ _schema = {
     'nationality_id': {'type': 'integer'},
     'primary_email': {'type': 'string'},
     'clubs': {'type': 'list',
-              'schema': {'type': 'integer',
-                         'data_relation': {
-                             'resource': 'organizations',
-                             'field': 'id',
-                             'embeddable': True,
-                         }
-                         },
+              'schema': {
+                  'type': 'integer',
+                  'data_relation': {
+                      'resource': 'organizations',
+                      'field': 'id',
+                      'embeddable': True,
+                  }
+              },
               },
     'memberships': {'type': 'list',
                     'default': [],
                     'schema': {
-                        'club': {'type': 'integer',
-                                 'data_relation': {
-                                     'resource': 'organizations',
-                                     'field': 'id',
-                                     'embeddable': True,
-                                 }
-                                 },
-                        'discipline': {'type': 'integer',
-                                       'data_relation': {
-                                           'resource': 'organizations',
-                                           'field': 'id',
-                                           'embeddable': True,
-                                       }
-                                       },
-                        'activity': {'type': 'integer',
-                                     'data_relation': {
-                                         'resource': 'activities',
-                                         'field': 'id',
-                                         'embeddable': True,
-                                     }
-                                     },
+                        'type': 'dict',
+                        'schema': {
+                            'id': {
+                                'type': 'integer',
+                                'data_relation': {
+                                    'resource': 'functions',
+                                    'field': 'id',
+                                    'embeddable': True,
+                                }
+                            },
+                            'club': {
+                                'type': 'integer',
+                                'data_relation': {
+                                    'resource': 'organizations',
+                                    'field': 'id',
+                                    'embeddable': True,
+                                }
+                            },
+                            'discipline': {
+                                'type': 'integer',
+                                'data_relation': {
+                                    'resource': 'organizations',
+                                    'field': 'id',
+                                    'embeddable': True,
+                                }
+                            },
+                            'activity': {
+                                'type': 'integer',
+                                'data_relation': {
+                                    'resource': 'activities',
+                                    'field': 'id',
+                                    'embeddable': True,
+                                }
+                            },
+                            'from_date': {'type': 'datetime'},
+                            'payment': {
+                                'type': 'dict',
+                                'schema': {
+                                    'id': {'type': 'integer', 'required': True},
+                                    'year': {'type': 'integer'},
+                                    'exception': {'type': 'string', 'nullable': True},
+                                    'type': {'type': 'string'},
+                                    'amount': {'type': 'float'},
+                                    'paid': {'type': 'datetime'}
+                                }
+                            }
+                        }
                     }
 
                     },
+    'federation': {'type': 'list'},
+    'magazines': {'type': 'list'},
     'functions': {'type': 'list',
-                  'schema': {'type': 'integer',
-                             'data_relation': {
-                                 'resource': 'functions',
-                                 'field': 'id',
-                                 'embeddable': True,
+                  'schema': {
+                      'type': 'integer',
+                      'data_relation': {
+                          'resource': 'functions',
+                          'field': 'id',
+                          'embeddable': True,
 
-                             }
-                             }
+                      }
+                  }
                   },
     # 'qualifications': {'type': 'list'},
     'activities': {'type': 'list',
-                   'schema': {'type': 'integer',
+                   'schema': {
+                       'type': 'integer',
+                       'data_relation': {
+                           'resource': 'activities',
+                           'field': 'id',
+                           'embeddable': True,
+                       }
+                   },
+                   },
+    'licenses': {'type': 'list',
+                 'schema': {
+                     'type': 'dict',
+                     'schema': {
+                         'id': {'type': 'integer',
+                                'data_relation': {
+                                    'resource': 'licenses',
+                                    'field': 'id',
+                                    'embeddable': True,
+                                }
+                                },
+                         'status_id': {'type': 'integer'},
+                         'status_date': {'type': 'datetime'},
+                         'expiry': {'type': 'datetime'},
+                         'type_id': {'type': 'integer'},
+                         'type_name': {'type': 'string'},
+                     }}
+
+                 },
+    'competences': {
+        'type': 'list',
+        'schema': {'type': 'dict',
+                   'schema': {
+                       'id': {'type': 'integer',
                               'data_relation': {
-                                  'resource': 'activities',
+                                  'resource': 'competences',
                                   'field': 'id',
                                   'embeddable': True,
                               }
                               },
-                   },
-    'licenses': {'type': 'list',
-                 'schema': {'type': 'dict',
-                            'schema': {
-                                'id': {'type': 'integer',
-                                       'data_relation': {
-                                           'resource': 'licenses',
-                                           'field': 'id',
-                                           'embeddable': True,
-                                       }
-                                       },
-                                'status_id': {'type': 'integer'},
-                                'status_date': {'type': 'datetime'},
-                                'expiry': {'type': 'datetime'},
-                                'type_id': {'type': 'integer'},
-                                'type_name': {'type': 'string'},
-                            }}
+                       'type_id': {'type': 'integer',
+                                   'data_relation': {
+                                       'resource': 'competences_types',
+                                       'field': 'id',
+                                       'embeddable': True,
+                                   }
+                                   },
+                       '_code': {'type': 'string'},
+                       'issuer': {'type': 'integer'},
+                       'expiry': {'type': 'datetime'},
+                       'paid': {'type': 'datetime'},
+                   }}
+    },
+    'address': {
+        'type': 'dict',
+        'schema':
+            {
+                'city': {'type': 'string'},
+                'contact_id': {'type': 'integer'},
+                'contact_information_id': {'type': 'integer'},
+                'country_id': {'type': 'integer'},
+                'email': {'type': 'list'},
+                'fax': {'type': 'string'},
+                'phone_home': {'type': 'string'},
+                'phone_mobile': {'type': 'string'},
+                'phone_work': {'type': 'string'},
+                'secret_address': {'type': 'boolean'},
+                'secret_email': {'type': 'boolean'},
+                'secret_phone_home': {'type': 'boolean'},
+                'secret_phone_mobile': {'type': 'boolean'},
+                'secret_phone_work': {'type': 'boolean'},
+                'street_address': {'type': 'string'},
+                'street_address2': {'type': 'string'},
+                'zip_code': {'type': 'string'},
+                'home_page': {'type': 'string'},
+                'location': {'type': 'dict',
+                             'schema': {'geo': {'type': 'point'},
+                                        'score': {'type': 'integer'},
+                                        'confidence': {'type': 'integer'},
+                                        'quality': {'type': 'string'}
+                                        }
+                             },
+            }
+    },
 
-                 },
-    'competences': {'type': 'list',
-                    'schema': {'type': 'dict',
-                               'schema': {
-                                   'id': {'type': 'integer',
-                                          'data_relation': {
-                                              'resource': 'competences',
-                                              'field': 'id',
-                                              'embeddable': True,
-                                          }
-                                          },
-                                   '_code': {'type': 'integer'},
-                                   'issuer': {'type': 'integer'},
-                                   'expiry': {'type': 'datetime'},
-                                   'paid': {'type': 'datetime'},
-                               }}
-                    },
-
-    'address': {'type': 'dict',
-                'schema':
-                    {
-                        'city': {'type': 'string'},
-                        'contact_id': {'type': 'integer'},
-                        'contact_information_id': {'type': 'integer'},
-                        'country_id': {'type': 'integer'},
-                        'email': {'type': 'list'},
-                        'fax': {'type': 'string'},
-                        'phone_home': {'type': 'string'},
-                        'phone_mobile': {'type': 'string'},
-                        'phone_work': {'type': 'string'},
-                        'secret_address': {'type': 'boolean'},
-                        'secret_email': {'type': 'boolean'},
-                        'secret_phone_home': {'type': 'boolean'},
-                        'secret_phone_mobile': {'type': 'boolean'},
-                        'secret_phone_work': {'type': 'boolean'},
-                        'street_address': {'type': 'string'},
-                        'street_address2': {'type': 'string'},
-                        'zip_code': {'type': 'string'},
-                        'home_page': {'type': 'string'},
-                        'location': {'type': 'dict',
-                                     'schema': {'geo': {'type': 'point'},
-                                                'score': {'type': 'integer'},
-                                                'confidence': {'type': 'integer'},
-                                                'quality': {'type': 'string'}
-                                                }
-                                     },
-                    }
-                },
-
-    'settings': {'type': 'dict',
-                 'schema':
-                     {'approve_marketing': {'type': 'boolean'},
-                      'approve_publishing': {'type': 'boolean'},
-                      'automatic_data_cleansing_reservation': {'type': 'boolean'},
-                      'is_person_info_locked': {'type': 'boolean'},
-                      'is_validated': {'type': 'boolean'},
-                      'restricted_address': {'type': 'boolean'}
-                      }
-                 },
+    'settings': {
+        'type': 'dict',
+        'schema':
+            {'approve_marketing': {'type': 'boolean'},
+             'approve_publishing': {'type': 'boolean'},
+             'automatic_data_cleansing_reservation': {'type': 'boolean'},
+             'is_person_info_locked': {'type': 'boolean'},
+             'is_validated': {'type': 'boolean'},
+             'restricted_address': {'type': 'boolean'}
+             }
+    },
 
 }
 
@@ -169,7 +210,7 @@ definition = {
     'versioning': True,
     'resource_methods': ['GET'],
     'item_methods': ['GET'],
-    'mongo_indexes': {'person id': ([('id', 1)], {'background': True}),
+    'mongo_indexes': {# 'person_id': ([('id', 1)], {'background': True}),
                       # , 'unique': True gives DuplicateKeyError with versioning
                       # 'primary_email': ([('primary_email', 'text')], {'background': True}),
                       'primary_email': ([('primary_email', 1)], {'background': True}),
@@ -220,6 +261,42 @@ process_definition = {
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'schema': _schema_process
+}
+
+# Knips
+# Custom endpoint
+knips_definition = {
+
+    'url': 'persons/knips',
+    'item_title': 'Persons Knips',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   'filter': {
+                       '_merged_to': {'$exists': False},
+                       'date_of_death': {'$exists': False}
+                   },
+                   'projection': {'id': 1,
+                                  'first_name': 1,
+                                  'last_name': 1,
+                                  'birth_date': 1,
+                                  'primary_email': 1,
+                                  'competences': 1,
+                                  'federation': 1,
+                                  'memberships': 1,
+                                  'activities': 1,
+                                  'functions': 1,
+                                  '_merged_to': 1,
+                                  'address.phone_mobile': 1
+                                  }
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'pagination': True,
+    'extra_response_fields': ['id'],
+    'resource_methods': ['GET'],
+    'item_methods': ['GET'],
+    'schema': _schema
 }
 
 # Search
@@ -308,7 +385,7 @@ agg_merged_from = {
                         "connectToField": "_merged_to",
                         "as": "merged_from",
                         "maxDepth": 100,
-                        "depthField": "depthField"
+                        "depthField": "depth"
                     }
                 },
                 {

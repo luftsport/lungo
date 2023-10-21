@@ -48,7 +48,7 @@ definition = {
     'versioning': False,
     'resource_methods': ['GET'],
     'item_methods': ['GET'],
-    'mongo_indexes': {'person id': ([('id', 1)], {'background': True}),
+    'mongo_indexes': {'person_id': ([('id', 1)], {'background': True}),
                       'clubs': ([('clubs', 1)], {'background': True}),
                       'group': ([('clubs.group', 1)], {'background': True}),
                       'discipline': ([('clubs.discipline', 1)], {'background': True}),

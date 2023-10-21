@@ -13,6 +13,18 @@ import test
 import payments
 import translate_persons
 import translate_organizations
+# Airports OurAirports
+import aip_airports
+import aip_frequencies
+import aip_runways
+import aip_navaids
+import aip_countries
+import aip_regions
+# import openaip_airports
+import aip_airspaces
+# Geo
+import geo_countries
+import geo_admin
 
 # import test, test_ref
 
@@ -40,8 +52,12 @@ DOMAIN = {
     "persons_age_distribution": persons.agg_age_distribution,
     "persons_age_gender_bucket_distribution": persons.agg_age_gender_bucket_distribution,
 
-    # Persons test
-    "test": test.definition,
+    # Custom Persons
+    # Knips:
+    "persons_knips": persons.knips_definition,
+
+    # Persons test for error id
+    # "test": test.definition,
 
     # Organization
     "organizations": organizations.definition,
@@ -64,8 +80,12 @@ DOMAIN = {
     # Competences
     "competences": competences.definition,
     "competences_process": competences.process_definition,
-    "competences_types": competences_types.definition,
     "competences_codes": competences.agg_count_codes,
+    "competences_types_count": competences.agg_count_types,
+    "competences_persons_count": competences.agg_count_persons,
+    # Competences Types
+    "competences_types": competences_types.definition,
+    "competences_types_meta_count": competences_types.agg_count_meta_types,
 
     # Licenses
     "licenses": licenses.definition,
@@ -89,6 +109,7 @@ DOMAIN = {
     "integration_changes_aggregate_day": integration_changes.agg_count_change_day,
     "integration_changes_aggregate_hour": integration_changes.agg_count_change_hour,
     "integration_changes_aggregate_day_hour": integration_changes.agg_count_change_day_hour,
+    "integration_changes_aggregate_errors_group": integration_changes.agg_count_and_sort_errors,
 
     # Resources
     "activities": activities.definition,
@@ -101,4 +122,19 @@ DOMAIN = {
     "translate_persons_process": translate_persons.process_definition,
     "translate_organizations": translate_organizations.definition,
     "translate_organizations_process": translate_organizations.process_definition,
+
+    # Airports and stuff
+    "aip_airports": aip_airports.definition,
+    "aip_airspaces": aip_airspaces.definition,
+    "aip_frequencies": aip_frequencies.definition,
+    "aip_runways": aip_runways.definition,
+    "aip_navaids": aip_navaids.definition,
+    "aip_countries": aip_countries.definition,
+    "aip_regions": aip_regions.definition,
+    # "openaip_airports": openaip_airports.definition,
+
+    # Geo
+    "geo_countries": geo_countries.definition,
+    "geo_admin": geo_admin.definition,
+
 }
