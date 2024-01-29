@@ -9,7 +9,7 @@
 
 # Atuhentication
 from eve.auth import TokenAuth
-from flask import current_app as app, request, Response, abort
+from flask import current_app as app, request, Response, abort, g
 
 # Not in github
 from ext.auth.clients import users
@@ -43,6 +43,11 @@ class NlfTokenAuth(TokenAuth):
                 self.resource_lookup = users[token]['resources'][resource]['lookup']
 
                 self.user_id = users[token]['id']
+
+                # globals
+                g.client_id = self.user_id
+                # X-on-behalf-of => person_id
+                g.whitelist_secret_contact = users[token].get('whitelist_secret_contact', {})
                 return True
         except:  # Keyerror
             pass
