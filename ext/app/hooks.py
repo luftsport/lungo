@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from operator import itemgetter
 from dateutil import tz
 from dateutil import parser
-from flask import Response, request as flask_request, abort, current_app as app
+from flask import Response, request as flask_request, abort, current_app as app, g
 import json
 
 from dateutil.parser import parse as date_parse
@@ -95,7 +95,7 @@ def _after_get_person(item):
         item['memberships'] = _add_payment_for_next_year(item.get('memberships', []))
 
     # Remove secret values
-    if item.get('address', {}).get('secret_address', False) is True:
+    if item.get('address', {}).get('secret_address', False) is True and g.whitelist_secret_contact.get('secret_address', False) is False:
         item['address'].pop('contact_id', None)
         item['address'].pop('contact_information_id', None)
         item['address'].pop('country_id', None)
@@ -106,15 +106,18 @@ def _after_get_person(item):
 
     if item.get('address', {}).get('secret_email', False) is True:
         item['address']['email'] = []
-        item.pop('primary_email', None)
 
-    if item.get('address', {}).get('secret_phone_home', False) is True:
+        #Only primary email!
+        if g['whitelist_secret_contact'].get('secret_email', False) is False:
+            item.pop('primary_email', None)
+
+    if item.get('address', {}).get('secret_phone_home', False) is True and g.whitelist_secret_contact.get('secret_phone_home', False) is False:
         item['address'].pop('phone_home', None)
 
-    if item.get('address', {}).get('secret_phone_mobile', False) is True:
+    if item.get('address', {}).get('secret_phone_mobile', False) is True and g.whitelist_secret_contact.get('secret_phone_mobile', False) is False:
         item['address'].pop('phone_mobile', None)
 
-    if item.get('address', {}).get('secret_phone_work', False) is True:
+    if item.get('address', {}).get('secret_phone_work', False) is True  and g.whitelist_secret_contact.get('secret_phone_work', False) is False:
         item['address'].pop('phone_work', None)
 
     return item
