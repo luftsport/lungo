@@ -1,7 +1,10 @@
-__version_info__ = ('1', '0', '5')
+__version_info__ = ('1', '0', '6')
 
 """
 VERSION HISTORY
+
+1.0.6
+- Adding 'secret_contact' whitelisting per client basis
 
 1.0.5
 - Correcting errors done with 1.0.3 vs 1.0.4 and hotfix vs feature branches
