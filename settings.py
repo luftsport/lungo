@@ -35,7 +35,7 @@ APP_HOST = '127.0.0.1'
 APP_PORT = 9191
 
 # Will also make server watch inode and reload on changes
-DEBUG = True
+DEBUG = False
 
 # Our api is located at */api/v1/
 URL_PREFIX = 'api'
@@ -107,7 +107,7 @@ EMBEDDING = True
 SWAGGER_INFO = {
     'title': 'LUNGO - NLF Membership API',
     'version': APP_VERSION,
-    'description': 'Release: Vin Fiz',
+    'description': 'Release: Wright Flyer',
     'termsOfService': 'See www.nlf.no',
     'contact': {
         'name': 'Einar Huseby',

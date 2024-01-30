@@ -127,8 +127,7 @@ def after_get_person(response):
     if '_merged_to' in response:
         # replace id with _merged_to
         headers = {
-            'Location': '{}'.format(flask_request.path).replace(str(response.get('id', 0)),
-                                                                str(response.get('_merged_to', 0)))
+            'Location': '{}'.format(flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)), str(response.get('_merged_to', 0))))
         }
         return abort(
             Response(

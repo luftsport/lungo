@@ -73,5 +73,5 @@ class NlfTokenAuth(TokenAuth):
         """ Overridden by NOT returning a WWW-Authenticate header
         This makes the browser NOT fire up the basic auth
         """
-        resp = Response(None, 401)
-        abort(401, description='Please provide proper credentials', response=resp)
+        # resp = Response(None, 401)
+        abort(401) #, description='Please provide proper credentials', response=resp)
