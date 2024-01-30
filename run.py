@@ -46,7 +46,7 @@ SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settin
 # app = Eve(settings=SETTINGS_PATH)
 app = Eve(auth=NlfTokenAuth, settings=SETTINGS_PATH)
 # app = Eve(settings=SETTINGS_PATH)
-
+app.debug = False
 """ Define global settings
 These settings are mirrored from Eve, but should not be!
 @todo: use app.config instead
