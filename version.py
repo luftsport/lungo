@@ -1,7 +1,10 @@
-__version_info__ = ('1', '0', '6')
+__version_info__ = ('1', '0', '7')
 
 """
 VERSION HISTORY
+
+1.0.7
+- Backporting small fixes and correct redirect on _merged_to
 
 1.0.6
 - Adding 'secret_contact' whitelisting per client basis
