@@ -45,9 +45,9 @@ class NlfTokenAuth(TokenAuth):
                 self.user_id = users[token]['id']
 
                 # globals
-                g.client_id = self.user_id
+                g['client_id'] = self.user_id
                 # X-on-behalf-of => person_id
-                g.whitelist_secret_contact = users[token].get('whitelist_secret_contact', {})
+                g['whitelist_secret_contact'] = users[token].get('whitelist_secret_contact', {})
                 return True
         except:  # Keyerror
             pass
