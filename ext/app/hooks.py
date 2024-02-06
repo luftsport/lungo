@@ -36,7 +36,7 @@ ALWAYS_PATCH = True
 
 NLF_ORG_STRUCTURE = {
     'fallskjerm': {'activity': 109, 'org_id': 90972},
-    'mikrofly': {'activity': 237, 'org_id': 203030},
+    'sportsfly': {'activity': 237, 'org_id': 203030},
     'motorfly': {'activity': 238, 'org_id': 203025},
     'seilfly': {'activity': 111, 'org_id': 90968},
     'modellfly': {'activity': 236, 'org_id': 203027},
@@ -70,11 +70,11 @@ def _add_payment_for_next_year(memberships) -> list:
     """
     _payment = {
         "id": 9999999999,
-        "year": 2022,
+        "year": datetime.utcnow().year+1,
         "exception": None,
         "type": "Senior",
         "amount": 0.0,
-        "paid": "2022-11-01T00:00:00.000000Z"
+        "paid": "{}-11-01T00:00:00.000000Z".format(datetime.utcnow().year+1)
     }
     try:
         _start_date = datetime(datetime.utcnow().year, 11, 1).replace(tzinfo=tz_utc)
@@ -713,9 +713,9 @@ def _get_pmt_activity(text):
     if 'modellfly' in text.lower():
         return NLF_ORG_STRUCTURE['modellfly']['activity']
     elif 'mikrofly' in text.lower():
-        return NLF_ORG_STRUCTURE['mikrofly']['activity']
+        return NLF_ORG_STRUCTURE['sportsfly']['activity']
     elif 'sportsfly' in text.lower():
-        return NLF_ORG_STRUCTURE['mikrofly']['activity']
+        return NLF_ORG_STRUCTURE['sportsfly']['activity']
     elif 'fallskjerm' in text.lower():
         return NLF_ORG_STRUCTURE['fallskjerm']['activity']
     elif 'motorfly' in text.lower():
