@@ -36,8 +36,7 @@ class NlfTokenAuth(TokenAuth):
             resource = resource.rstrip(string.digits)
         except:
             pass
-        # print('Token: ', token, resource, method)
-        # print(users.keys())
+
         try:
             if token in users.keys() and method in users[token]['resources'][resource]['methods']:
                 self.resource_lookup = users[token]['resources'][resource]['lookup']

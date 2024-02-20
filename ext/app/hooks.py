@@ -605,14 +605,15 @@ def on_competence_put(response, original=None):
                                     'expiry': expiry,
                                     # 'paid': response.get('paid_date', None)
                                     })
-            except:
+            except Exception as e:
+                print(e)
                 pass
 
         # Always remove stale competences
         # Note that _code is for removing old competences, should be removed
         competences[:] = [d for d in competences if
                           _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
-
+        print(competences)
         # If competence valid_to is None # or competence not passed
         if expiry is None:  # or passed is False:
             try:
@@ -622,7 +623,7 @@ def on_competence_put(response, original=None):
 
         # Always unique by id
         competences = list({v['id']: v for v in competences}.values())
-
+        print(competences)
         # Patch if difference
         if ALWAYS_PATCH is True or _compare_list_of_dicts(competences, person.get('competences', [])) is True:
             lookup = {'_id': person['_id']}
@@ -630,7 +631,12 @@ def on_competence_put(response, original=None):
                                                 **lookup)
             if status != 200:
                 app.logger.error('Patch returned {} for competence'.format(status))
+                print('Not 200')
                 pass
+        else:
+            print('Not always')
+
+    print('COMPETENCES!!!')
 
 
 def on_organizations_post(items):

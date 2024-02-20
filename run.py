@@ -21,6 +21,7 @@ from blueprints.fai import Fai
 from blueprints.acl import ACL
 from blueprints.member_check import MemberCheck
 from blueprints.html import Html
+from blueprints.nif import NIF
 
 # Import blueprints
 # from blueprints.authentication import Authenticate
@@ -33,9 +34,14 @@ from ext.app.url_maps import ObjectIDConverter, RegexConverter
 from ext.auth.tokenauth import NlfTokenAuth
 
 # Make sure we are in virtualenv
-if not hasattr(sys, 'real_prefix'):
-    print("Outside virtualenv, aborting....")
-    sys.exit(-1)
+try:
+    if sys.prefix == sys.base_prefix:
+        print("Outside virtualenv, aborting....")
+        sys.exit(-1)
+except:
+    if not hasattr(sys, 'real_prefix'):
+        print("Outside virtualenv, aborting....")
+        sys.exit(-1)
 
 # Make sure gunicorn passes settings.py
 SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings.py')
@@ -46,7 +52,7 @@ SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settin
 # app = Eve(settings=SETTINGS_PATH)
 app = Eve(auth=NlfTokenAuth, settings=SETTINGS_PATH)
 # app = Eve(settings=SETTINGS_PATH)
-app.debug = False
+app.debug = True
 """ Define global settings
 These settings are mirrored from Eve, but should not be!
 @todo: use app.config instead
@@ -68,6 +74,7 @@ app.register_blueprint(Sync, url_prefix="%s/syncdaemon" % app.globals.get('prefi
 app.register_blueprint(Fai, url_prefix="%s/fai" % app.globals.get('prefix'))
 app.register_blueprint(ACL, url_prefix="%s/acl" % app.globals.get('prefix'))
 app.register_blueprint(MemberCheck, url_prefix="%s/membercheck" % app.globals.get('prefix'))
+app.register_blueprint(NIF, url_prefix="%s/nif" % app.globals.get('prefix'))
 
 # Blueprint returning html
 app.register_blueprint(Html, url_prefix="%s/html" % app.globals.get('prefix'))
@@ -116,6 +123,7 @@ app.on_replaced_competences_process += on_competence_put
 # PAYMENTS POST
 app.on_insert_payments_process += on_payment_before_post
 app.on_inserted_payments_process += on_payment_after_post
+
 # PAYMENTS PUT
 app.on_replace_payments_process += on_payment_before_put
 app.on_replaced_payments_process += on_payment_after_put
