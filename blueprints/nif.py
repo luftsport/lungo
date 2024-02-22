@@ -52,7 +52,6 @@ def _gen_change_msg(entity_id, entity_type, change_type='Modified', org_id=376, 
 #@require_token()
 def generate_change_message():
     data = request.get_json()
-    print('DATA', data)
     status, response = _gen_change_msg(data['entity_id'], data['entity_type'])
     return eve_response(response, status)
     #return {}, 201
