@@ -27,7 +27,13 @@ _schema = {
     'id': {'type': 'integer',
            'unique': True,
            'required': True},
-    'type_id': {'type': 'integer'},
+    'type_id': {'type': 'integer',
+                'data_relation': {
+                    'resource': 'functions/types',
+                    'field': 'id',
+                    'embeddable': True,
+                },
+                },
     'type_is_license': {'type': 'boolean'},
     'type_name': {'type': 'string'},
     'type_publish': {'type': 'boolean'},
@@ -50,12 +56,12 @@ definition = {
     'url': 'functions',
     'item_title': 'functions',
     'datasource': {'source': RESOURCE_COLLECTION,
-                   #'filter': {
-                       # Show only active by default
-                       # @TODO move to hook and add filter if not set
+                   # 'filter': {
+                   # Show only active by default
+                   # @TODO move to hook and add filter if not set
                    #    'is_passive': False,
                    #    'is_deleted': False
-                   #}
+                   # }
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
