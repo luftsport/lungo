@@ -1,7 +1,10 @@
-__version_info__ = ('1', '0', '11')
+__version_info__ = ('1', '1', '1')
 
 """
 VERSION HISTORY
+
+1.1.1
+- Adding nif blueprint using nif_tools to compare entities in KA to those in Lungo
 
 1.0.7
 - Backporting small fixes and correct redirect on _merged_to
