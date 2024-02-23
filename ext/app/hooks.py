@@ -573,7 +573,7 @@ def on_competence_put(response, original=None):
     # if response.get('passed', False) is True:
 
     passed = response.get('passed', False)
-    expiry = response.get('valid_until', None)
+    expiry = response.get('valid_until', response.get('expiry', None))
 
     # Always require an expiry date!
     # if expiry is None:
@@ -598,6 +598,7 @@ def on_competence_put(response, original=None):
                                                                                                datetime) and expiry >= _get_now():
 
             try:
+                #print('append')
                 competences.append({'id': response.get('id'),
                                     '_code': response.get('_code', response.get('title', 'Ukjent')),
                                     'type_id': response.get('type_id', 0),
@@ -605,24 +606,26 @@ def on_competence_put(response, original=None):
                                     'expiry': expiry,
                                     # 'paid': response.get('paid_date', None)
                                     })
-            except:
+            except Exception as e:
+                #print(e)
                 pass
 
         # Always remove stale competences
         # Note that _code is for removing old competences, should be removed
         competences[:] = [d for d in competences if
                           _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
-
+        #print(competences)
         # If competence valid_to is None # or competence not passed
         if expiry is None:  # or passed is False:
+            #print('expiry is none')
             try:
                 competences[:] = [d for d in competences if d.get('id', 0) != response.get('id')]
             except Exception as e:
-                app.logger.exceptin('Error removing competence from person')
+                app.logger.exception('Error removing competence from person')
 
         # Always unique by id
         competences = list({v['id']: v for v in competences}.values())
-
+        #print(competences)
         # Patch if difference
         if ALWAYS_PATCH is True or _compare_list_of_dicts(competences, person.get('competences', [])) is True:
             lookup = {'_id': person['_id']}
@@ -630,7 +633,13 @@ def on_competence_put(response, original=None):
                                                 **lookup)
             if status != 200:
                 app.logger.error('Patch returned {} for competence'.format(status))
+                #print('Not 200')
                 pass
+        else:
+            #print('Not always')
+            pass
+
+    #print('Check', _compare_list_of_dicts(competences, person.get('competences', [])))
 
 
 def on_organizations_post(items):
