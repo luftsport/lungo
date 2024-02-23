@@ -1,7 +1,10 @@
-__version_info__ = ('1', '0', '12')
+__version_info__ = ('1', '0', '11')
 
 """
 VERSION HISTORY
+
+1.1.1
+- Adding nif blueprint using nif_tools to compare entities in KA to those in Lungo
 
 1.0.12:
 - Renaming 'mikrofly' to 'sportsfly'
