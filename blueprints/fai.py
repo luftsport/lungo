@@ -23,11 +23,47 @@ def get_licenses():
     return eve_response(response.json(), response.status_code)
 
 
+@Fai.route("/licenses/<int:license_id>", methods=['GET'])
+@require_token()
+def get_license(license_id):
+    response = requests.get('{}/licence/{}?{}'.format(FAI_URL, license_id, urlencode(make_params())))
+
+    return eve_response(response.json(), response.status_code)
+
+
+@Fai.route("/search", methods=['GET'])
+@require_token()
 def search_licenses():
+    where = request.get_json()
+
+    query = make_params() #urlencode()
+
+    for key, value in where:
+        query[key] = value
+
+    response = requests.get('{}/licences?{}'.format(FAI_URL, urlencode(query)))
+
+    return eve_response(response.json(), response.status_code)
+
     """
-    GET licences?auth_username=&auth_password=&nac_org=&country=&valid_from=&valid_to=&search_name=&search_number=&discipline=&include_invalid=&limit_start=&limit_length=
+    GET licences?
+    auth_username=
+    &auth_password=
+
+    &nac_org=&
+    country=&
+    valid_from=&
+    valid_to=&
+    search_name=
+    &search_number=
+    &discipline=&
+    include_invalid=
+    &limit_start=
+    &limit_length=
+
     auth_username sportinglicences2.fai.org username String
     auth_password password, base64 encoded String
+    
     nac_org licences-lic.idissue-lic String
     country utilisateur.iPaysUtilisateur or 3 Letter IOC Code eg. FIN,SWE String
     valid_from licences-lic.dateissued-lic String
@@ -42,6 +78,7 @@ def search_licenses():
     :return:
     """
 
+
 def get_details():
     """
     GET licence/idlicence?auth_username=&auth_password=
@@ -52,13 +89,14 @@ def get_details():
     :return:
     """
 
+
 def create():
     """
     GET create?auth_username=&auth_password=&idlicencee=&licencee_firstname=&licencee_middlename=&licencee_lastname=&licencee_gender=&licencee_birthdate=&licencee_nationality=&licencee_residencecountry=&address1=&address2=&address3=&address_country=&licencee_email=&phone_home=&phone_office=&phone_mobile=&licence_number=&dateissued=&validuntil=&discipline=
 
     auth_username sportinglicences2.fai.org username String
     auth_password password, base64 encoded String
-    idlicencee If empty, new pilot will be created. Otherwise pilot with idlicencee id be updated String
+    -> idlicencee If empty, new pilot will be created. Otherwise pilot with idlicencee id be updated String
     licencee_firstname String
     licencee_middlename String
     licencee_lastname String
@@ -81,12 +119,14 @@ def create():
     :return:
     """
 
-def update():
-    """
+@Fai.route("/licenses/<int:licensee_id>", methods=['PATCH'])
+@require_token()
+def update(licensee_id):
+    """70285
     GET create?auth_username=&auth_password=&idlicence=&idlicencee=&licencee_firstname=&licencee_middlename=&licencee_lastname=&licencee_gender=&licencee_birthdate=&licencee_nationality=&licencee_residencecountry=&address1=&address2=&address3=&address_country=&licencee_email=&phone_home=&phone_office=&phone_mobile=&licence_number=&dateissued=&validuntil=&discipline=
     auth_username sportinglicences2.fai.org username String
     auth_password password, base64 encoded String
-    idlicencee If empty, new pilot will be created. Otherwise pilot with idlicencee id be updated String
+    -> idlicencee If empty, new pilot will be created. Otherwise pilot with idlicencee id be updated String
     licencee_firstname String
     licencee_middlename String
     licencee_lastname String
@@ -107,3 +147,15 @@ def update():
     validuntil Date in the format YYYY-MM-DD [ example: 2016-01-18 ] String
     discipline Sport ID or discipline text as shown in http://sl-test.fai.org/sl/search
     """
+
+    where = request.get_json()
+
+    query = make_params()  # urlencode()
+
+    for key, value in where:
+        query[key] = value
+
+    query['idlicencee'] = licensee_id
+
+    response = requests.get('{}/create?{}'.format(FAI_URL, urlencode(query)))
+    return eve_response(response.json(), response.status_code)
