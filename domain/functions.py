@@ -29,7 +29,7 @@ _schema = {
            'required': True},
     'type_id': {'type': 'integer',
                 'data_relation': {
-                    'resource': 'functions/types',
+                    'resource': 'functions_types',
                     'field': 'id',
                     'embeddable': True,
                 },
