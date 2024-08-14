@@ -4,12 +4,12 @@ _schema = {
     'id': {'type': 'integer',
            'required': True,
            'unique': True},
-    'type_id': {'type': 'integer',
-                'data_relation': {
-                    'resource': 'licenses_types',
-                    'field': 'id',
-                    'embeddable': True,
-                },
+    'type_id': {'type': 'integer'
+                #'data_relation': {
+                #    'resource': 'licenses_types',
+                #    'field': 'id',
+                #    'embeddable': True,
+                #},
                 },
     'type_name': {'type': 'string'},
     'type_price': {'type': 'number'},
