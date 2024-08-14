@@ -7,7 +7,6 @@ _schema = {
                              'resource': 'organizations',
                              'field': 'id',
                              'embeddable': True,
-
                          },
                          },
     'org_id': {'type': 'integer',
@@ -27,12 +26,12 @@ _schema = {
     'id': {'type': 'integer',
            'unique': True,
            'required': True},
-    'type_id': {'type': 'integer',
-                'data_relation': {
-                    'resource': 'functions/types',
-                    'field': 'id',
-                    'embeddable': True,
-                },
+    'type_id': {'type': 'integer'
+                #'data_relation': {
+                #    'resource': 'functions/types',
+                #    'field': 'id',
+                #    'embeddable': True,
+                #},
                 },
     'type_is_license': {'type': 'boolean'},
     'type_name': {'type': 'string'},
