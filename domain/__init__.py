@@ -25,7 +25,8 @@ import aip_airspaces
 # Geo
 import geo_countries
 import geo_admin
-
+# ADS data from flightradar24
+import ads
 # import test, test_ref
 
 DOMAIN = {
@@ -136,5 +137,9 @@ DOMAIN = {
     # Geo
     "geo_countries": geo_countries.definition,
     "geo_admin": geo_admin.definition,
+
+    # ADS Data
+    "ads": ads.definition,
+    "ads_process": ads.process_definition,
 
 }
