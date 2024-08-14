@@ -1,9 +1,9 @@
-__version_info__ = ('1', '1', '12')
+__version_info__ = ('1', '1', '2')
 
 """
 VERSION HISTORY
 
-1.1.12
+1.1.2
 - Backpedaling the type_id constraints in domain config which fails in some cases
 
 1.1.1
