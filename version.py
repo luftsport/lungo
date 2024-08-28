@@ -1,7 +1,10 @@
-__version_info__ = ('1', '1', '3')
+__version_info__ = ('1', '1', '4')
 
 """
 VERSION HISTORY
+
+1.1.4 hotfix
+- reenabled disabled chenge message generation
 
 1.1.3
 - NEW ads domain file
