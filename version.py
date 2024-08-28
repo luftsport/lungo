@@ -1,7 +1,10 @@
-__version_info__ = ('1', '1', '4')
+__version_info__ = ('1', '1', '5')
 
 """
 VERSION HISTORY
+
+1.1.5 hotfix
+- person competences object completely empty if no competences
 
 1.1.4 hotfix
 - reenabled disabled chenge message generation
