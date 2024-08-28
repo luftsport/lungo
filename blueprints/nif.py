@@ -38,7 +38,6 @@ def _gen_change_msg(entity_id, entity_type, change_type='Modified', org_id=376, 
     payload['_status'] = 'ready'
     payload['_org_id'] = org_id
     payload['_realm'] = realm
-    return True, {}
     response, _, _, status, _ = post_internal(resource='integration_changes',
                                               payl=payload,
                                               skip_validation=True)
@@ -69,15 +68,14 @@ def _get_nif_person_competences_list(person_id) -> list:
     """
 
     status, result = _get_nif_person_competences(person_id)
-    #print(result)
+    # print(result)
     if status is True:
         try:
             return [x['id'] for x in result['competences'] if
                     x['passed'] is True and
                     (x['expires'] is not None and parser.parse(x['expires']) > datetime.datetime.now())]
         except Exception as e:
-            print('[ERR]', e)
-
+            pass # print('[ERR]', e)
 
     return []
 
@@ -106,7 +104,6 @@ def generate_change_message():
     data = request.get_json()
     status, response = _gen_change_msg(data['entity_id'], data['entity_type'])
     return eve_response(response, status)
-    # return {}, 201
 
 
 @NIF.route('competences/<int:person_id>', methods=['GET'])
@@ -116,7 +113,7 @@ def get_person_competences(person_id):
 
     # Only valid competences?
     competences = [x for x in competences['competences'] if x['passed'] is True]
-    return eve_response(competences, status)
+    return eve_response(competences, 200)
 
 
 @NIF.route('licenses/<int:person_id>', methods=['GET'])
@@ -154,8 +151,8 @@ def check_and_fix(person_id):
         if competence not in [c['id'] for c in person_competences]:
             change_type = 'Created'
 
-        s, r = _gen_change_msg(entity_id=competence, entity_type='Competence', change_type=change_type)
-        if s in [200, 201]:
+        status, r = _gen_change_msg(entity_id=competence, entity_type='Competence', change_type=change_type)
+        if status in [200, 201]:
             change_messages.append({'id': competence, 'status': True})
         else:
             change_messages.append({'id': competence, 'status': False, 'err': r.text})
