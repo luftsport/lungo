@@ -1,7 +1,11 @@
-__version_info__ = ('1', '1', '2')
+__version_info__ = ('1', '1', '3')
 
 """
 VERSION HISTORY
+
+1.1.3
+- NEW ads domain file
+- Converted nif blueprint to use nif rest api as backend
 
 1.1.2
 - Backpedaling the type_id constraints in domain config which fails in some cases

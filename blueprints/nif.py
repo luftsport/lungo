@@ -4,12 +4,18 @@ import datetime
 from hashlib import sha224
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
 # from eve.methods.post import post_internal
-from ext.scf import KA_USERNAME, KA_PASSWORD
+from ext.scf import KA_USERNAME, KA_PASSWORD, NIF_CLIENT_SECRET, NIF_CLIENT_ID, NIF_TOKEN_FILE
 from ext.app.eve_helper import eve_response
 from eve.methods.post import post_internal
 from eve.methods.get import getitem_internal, get_internal
+from nif_rest_api_client import NifRestApiClient
+from dateutil import parser
 
 NIF = Blueprint('NIF tools', __name__)
+
+
+def get_nif_api_client():
+    return NifRestApiClient(client_id=NIF_CLIENT_ID, client_secret=NIF_CLIENT_SECRET, token_file=NIF_TOKEN_FILE)
 
 
 def _gen_change_msg(entity_id, entity_type, change_type='Modified', org_id=376, realm='PROD'):
@@ -32,7 +38,7 @@ def _gen_change_msg(entity_id, entity_type, change_type='Modified', org_id=376, 
     payload['_status'] = 'ready'
     payload['_org_id'] = org_id
     payload['_realm'] = realm
-
+    return True, {}
     response, _, _, status, _ = post_internal(resource='integration_changes',
                                               payl=payload,
                                               skip_validation=True)
@@ -40,14 +46,40 @@ def _gen_change_msg(entity_id, entity_type, change_type='Modified', org_id=376, 
     return status, response
 
 
-def _get_person_competences(person_id):
+def _get_ka_person_competences(person_id):
     ka = KA(KA_USERNAME, KA_PASSWORD)
     return ka.get_person_competence(person_id)
 
 
-def _get_person_licenses(person_id):
+def _get_ka_person_licenses(person_id):
     ka = KA(KA_USERNAME, KA_PASSWORD)
     return ka.get_person_licenses(person_id)
+
+
+def _get_nif_person_competences(person_id) -> any:
+    api = get_nif_api_client()
+    return api.get_person_competences(person_id)
+
+
+def _get_nif_person_competences_list(person_id) -> list:
+    """
+    Get competences for person then mk list and return only unique id's for valid competence id's
+    :param person_id:
+    :return:
+    """
+
+    status, result = _get_nif_person_competences(person_id)
+    #print(result)
+    if status is True:
+        try:
+            return [x['id'] for x in result['competences'] if
+                    x['passed'] is True and
+                    (x['expires'] is not None and parser.parse(x['expires']) > datetime.datetime.now())]
+        except Exception as e:
+            print('[ERR]', e)
+
+
+    return []
 
 
 def _get_api_person(person_id):
@@ -80,28 +112,39 @@ def generate_change_message():
 @NIF.route('competences/<int:person_id>', methods=['GET'])
 @require_token()
 def get_person_competences(person_id):
-    status, competences = _get_person_competences(person_id)
+    status, competences = _get_nif_person_competences(person_id)
+
+    # Only valid competences?
+    competences = [x for x in competences['competences'] if x['passed'] is True]
     return eve_response(competences, status)
 
 
 @NIF.route('licenses/<int:person_id>', methods=['GET'])
 @require_token()
 def get_person_licenses(person_id):
-    status, licenses = _get_person_licenses(person_id)
+    """
+    Uses KA, no access in nif api
+    :param person_id:
+    :return:
+    """
+    status, licenses = _get_ka_person_licenses(person_id)
     return eve_response(licenses, status)
 
 
 @NIF.route('check/<int:person_id>', methods=['POST'])
 @require_token()
 def check_and_fix(person_id):
-    """Compares data from ka and internal, if needed, generate change messages"""
-    ka_status, ka_competences = _get_person_competences(person_id)
-    # ka_licenses = _get_person_licenses(person_id)
+    """
+
+    :param person_id:
+    :return:
+    """
+    nif_competences_list = _get_nif_person_competences_list(person_id)
     person_status, person = _get_api_person(person_id)
     competences_status, person_competences = _get_api_person_competences(person_id)
 
-    # 1. Competences in ka not in api:
-    delta = [c['CompetenceId'] for c in ka_competences if c['CompetenceId'] not in [x['id'] for x in person.get('competences', [])]]
+    # 1. Competences in nif api not in membership api:
+    delta = [x for x in nif_competences_list if x not in [x['id'] for x in person.get('competences', [])]]
 
     to_make_change_messages = [x for x in delta if x not in [c['id'] for c in person_competences]]
 
@@ -117,11 +160,10 @@ def check_and_fix(person_id):
         else:
             change_messages.append({'id': competence, 'status': False, 'err': r.text})
 
-
     return eve_response({
         'api_competences': [c['id'] for c in person_competences],
         'api_person_competences': [x['id'] for x in person['competences']],
-        'klubbadmin': [c['CompetenceId'] for c in ka_competences],
-        'delta_ka_person': delta,
+        'nif_api': nif_competences_list,
+        'delta_nif_person': delta,
         'change_messages': change_messages
     })
