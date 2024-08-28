@@ -111,9 +111,12 @@ def generate_change_message():
 def get_person_competences(person_id):
     status, competences = _get_nif_person_competences(person_id)
 
-    # Only valid competences?
-    competences = [x for x in competences['competences'] if x['passed'] is True]
-    return eve_response(competences, 200)
+    if status is True:
+        # Only valid competences?
+        competences = [x for x in competences['competences'] if x['passed'] is True]
+        return eve_response(competences, 200)
+
+    abort(404)
 
 
 @NIF.route('licenses/<int:person_id>', methods=['GET'])
