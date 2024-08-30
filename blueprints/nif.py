@@ -99,7 +99,7 @@ def _get_api_person_competences(person_id):
 
 
 @NIF.route('/change', methods=['POST'])
-# @require_token()
+@require_token()
 def generate_change_message():
     data = request.get_json()
     status, response = _gen_change_msg(data['entity_id'], data['entity_type'])
