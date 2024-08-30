@@ -1,7 +1,10 @@
-__version_info__ = ('1', '1', '5')
+__version_info__ = ('1', '1', '6')
 
 """
 VERSION HISTORY
+
+1.1.6 hotfix
+- missing auth req
 
 1.1.5 hotfix
 - person competences object completely empty if no competences
