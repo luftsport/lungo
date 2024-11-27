@@ -3,7 +3,17 @@ from ext.auth.decorators import require_token
 from ext.app.eve_helper import eve_response, eve_abort
 from eve.methods.get import get_internal, getitem_internal, _perform_aggregation
 from datetime import datetime
-from blueprints.member_check import ACTIVITIES
+
+ACTIVITIES = {
+    'mikrofly': 237,
+    'sportsfly': 237,
+    'motorfly': 238,
+    'fallskjerm': 109,
+    'hps': 110,
+    'seilfly': 111,
+    'modellfly': 236,
+    'ballong': 235
+}
 
 Html = Blueprint('Html blueprint for returning html', __name__)
 
