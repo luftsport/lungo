@@ -32,7 +32,7 @@ class NlfTokenAuth(TokenAuth):
             resource = ''
 
         # if this is not a collection /
-        if resource[-1:] != '/':
+        if '_' not in resource and resource[-1:] != '/':
 
             if resource + '/' in users[token]['resources']:
                 resource = resource + '/'
