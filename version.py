@@ -1,7 +1,14 @@
-__version_info__ = ('1', '1', '6')
+__version_info__ = ('1', '2', '1')
 
 """
 VERSION HISTORY
+
+1.2.1
+- Removal of most legacy ka
+- NEW nif-rest-api-client integration replaces ka
+- FAI external license handling keeping sporting licenses in sync
+- Added domain for ads data 
+- NEW simpler markup for client resource access
 
 1.1.6 hotfix
 - missing auth req
