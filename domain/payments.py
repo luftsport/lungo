@@ -73,3 +73,21 @@ process_definition = {
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'schema': _schema_process
 }
+
+
+payments_total_per_year = {
+    'url': 'payments/year/total',
+    'item_title': 'Aggregates and returns total amount payed for year',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+        {'$match': {'paid_date': {'$gte': '$from_date', '$lte': '$to_date'}}},
+        {'$group': {"_id": "payments", "amount": {"$sum": '$amount'}, "count": {"$sum": 1}}}
+
+                #{'$project': {'Total': {"$sum": '$amount'}}}
+        ]
+        }
+    }
+}

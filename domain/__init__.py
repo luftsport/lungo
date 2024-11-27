@@ -26,7 +26,7 @@ import aip_airspaces
 import geo_countries
 import geo_admin
 # ADS data from flightradar24
-import ads
+# import ads
 # import test, test_ref
 
 DOMAIN = {
@@ -54,8 +54,6 @@ DOMAIN = {
     "persons_age_gender_bucket_distribution": persons.agg_age_gender_bucket_distribution,
 
     # Custom Persons
-    # Knips:
-    "persons_knips": persons.knips_definition,
 
     # Persons test for error id
     # "test": test.definition,
@@ -63,6 +61,7 @@ DOMAIN = {
     # Organization
     "organizations": organizations.definition,
     "organizations_process": organizations.process_definition,
+    "organizations_search": organizations.search_definition,
     "organizations_types": organization_types.definition,
     "organizations_types_count": organizations.agg_count_types,
     "organizations_get_children": organizations.agg_get_children,
@@ -72,30 +71,39 @@ DOMAIN = {
     # Functions
     "functions": functions.definition,
     "functions_process": functions.process_definition,
+    "functions_search": functions.search_definition,
     "functions_types_count": functions.agg_count_types,
     "functions_types_org_count": functions.agg_count_types_org,
     "functions_types_activity_count": functions.agg_count_types_activity,
     "functions_get_persons_by_type_and_orgs": functions.agg_get_persons_by_type_and_orgs,
+    "functions_memberships_count": functions.agg_count_members_on_date,
+    "functions_memberships_disciplines_count": functions.agg_count_members_in_disciplines,
+    # Functions types
     "functions_types": function_types.definition,
+    "functions_types_search": function_types.search_definition,
 
     # Competences
     "competences": competences.definition,
     "competences_process": competences.process_definition,
     "competences_codes": competences.agg_count_codes,
     "competences_types_count": competences.agg_count_types,
+    "competences_count_types_by_year": competences.agg_count_types_by_year,
     "competences_persons_count": competences.agg_count_persons,
     # Competences Types
     "competences_types": competences_types.definition,
+    "competences_types_search": competences_types.search_definition,
     "competences_types_meta_count": competences_types.agg_count_meta_types,
 
     # Licenses
     "licenses": licenses.definition,
     "licenses_process": licenses.process_definition,
     "licenses_types": licenses_types.definition,
+    "licenses_types_search": licenses_types.search_definition,
 
     # Payments
     "payments": payments.definition,
     "payments_process": payments.process_definition,
+    "payments_total_per_year": payments.payments_total_per_year,
 
     # Integration Users
     "integration_users": integration_users.definition,
@@ -114,8 +122,11 @@ DOMAIN = {
 
     # Resources
     "activities": activities.definition,
+    "activities_search": activities.search_definition,
     "countries": countries.definition,
+    "countries_search": countries.search_definition,
     "counties": counties.definition,
+    "counties_search": counties.search_definition,
     "licenses_status": licenses_status.definition,
 
     # Translations Melwin to NIF Id's
@@ -139,7 +150,7 @@ DOMAIN = {
     "geo_admin": geo_admin.definition,
 
     # ADS Data
-    "ads": ads.definition,
-    "ads_process": ads.process_definition,
+    #"ads": ads.definition,
+    #"ads_process": ads.process_definition,
 
 }
