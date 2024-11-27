@@ -158,13 +158,13 @@ def acl_activities_person(person_id):
     return eve_response(list(set(activities)), 200)
 
 
-@ACL.route('/activities/<int:person_id>', methods=['GET'])
+@ACL.route('/activities/', methods=['GET'])
 @require_token()
 def acl_activities():
     return eve_response(NLF_ORG, 200)
 
 
-@ACL.route('/clubs', methods=['GET'])
+@ACL.route('/clubs/person/<int:person_id>', methods=['GET'])
 @require_token()
 def acl_clubs_person():
     clubs, _, _, status, _ = get_internal('organizations_process', **{'type_id': {'$in': [6, 2, 19]}})
@@ -175,7 +175,7 @@ def acl_clubs_person():
     return eve_response([], status)
 
 
-@ACL.route('/clubs', methods=['GET'])
+@ACL.route('/clubs/', methods=['GET'])
 @require_token()
 def acl_clubs():
     clubs, _, _, status, _ = get_internal('organizations', **{'type_id': {'$in': [6, 2, 19]}})
