@@ -84,6 +84,8 @@ def eve_response(data={}, status=200):
 
 def eve_response_pppd(data={}, status=200, error_message=False):
     """Manually create a reponse for POST, PATCH, PUT, DELETE"""
+    if data is None:
+        data = {}
 
     # Add status OK | ERR to data.
     if not error_message:
