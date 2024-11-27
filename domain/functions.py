@@ -7,6 +7,7 @@ _schema = {
                              'resource': 'organizations',
                              'field': 'id',
                              'embeddable': True,
+
                          },
                          },
     'org_id': {'type': 'integer',
@@ -26,12 +27,12 @@ _schema = {
     'id': {'type': 'integer',
            'unique': True,
            'required': True},
-    'type_id': {'type': 'integer'
-                #'data_relation': {
-                #    'resource': 'functions/types',
-                #    'field': 'id',
-                #    'embeddable': True,
-                #},
+    'type_id': {'type': 'integer',
+                'data_relation': {
+                    'resource': 'functions_types',
+                    'field': 'id',
+                    'embeddable': True,
+                },
                 },
     'type_is_license': {'type': 'boolean'},
     'type_name': {'type': 'string'},
@@ -103,6 +104,33 @@ process_definition = {
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'schema': _schema_process
+}
+
+# Search
+search_definition = {
+    'url': 'functions/search',
+    'item_title': 'Functions Search',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   'projection': {
+                       "_score": {"$meta": "textScore"},
+                       "type_name": 1,
+                       "type_id": 1,
+                       "id": 1,
+                       "_updated": 1,
+                       "_created": 1,
+                       "_version": 1
+                   },
+                   'default_sort': [("_score", {"$meta": "textScore"})],
+                   #'filter': {'_merged_to': {'$exists': False}}
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'extra_response_fields': ['id'],
+    'resource_methods': ['GET'],
+    'item_methods': [],
+    'schema': _schema
 }
 
 # Aggregation
@@ -181,6 +209,45 @@ agg_count_types_activity = {
                 {"$match": {"active_in_org_id": {"$in": "$org_ids"}}},
                 {"$group": {"_id": {"type_id": "$type_id", "name": "$type_name"}, "count": {"$sum": 1}}},
                 {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
+}
+
+agg_count_members_on_date = {
+    'url': 'functions/memberships/count',
+    'item_title': 'Number of memberships on given date',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$match":
+                    {"$and": [
+                        {"type_id": 10000000,
+                         "from_date": {"$lte": "$ddate"}},
+                        {"$or": [{"to_date": {"$exists": False}}, {"to_date": {"$gt": "$ddate"}}]}
+                    ]
+                    }
+                },
+                {"$group": {"_id": {"person_id": "$person_id"}, "count": {"$sum": 1}}},
+                {"$group": {"_id": "$ddate", "count": {"$sum": 1}}},
+            ]
+        }
+    }
+}
+
+agg_count_members_in_disciplines = {
+    'url': 'functions/memberships/disciplines/count',
+    'item_title': 'Number of memberships for all disciplines',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$match": {"type_id": 10000000, "org_type_id": 14}},
+                {"$group": {"_id": {"org": "$active_in_org_id"}, "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}}
             ]
         }
     }

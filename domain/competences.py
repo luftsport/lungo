@@ -110,6 +110,28 @@ agg_count_types = {
     }
 }
 
+"""
+example api/v1/competences/types/count/year?aggregate={"$competences": [66667614, 66667596]}
+"""
+agg_count_types_by_year = {
+    'url': 'competences/types/count/year',
+    'item_title': 'Competences Types',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {'$match': {'type_id': {'$in': '$competences'},
+                            "approved_by_org_id": 376,
+                            },
+                 },
+                {'$group': {"_id": {"year": {"$year": "$date"}, "code": "$_code", "type": "$type_id"},
+                            "count": {"$sum": 1}}}
+            ]
+        }
+    }
+}
+
 # Aggregations
 agg_count_persons = {
     'url': 'competences/persons/count',

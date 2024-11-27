@@ -128,11 +128,13 @@ definition = {
                       'KL Number': ([('nif_organization_number', 1)], {'background': True}),
                       '_up': ([('_up', 1)], {'background': True}),
                       '_down': ([('_down', 1)], {'background': True}),
-                      'name': ([('name', 'text')], {'background': True}),
+                      'name': ([('name', 'text'),('describing_name', 'text')], {'background': True}),
                       'location': ([('contact.location.geo', '2dsphere')], {'background': True}),
                       },
     'schema': _schema
 }
+
+
 
 # Process resource without data_relations
 _schema_process = _schema.copy()
@@ -168,6 +170,33 @@ process_definition = {
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'schema': _schema_process
 }
+
+# Search
+search_definition = {
+    'url': 'organizations/search',
+    'item_title': 'Organizations Search',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   'projection': {
+                       "_score": {"$meta": "textScore"},
+                       "name": 1,
+                       "id": 1,
+                       "_updated": 1,
+                       "_created": 1,
+                       "_version": 1
+                   },
+                   'default_sort': [("_score", {"$meta": "textScore"})],
+                   #'filter': {'org_id_owner': 376, 'is_valid':True}
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'extra_response_fields': ['id'],
+    'resource_methods': ['GET'],
+    'item_methods': [],
+    'schema': _schema
+}
+
 
 # Aggregation
 from bson import SON, ObjectId

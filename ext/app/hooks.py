@@ -16,8 +16,7 @@ from ext.auth.clients import LUNGO_SIO_TOKEN
 from ext.app.decorators import _async, debounce
 import time
 import socketio
-
-
+from blueprints.fai import upsert_fai
 # import dateutil.parser
 
 
@@ -31,6 +30,49 @@ RESOURCE_MERGED_FROM = 'persons_merged_from'
 
 # meta types which are considered "kompetanse"
 COMPETENCE_META_TYPES = ['Kompetansedefinisjon']
+"""
+66667584 A-SPO - SPORTSLISENS [238]
+66667674 M-SPO - SPORTSLISENS [27, 236]
+66669579 U-SPO - SPORTSLISENS [27, 237]
+66667695 NLF-S-SPO - SPORTSLISENS [27, 111]
+66667588 NLF-B-SPO - SPORTSLISENS [27, 235]
+66667720 NLF-U-SPO - Ikke i bruk [27, 237]
+66667614 F-SPO - FAI SPORTING LICENCE [109]
+66667663 H-SPO - NLF/HPS SPORTING LICENSE [110]
+17: '-',
+7: 'Aerobatics', 
+9: 'Aeromodelling',
+5: 'Aeromodelling and Spacemodelling',
+21: 'Airships',
+15: 'Amateur-built and Experimental Aircraft',
+16: 'Astronautics',
+1: 'Ballooning',
+23: 'FPV Racing',
+3: 'General Aviation',
+2: 'Gliding',
+13: 'Hang Gliding',
+4: 'Hang Gliding and Paragliding',
+20: 'Human Powered',
+11: 'Microlights and Paramotors',
+12: 'Motor Gliding',
+6: 'Parachuting',
+14: 'Paragliding',
+10: 'Rotorcraft',
+18: 'Space Modelling',
+22: 'Special Projects',
+19: 'UAV',
+8: 'Universal'
+"""
+COMPETENCE_FAI_MAPPING = {
+    66667584: 3,  # {'fai_type_id': 3 #'General Aviation'}, , , ]
+    66667674: 5,
+    66669579: 15,
+    66667695: 2,
+    66667588: 1,
+    # 66667720:
+    66667614: 6,
+    66667663: 4
+}
 # If True, will always run the patch on person object and not verify changes exists
 ALWAYS_PATCH = True
 
@@ -70,11 +112,11 @@ def _add_payment_for_next_year(memberships) -> list:
     """
     _payment = {
         "id": 9999999999,
-        "year": datetime.utcnow().year+1,
+        "year": datetime.utcnow().year + 1,
         "exception": None,
         "type": "Senior",
         "amount": 0.0,
-        "paid": "{}-11-01T00:00:00.000000Z".format(datetime.utcnow().year+1)
+        "paid": "{}-11-01T00:00:00.000000Z".format(datetime.utcnow().year + 1)
     }
     try:
         _start_date = datetime(datetime.utcnow().year, 11, 1).replace(tzinfo=tz_utc)
@@ -95,7 +137,8 @@ def _after_get_person(item):
         item['memberships'] = _add_payment_for_next_year(item.get('memberships', []))
 
     # Remove secret values
-    if item.get('address', {}).get('secret_address', False) is True and g.whitelist_secret_contact.get('secret_address', False) is False:
+    if item.get('address', {}).get('secret_address', False) is True and g.whitelist_secret_contact.get('secret_address',
+                                                                                                       False) is False:
         item['address'].pop('contact_id', None)
         item['address'].pop('contact_information_id', None)
         item['address'].pop('country_id', None)
@@ -104,20 +147,23 @@ def _after_get_person(item):
         item['address'].pop('zip_code', None)
         item['address'].pop('location', None)
 
-    if item.get('address', {}).get('secret_email', False) is True:
+    if item.get('address', {}).get('secret_email', False) is True and g.whitelist_secret_contact.get('secret_email_all', False) is False:
         item['address']['email'] = []
 
-        #Only primary email!
+        # Only primary email!
         if g.whitelist_secret_contact.get('secret_email', False) is False:
             item.pop('primary_email', None)
 
-    if item.get('address', {}).get('secret_phone_home', False) is True and g.whitelist_secret_contact.get('secret_phone_home', False) is False:
+    if item.get('address', {}).get('secret_phone_home', False) is True and g.whitelist_secret_contact.get(
+            'secret_phone_home', False) is False:
         item['address'].pop('phone_home', None)
 
-    if item.get('address', {}).get('secret_phone_mobile', False) is True and g.whitelist_secret_contact.get('secret_phone_mobile', False) is False:
+    if item.get('address', {}).get('secret_phone_mobile', False) is True and g.whitelist_secret_contact.get(
+            'secret_phone_mobile', False) is False:
         item['address'].pop('phone_mobile', None)
 
-    if item.get('address', {}).get('secret_phone_work', False) is True  and g.whitelist_secret_contact.get('secret_phone_work', False) is False:
+    if item.get('address', {}).get('secret_phone_work', False) is True and g.whitelist_secret_contact.get(
+            'secret_phone_work', False) is False:
         item['address'].pop('phone_work', None)
 
     return item
@@ -127,7 +173,9 @@ def after_get_person(response):
     if '_merged_to' in response:
         # replace id with _merged_to
         headers = {
-            'Location': '{}'.format(flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)), str(response.get('_merged_to', 0))))
+            'Location': '{}'.format(flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)),
+                                                                                         str(response.get('_merged_to',
+                                                                                                          0))))
         }
         return abort(
             Response(
@@ -229,6 +277,7 @@ def _get_merged_from(person_id) -> list:
         app.logger.exception('Aggregation with database layer failed for person_id {}'.format(person_id))
 
     return merged_from_ids
+
 
 def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
     """Sorts lists then compares on the given id in the dicts
@@ -437,11 +486,17 @@ def on_function_put(response, original=None) -> None:
                 # Fix payments all payments from merged person id's
                 payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
                                                            **{
-                                                               'person_id': {'$in': list(set([person['id']] + _get_merged_from(person['id'])))},
+                                                               'person_id': {'$in': list(
+                                                                   set([person['id']] + _get_merged_from(
+                                                                       person['id'])))},
                                                                'org_id': {
-                                                                   '$in': [x['club'] for x in memberships] + [v['org_id'] for k,v in NLF_ORG_STRUCTURE.items() if NLF_ORG_STRUCTURE[k]['activity'] in [val['activity'] for val in memberships]] + [376]
+                                                                   '$in': [x['club'] for x in memberships] + [
+                                                                       v['org_id'] for k, v in NLF_ORG_STRUCTURE.items()
+                                                                       if NLF_ORG_STRUCTURE[k]['activity'] in [
+                                                                           val['activity'] for val in memberships]] + [
+                                                                              376]
                                                                }
-                                                              }
+                                                           }
                                                            )
                 if p_status == 200:
 
@@ -588,36 +643,59 @@ def on_competence_put(response, original=None):
 
         competences = person.get('competences', []).copy()
 
+        try:
+            existing_competence = next(x for x in person.get('competences') if x['id'] == response.get('id'))
+        except:
+            existing_competence = {}
+
         # Always remove existing:
         competences = [x for x in competences if x['id'] != response['id']]
 
         competence_meta_type = _get_competence_type_meta_type(response.get('type_id', 0))
 
-        # Add this competence
-        if competence_meta_type in COMPETENCE_META_TYPES and expiry is not None and isinstance(expiry,
-                                                                                               datetime) and expiry >= _get_now():
+        # Add this competence if valid
+        if competence_meta_type in COMPETENCE_META_TYPES and expiry is not None and isinstance(expiry, datetime) and expiry >= _get_now():
 
+            _competence = {
+                'id': response.get('id'),
+                '_code': response.get('_code', response.get('title', 'Ukjent')),
+                'type_id': response.get('type_id', 0),
+                'issuer': response.get('approved_by_person_id', None),
+                'expiry': expiry,
+                # 'paid': response.get('paid_date', None)
+            }
+
+            # Handle Fai sporting codes
+            if response.get('type_id', 0) in [x for x in COMPETENCE_FAI_MAPPING.keys()]:
+
+                # True, r['idlicencee'], r['idlicence']
+                fai_status, fai_person_id, fai_license_id = upsert_fai(person,
+                                                                       competence_id=response.get('id'),
+                                                                       license_id=existing_competence.get('_fai', {}).get('license_id', None),
+                                                                       discipline=COMPETENCE_FAI_MAPPING[response.get('type_id', 0)])
+                if fai_status is True:
+                    _competence['_fai'] = {
+                        'license_id': fai_license_id,
+                        'person_id': fai_person_id
+                    }
+
+            # Append the competence to the existing competences
             try:
-                #print('append')
-                competences.append({'id': response.get('id'),
-                                    '_code': response.get('_code', response.get('title', 'Ukjent')),
-                                    'type_id': response.get('type_id', 0),
-                                    'issuer': response.get('approved_by_person_id', None),
-                                    'expiry': expiry,
-                                    # 'paid': response.get('paid_date', None)
-                                    })
+                # print('append')
+                competences.append(_competence)
             except Exception as e:
-                #print(e)
+                # print(e)
                 pass
+
 
         # Always remove stale competences
         # Note that _code is for removing old competences, should be removed
         competences[:] = [d for d in competences if
                           _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
-        #print(competences)
+        # print(competences)
         # If competence valid_to is None # or competence not passed
         if expiry is None:  # or passed is False:
-            #print('expiry is none')
+            # print('expiry is none')
             try:
                 competences[:] = [d for d in competences if d.get('id', 0) != response.get('id')]
             except Exception as e:
@@ -625,7 +703,7 @@ def on_competence_put(response, original=None):
 
         # Always unique by id
         competences = list({v['id']: v for v in competences}.values())
-        #print(competences)
+        # print(competences)
         # Patch if difference
         if ALWAYS_PATCH is True or _compare_list_of_dicts(competences, person.get('competences', [])) is True:
             lookup = {'_id': person['_id']}
@@ -633,13 +711,13 @@ def on_competence_put(response, original=None):
                                                 **lookup)
             if status != 200:
                 app.logger.error('Patch returned {} for competence'.format(status))
-                #print('Not 200')
+                # print('Not 200')
                 pass
         else:
-            #print('Not always')
+            # print('Not always')
             pass
 
-    #print('Check', _compare_list_of_dicts(competences, person.get('competences', [])))
+    # print('Check', _compare_list_of_dicts(competences, person.get('competences', [])))
 
 
 def on_organizations_post(items):
@@ -651,10 +729,11 @@ def on_organizations_put(response, original=None):
     # Only on NIF groups / NLF clubs
     if response.get('type_id', 0) == 6 or len(response.get('activities', [])) == 0:
 
+        # Rebuild activities, only active disciplines
         for v in response.get('_down'):
             if v.get('type') == 14:
                 discipline = _get_org(v.get('id'))
-                if 'activities' in discipline:
+                if discipline.get('is_active', False) is True and 'activities' in discipline:
                     for a in discipline['activities']:
                         response['activities'].append(a)
                 if 'main_activity' in discipline:
@@ -825,13 +904,13 @@ def _get_pmt(payment):
         pass
 
     return org_id, \
-           activity, \
-           product_type, \
-           product_type_exception, \
-           product_type_id, \
-           year, \
-           payment['amount'], \
-           payment['paid_date']
+        activity, \
+        product_type, \
+        product_type_exception, \
+        product_type_id, \
+        year, \
+        payment['amount'], \
+        payment['paid_date']
 
 
 ### PAYMENTS HOOKS ###

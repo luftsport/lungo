@@ -31,16 +31,21 @@ class NlfTokenAuth(TokenAuth):
         if resource is None:
             resource = ''
 
-        # Remove integer from end of string
-        try:
-            resource = resource.rstrip(string.digits)
-        except:
-            pass
+        # if this is not a collection /
+        if resource[-1:] != '/':
+
+            if resource + '/' in users[token]['resources']:
+                resource = resource + '/'
+
+            elif resource not in users[token]['resources'] and resource + '/' not in users[token]['resources']:
+                # Remove last part of
+                if '/'.join(resource.split('/')[:-1])+'/*' in users[token]['resources']:
+                    resource = '/'.join(resource.split('/')[:-1])+'/*'
 
         try:
             if token in users.keys() and method in users[token]['resources'][resource]['methods']:
-                self.resource_lookup = users[token]['resources'][resource]['lookup']
 
+                self.resource_lookup = users[token]['resources'][resource]['lookup']
                 self.user_id = users[token]['id']
 
                 # globals
@@ -77,4 +82,4 @@ class NlfTokenAuth(TokenAuth):
         This makes the browser NOT fire up the basic auth
         """
         # resp = Response(None, 401)
-        abort(401) #, description='Please provide proper credentials', response=resp)
+        abort(401)  # , description='Please provide proper credentials', response=resp)

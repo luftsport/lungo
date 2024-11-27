@@ -52,9 +52,35 @@ definition = {
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'mongo_indexes': {'type_id': ([('id', 1)], {'background': True}),
                       'type': ([('meta_type', 1)], {'background': True}),
-                      'title': ([('title', 'text')], {'background': True})
+                      'title': ([('title', 'text'), ('description', 'text'), ('sports.name', 'text')], {'background': True})
                       },
     'allow_unknown': True,
+    'schema': _schema
+}
+
+# Search
+search_definition = {
+    'url': 'competences/types/search',
+    'item_title': 'Functions Types Search',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   'projection': {
+                       "_score": {"$meta": "textScore"},
+                       "title": 1,
+                       "id": 1,
+                       "_updated": 1,
+                       "_created": 1,
+                       "_version": 1
+                   },
+                   'default_sort': [("_score", {"$meta": "textScore"})],
+                   #'filter': {'org_id_owner': 376, 'is_valid':True}
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'extra_response_fields': ['id'],
+    'resource_methods': ['GET'],
+    'item_methods': [],
     'schema': _schema
 }
 
@@ -73,3 +99,5 @@ agg_count_meta_types = {
         }
     }
 }
+
+
