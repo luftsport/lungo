@@ -79,8 +79,8 @@ def _get_nif_person_competences_list(person_id) -> list:
     if status is True:
         try:
             return [x['id'] for x in result['competences'] if
-                    x['passed'] is True and
-                    (x['expires'] is not None and parser.parse(x['expires']) > datetime.datetime.now())]
+                    x['passed'] is True or
+                    (x['expires'] is None or parser.parse(x['expires']) > datetime.datetime.now())]
         except Exception as e:
             pass  # print('[ERR]', e)
 
@@ -128,7 +128,7 @@ def get_person_competences(person_id):
 
     if status is True:
         # Only valid competences?
-        competences = [x for x in competences['competences'] if x['passed'] is True]
+        competences = [x for x in competences['competences'] if x['passed'] is True or x['expires'] is None]
         return eve_response(competences, 200)
 
     abort(404)
@@ -221,6 +221,7 @@ def check_and_fix(person_id):
 @NIF.route('ka/productchecker/<int:person_id>', methods=['GET'])
 @require_token()
 def product_checker(person_id):
+    return eve_response([str(p) for p in app.url_map.iter_rules()])
     """
     Switch dry_run on method GET=True, POST=False
     @Todo: refactor and make the status from pc be a bit smarter so you can make correct response codes
@@ -239,3 +240,4 @@ def product_checker(person_id):
         pass
 
     abort(500)
+
