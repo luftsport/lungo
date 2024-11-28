@@ -9,6 +9,7 @@ _schema = {
     'sport_no': {'type': 'string'},
     'user_id': {'type': 'integer'},
     '_merged_to': {'type': 'integer'},
+    '_fids': {'type': 'dict'},
     'created_date': {'type': 'datetime'},
     'last_changed_date': {'type': 'datetime'},
     'first_name': {'type': 'string'},
@@ -145,6 +146,7 @@ _schema = {
                                    }
                                    },
                        '_code': {'type': 'string'},
+                       '_fai': {'type': 'dict'},
                        'issuer': {'type': 'integer'},
                        'expiry': {'type': 'datetime'},
                        'paid': {'type': 'datetime'},
