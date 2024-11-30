@@ -133,7 +133,11 @@ def _get_ISO_country(country_id):
     response, _, _, status = getitem_internal('countries', **{'id': country_id})
 
     if status == 200:
-        return response.json().get('iso_alpha3', '')
+        try:
+            return response.json().get('iso_alpha3', 'NOR')
+        except:
+            pass
+
 
     return 'NOR'
 
