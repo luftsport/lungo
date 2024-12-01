@@ -19,6 +19,7 @@ import socketio
 from blueprints.fai import upsert_fai
 # import dateutil.parser
 
+FAI_SYNC = False
 
 RESOURCE_PERSONS_PROCESS = 'persons_process'
 RESOURCE_FUNCTIONS_PROCESS = 'functions_process'
@@ -666,13 +667,13 @@ def on_competence_put(response, original=None):
             }
 
             # Handle Fai sporting codes
-            if response.get('type_id', 0) in [x for x in COMPETENCE_FAI_MAPPING.keys()]:
+            if FAI_SYNC is True and response.get('type_id', 0) in list(COMPETENCE_FAI_MAPPING.keys()):
 
                 # True, r['idlicencee'], r['idlicence']
                 fai_status, fai_person_id, fai_license_id = upsert_fai(person,
                                                                        competence_id=response.get('id'),
                                                                        license_id=existing_competence.get('_fai', {}).get('license_id', None),
-                                                                       discipline=COMPETENCE_FAI_MAPPING[response.get('type_id', 0)])
+                                                                       discipline=COMPETENCE_FAI_MAPPING.get(int(response.get('type_id', 0))))
                 if fai_status is True:
                     _competence['_fai'] = {
                         'license_id': fai_license_id,
