@@ -19,7 +19,7 @@ import socketio
 from blueprints.fai import upsert_fai
 # import dateutil.parser
 
-FAI_SYNC = False
+FAI_SYNC = True
 
 RESOURCE_PERSONS_PROCESS = 'persons_process'
 RESOURCE_FUNCTIONS_PROCESS = 'functions_process'
