@@ -8,10 +8,11 @@
 from flask import jsonify, abort, Response, current_app as app
 import sys, json
 import bson.json_util as json_util
-#from ..scf import Scf
 
-#from ext.notifications.sms import Sms  # Email
-#from ext.app.decorators import _async
+# from ..scf import Scf
+
+# from ext.notifications.sms import Sms  # Email
+# from ext.app.decorators import _async
 
 CRITICAL_ERROR_CODES = [503]
 
@@ -31,35 +32,36 @@ def eve_abort(status=500, message='', sysinfo=None):
         resp = Response(None, status)
 
         if 100 <= status <= 299:
-            #app.logger.info("%s: %s" % (message, sysinfo))
+            # app.logger.info("%s: %s" % (message, sysinfo))
             pass
         elif 300 <= status <= 399:
-            #app.logger.warn("%s: %s" % (message, sysinfo))
+            # app.logger.warn("%s: %s" % (message, sysinfo))
             pass
         elif 400 <= status <= 499:
-            #app.logger.error("%s: %s" % (message, sysinfo))
+            # app.logger.error("%s: %s" % (message, sysinfo))
             pass
         elif 500 <= status <= 599:
             # Check if mongo is down
-            #app.logger.error("%s: %s" % (message, sysinfo))
+            # app.logger.error("%s: %s" % (message, sysinfo))
 
             # 503 Service Unavailable
             if status in CRITICAL_ERROR_CODES:
                 if not is_mongo_alive(status):
                     app.logger.critical("MongoDB is down [%s]" % sysinfo)
-                    #send_sms(status, "MongoDB is down (%s)" % app.config['APP_INSTANCE'])
+                    # send_sms(status, "MongoDB is down (%s)" % app.config['APP_INSTANCE'])
                 else:
                     app.logger.critical("%s [%s]" % (message, sysinfo))
                     message = message
-                    #send_sms(status, "%s (%s)" % (message, app.config['APP_INSTANCE']))
+                    # send_sms(status, "%s (%s)" % (message, app.config['APP_INSTANCE']))
 
         else:
-            #app.logger.debug("%s: %s" % (message, sysinfo))
+            # app.logger.debug("%s: %s" % (message, sysinfo))
             pass
     except:
         pass
 
     abort(status, description=message, response=resp)
+
 
 def eve_response(data={}, status=200):
     """Manually send a response like Eve
@@ -82,6 +84,7 @@ def eve_response(data={}, status=200):
         resp = jsonify(**data)
     return resp
 
+
 def eve_response_pppd(data={}, status=200, error_message=False):
     """Manually create a reponse for POST, PATCH, PUT, DELETE"""
     if data is None:
@@ -100,6 +103,7 @@ def eve_response_pppd(data={}, status=200, error_message=False):
 def eve_response_get(data={}, status=200, error_message=False):
     return eve_response(data, status)
 
+
 def eve_response_post(data={}, status=200, error_message=False):
     return eve_response_pppd(data, status, error_message)
 
@@ -116,13 +120,26 @@ def eve_response_patch(data={}, status=200, error_message=False):
     return eve_response_pppd(data, status, error_message)
 
 
+def eve_error_response(message, code):
+    data = {
+        "_status": "ERR",
+        "_error": {
+            "code": code,
+            "message": message
+        }
+    }
+
+    return eve_response(data, code)
+
+
 def is_mongo_alive(status=502):
     try:
         app.data.driver.db.command('ping')
         return True
     except:
-        #send_sms(status, "Mongodb is down (%s)" % app.config['APP_INSTANCE'])
+        # send_sms(status, "Mongodb is down (%s)" % app.config['APP_INSTANCE'])
         return False
+
 
 """
 def send_sms(status, message):
