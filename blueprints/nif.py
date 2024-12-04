@@ -5,7 +5,7 @@ from hashlib import sha224
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
 # from eve.methods.post import post_internal
 from ext.scf import KA_USERNAME, KA_PASSWORD, NIF_CLIENT_SECRET, NIF_CLIENT_ID, NIF_TOKEN_FILE
-from ext.app.eve_helper import eve_response
+from ext.app.eve_helper import eve_response,eve_error_response
 from eve.methods.post import post_internal
 from eve.methods.get import getitem_internal, get_internal
 from nif_rest_api_client import NifRestApiClient
@@ -241,3 +241,26 @@ def product_checker(person_id):
 
     abort(500)
 
+
+@NIF.route('flydrone/<int:person_id>', methods=['GET', 'POST'])
+@require_token()
+def flydrone(person_id):
+
+    if request.method == 'GET':
+        status, person = _get_lungo_person(person_id)
+        if status is True:
+            drone = person.get('_fids', {}).get('flydrone', None)
+            if drone is not None:
+                return eve_response(drone, 200)
+
+        return eve_error_response("The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.", 404)
+
+    elif request.method == 'POST':
+        status, result = get_nif_api_client().register_drone_pilot(person_id)
+
+        if status is True:
+            return eve_response(result, 201)
+
+        return eve_error_response("The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.", 404)
+
+        #return eve_response(response, 200 if status is False else 201)
