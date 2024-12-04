@@ -104,6 +104,7 @@ DOMAIN = {
     "payments": payments.definition,
     "payments_process": payments.process_definition,
     "payments_total_per_year": payments.payments_total_per_year,
+    "agg_count_payment_products": payments.agg_count_payment_products,
 
     # Integration Users
     "integration_users": integration_users.definition,

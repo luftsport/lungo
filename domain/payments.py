@@ -1,3 +1,5 @@
+from bson import SON
+
 RESOURCE_COLLECTION = 'payments'
 
 _schema = {
@@ -88,6 +90,22 @@ payments_total_per_year = {
 
                 #{'$project': {'Total': {"$sum": '$amount'}}}
         ]
+        }
+    }
+}
+
+# Aggregations
+agg_count_payment_products = {
+    'url': 'payments/products/count',
+    'item_title': 'Payment Products',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$group": {"_id": {"id": "$product_type_id", "product_type": "$product_name"}, "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
         }
     }
 }
