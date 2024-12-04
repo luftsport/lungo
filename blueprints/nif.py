@@ -8,6 +8,7 @@ from ext.scf import KA_USERNAME, KA_PASSWORD, NIF_CLIENT_SECRET, NIF_CLIENT_ID, 
 from ext.app.eve_helper import eve_response,eve_error_response
 from eve.methods.post import post_internal
 from eve.methods.get import getitem_internal, get_internal
+from eve.methods.patch import patch_internal
 from nif_rest_api_client import NifRestApiClient
 from dateutil import parser
 from nif_tools import KA
@@ -259,7 +260,19 @@ def flydrone(person_id):
         status, result = get_nif_api_client().register_drone_pilot(person_id)
 
         if status is True:
-            return eve_response(result, 201)
+            status, person = _get_lungo_person(person_id)
+            lookup = {'_id': person['_id']}
+
+            _fids = person.get('_fids', {})
+            _fids['flydrone'] = result
+
+            resp, _, _, patch_status = patch_internal('persons_process',
+                                                {'_fids': _fids},
+                                                False,
+                                                True,
+                                                **lookup)
+
+            return eve_response(result, patch_status)
 
         return eve_error_response("The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.", 404)
 
