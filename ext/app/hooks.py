@@ -668,13 +668,13 @@ def on_competence_put(response, original=None):
 
             # Handle Fai sporting codes
             try:
-                if FAI_SYNC is True and response.get('type_id', 0) in list(COMPETENCE_FAI_MAPPING.keys()):
+                if FAI_SYNC is True and response['type_id'] in list(COMPETENCE_FAI_MAPPING.keys()):
 
                     # True, r['idlicencee'], r['idlicence']
                     fai_status, fai_person_id, fai_license_id = upsert_fai(person,
                                                                            competence_id=response.get('id'),
                                                                            license_id=existing_competence.get('_fai', {}).get('license_id', None),
-                                                                           discipline=COMPETENCE_FAI_MAPPING.get(int(response.get('type_id', 0))))
+                                                                           discipline=COMPETENCE_FAI_MAPPING[response['type_id']])
                     if fai_status is True:
                         _competence['_fai'] = {
                             'license_id': fai_license_id,
@@ -682,6 +682,16 @@ def on_competence_put(response, original=None):
                         }
             except Exception as e:
                 app.logger.error('[FAI] error handling FAI competence')
+                app.logger.error('[FAI] List of competencens:')
+                try:
+                    app.logger.error(str(COMPETENCE_FAI_MAPPING))
+                except:
+                    app.logger.error('Could not log list of competences')
+                app.logger.error('[FAI] response:')
+                try:
+                    app.logger.error(str(response))
+                except:
+                    app.logger.error('Could not log response')
                 app.logger.exception(e)
 
             # Append the competence to the existing competences
