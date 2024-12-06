@@ -80,8 +80,6 @@ FAI_SPORTING_CODES = {
 }
 
 
-
-
 def make_params():
     params = {
         'auth_username': FAI_USERNAME,
@@ -107,7 +105,8 @@ def _get_licenses(query, nac='NOR'):
 
     r = requests.get(f'{FAI_URL}/licences', params=query)
     try:
-        result = sorted([x for x in r.json() if x['IOC']==nac and x['editable'] is True], key=lambda d: datetime.strptime(d["validuntil_lic"], '%Y-%m-%d'))
+        result = sorted([x for x in r.json() if x['IOC'] == nac and x['editable'] is True],
+                        key=lambda d: datetime.strptime(d["validuntil_lic"], '%Y-%m-%d'))
         return r.status_code, result
     except:
         pass
@@ -129,19 +128,19 @@ def _create_or_update_license(license):
 def _get_ISO_country(country_id):
     if country_id == 0:
         return 'NOR'
+
     try:
         response, _, _, status = getitem_internal('countries', **{'id': country_id})
 
         if status == 200:
-            return response.json().get('iso_alpha3', 'NOR')
+            return response.get('iso_alpha3', 'NOR')
     except:
         pass
-
 
     return 'NOR'
 
 
-def upsert_fai(person, competence_id, license_id, discipline)->(bool, str, str):
+def upsert_fai(person, competence_id, license_id, discipline) -> (bool, str, str):
     """
 
     :param person:
@@ -185,7 +184,8 @@ def upsert_fai(person, competence_id, license_id, discipline)->(bool, str, str):
             })
         else:
             # Try to get person!
-            status, fai_person = _get_licenses(query={'nac_org': 'NOR', 'search_number': person['id'], 'include_invalid': 0})
+            status, fai_person = _get_licenses(
+                query={'nac_org': 'NOR', 'search_number': person['id'], 'include_invalid': 0})
             if status in [200]:
                 try:
                     params.update({
@@ -217,7 +217,8 @@ def upsert_fai(person, competence_id, license_id, discipline)->(bool, str, str):
                 if result.get('message', None) == 'The athlete has a same valid license for this period.':
                     if 'idlicence' not in params:
                         try:
-                            return True, params['idlicencee'], [x['idlicence'] for x in fai_person if x['idlicencee'] == params['idlicencee']][0]
+                            return True, params['idlicencee'], \
+                            [x['idlicence'] for x in fai_person if x['idlicencee'] == params['idlicencee']][0]
                         except Exception as e:
                             app.logger.exception(e)
                     else:
@@ -234,11 +235,13 @@ def upsert_fai(person, competence_id, license_id, discipline)->(bool, str, str):
 
         return False, None, None
 
+
 @Fai.route('/api-doc', methods=['GET'])
 @require_token()
 def get_paths():
     resp = [str(p) for p in app.url_map.iter_rules() if str(p).startswith('/api/v1/fai')]
     return eve_response(resp)
+
 
 @Fai.route("/licenses", methods=['GET'])
 @require_token()
@@ -353,7 +356,6 @@ def get_license(license_id):
 @Fai.route("/licenses/", methods=['POST'])
 @require_token()
 def create():
-
     """
     GET create?auth_username=&auth_password=&idlicencee=&licencee_firstname=&licencee_middlename=&licencee_lastname=&licencee_gender=&licencee_birthdate=&licencee_nationality=&licencee_residencecountry=&address1=&address2=&address3=&address_country=&licencee_email=&phone_home=&phone_office=&phone_mobile=&licence_number=&dateissued=&validuntil=&discipline=
 
