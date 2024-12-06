@@ -107,7 +107,7 @@ def _get_licenses(query, nac='NOR'):
 
     r = requests.get(f'{FAI_URL}/licences', params=query)
     try:
-        result = sorted([x for x in r.json() if x['IOC']==nac], key=lambda d: datetime.strptime(d["validuntil_lic"], '%Y-%m-%d'))
+        result = sorted([x for x in r.json() if x['IOC']==nac and x['editable'] is True or 1], key=lambda d: datetime.strptime(d["validuntil_lic"], '%Y-%m-%d'))
         return r.status_code, result
     except:
         pass
