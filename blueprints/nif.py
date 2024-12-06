@@ -130,7 +130,7 @@ def _get_lungo_person_competences(person_id):
 def generate_change_message():
     data = request.get_json()
     status, response = _gen_change_msg(data['entity_id'], data['entity_type'])
-    return eve_response(response, status)
+    return eve_response(response, 200 if status is True else 500)
     # return {}, 201
 
 
@@ -138,7 +138,7 @@ def generate_change_message():
 @require_token()
 def get_person(person_id):
     status, person = get_nif_api_client().get_person(person_id)
-    return eve_response(person, status)
+    return eve_response(person, 200 if status is True else 404)
 
 
 @NIF.route('competences/<int:person_id>', methods=['GET'])
@@ -173,7 +173,7 @@ def get_person_licenses(person_id):
     :return:
     """
     status, licenses = get_nif_api_client().get_person_licenses(person_id)
-    return eve_response(licenses, status)
+    return eve_response(licenses, 200 if status is True else 404)
 
 
 @NIF.route('licenses/check/<int:person_id>', methods=['GET'])
@@ -185,7 +185,7 @@ def get_person_licenses_check(person_id):
     :return:
     """
     status, licenses = get_nif_api_client().get_person_licenses_check(person_id)
-    return eve_response(licenses, status)
+    return eve_response(licenses, 200 if status is True else 404)
 
 
 @NIF.route('licenses/org/<int:org_id>', methods=['GET'])
@@ -197,7 +197,7 @@ def get_organization_licenses(org_id):
     :return:
     """
     status, licenses = get_nif_api_client().get_org_licenses(org_id)
-    return eve_response(licenses, status)
+    return eve_response(licenses, 200 if status is True else 404)
 
 
 @NIF.route('check/<int:person_id>', methods=['POST'])
