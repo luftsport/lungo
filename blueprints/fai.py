@@ -175,7 +175,7 @@ def upsert_fai(person, competence_id, license_id, discipline)->(bool, str, str):
 
             'dateissued': str(datetime.now().date()),
             'discipline': discipline,
-            'validuntil': _competence.get('expiry', str(datetime.now().date()))[0:10]
+            'validuntil': str(_competence.get('expiry', datetime.now().date()))[0:10]
         }
 
         # We have a fai id?
