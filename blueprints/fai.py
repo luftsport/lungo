@@ -172,7 +172,7 @@ def upsert_fai(person, competence_id, license_id, discipline) -> (bool, str, str
             'licencee_lastname': person.get('last_name', '').strip(),
             'licencee_nationality': _get_ISO_country(person.get('nationality_id', 1500152)),
             'licencee_residencecountry': _get_ISO_country(person.get('address', {}).get('country_id', 1500152)),
-            'phonemobile': _get_ISO_country(person.get('address', {}).get('phone_mobile', '')),
+            'phonemobile': person.get('address', {}).get('phone_mobile', ''),
 
             'dateissued': str(datetime.now().date()),
             'discipline': discipline,
