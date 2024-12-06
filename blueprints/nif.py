@@ -125,6 +125,13 @@ def _get_lungo_person_competences(person_id):
     return False, {}
 
 
+@NIF.route('/api-doc', methods=['GET'])
+@require_token()
+def get_paths():
+    resp = [str(p) for p in app.url_map.iter_rules() if 'nif' in str(p)]
+    return eve_response(resp)
+
+
 @NIF.route('/change', methods=['POST'])
 @require_token()
 def generate_change_message():
