@@ -209,6 +209,8 @@ def upsert_fai(person, competence_id, license_id, discipline) -> (bool, str, str
                 app.logger.exception(e)
 
         status, result = _create_or_update_license(params)
+        app.logger.info('[FAI UPSERT 1]')
+        app.logger.info(result)
         if status in [200, 201]:
 
             # handle errors anyway!
@@ -226,9 +228,12 @@ def upsert_fai(person, competence_id, license_id, discipline) -> (bool, str, str
                         except Exception as e:
                             app.logger.exception(e)
                 else:
+
                     params.pop('idlicence', None)
                     params.pop('idlicencee', None)
                     status, result = _create_or_update_license(params)
+                    app.logger.info('[FAI UPSERT 2]')
+                    app.logger.info(result)
                     if status in [200, 201]:
                         return True, result.get('idlicencee', None), result.get('idlicence', None)
 
