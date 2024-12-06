@@ -31,6 +31,7 @@ RESOURCE_MERGED_FROM = 'persons_merged_from'
 
 # meta types which are considered "kompetanse"
 COMPETENCE_META_TYPES = ['Kompetansedefinisjon']
+COMPETENCE_ATTESTATION_TYPES = [66677325, 66677394, 66679452, 66679458]
 """
 66667584 A-SPO - SPORTSLISENS [238]
 66667674 M-SPO - SPORTSLISENS [27, 236]
@@ -625,7 +626,6 @@ def on_competence_post(items):
 
 def on_competence_put(response, original=None):
     """"""
-    # Should be reenabled when all have populated?
     # if response.get('passed', False) is True:
 
     passed = response.get('passed', False)
@@ -667,26 +667,30 @@ def on_competence_put(response, original=None):
             }
 
             # Handle Fai sporting codes
-            if FAI_SYNC is True and response.get('type_id', 0) in list(COMPETENCE_FAI_MAPPING.keys()):
+            try:
+                if FAI_SYNC is True and response.get('type_id', 0) in list(COMPETENCE_FAI_MAPPING.keys()):
 
-                # True, r['idlicencee'], r['idlicence']
-                fai_status, fai_person_id, fai_license_id = upsert_fai(person,
-                                                                       competence_id=response.get('id'),
-                                                                       license_id=existing_competence.get('_fai', {}).get('license_id', None),
-                                                                       discipline=COMPETENCE_FAI_MAPPING.get(int(response.get('type_id', 0))))
-                if fai_status is True:
-                    _competence['_fai'] = {
-                        'license_id': fai_license_id,
-                        'person_id': fai_person_id
-                    }
+                    # True, r['idlicencee'], r['idlicence']
+                    fai_status, fai_person_id, fai_license_id = upsert_fai(person,
+                                                                           competence_id=response.get('id'),
+                                                                           license_id=existing_competence.get('_fai', {}).get('license_id', None),
+                                                                           discipline=COMPETENCE_FAI_MAPPING.get(int(response.get('type_id', 0))))
+                    if fai_status is True:
+                        _competence['_fai'] = {
+                            'license_id': fai_license_id,
+                            'person_id': fai_person_id
+                        }
+            except Exception as e:
+                app.logger.error('[FAI] error handling FAI competence')
+                app.logger.exception(e)
 
             # Append the competence to the existing competences
             try:
                 # print('append')
                 competences.append(_competence)
             except Exception as e:
-                # print(e)
-                pass
+                app.logger.error('[COMPETENCE]')
+                app.logger.exception(e)
 
 
         # Always remove stale competences
