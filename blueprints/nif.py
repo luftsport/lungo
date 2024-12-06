@@ -33,7 +33,7 @@ def _gen_flydrone_email(first_name, registration, registration_expiry, type_of_c
     msg = f'Hi {first_name}\r\n\r\n'
     msg += f'Your registration at flydrone.no has been {type_of_change}.\r\n\r\n'
     msg += f'Registration number: {registration}\r\n'
-    msg += f'Registration expiry: {registration_expiry}\r\n\r\n'
+    msg += f'Registration expiry: {str(registration_expiry)[:10]}\r\n\r\n'
     msg += 'Remember to mark your model/drone with your operator number - this is mandatory\r\n\r\n'
     msg += 'This connects your drone registration to your membership in NLF. You can also view your registration at https://www.flydrone.no.\r\n\r\n'
     msg += 'This is an automatic generated message from the Norwegian Air Sports Federation, replies will not be answered.\r\n\r\n'
