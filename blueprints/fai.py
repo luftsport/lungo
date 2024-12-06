@@ -210,7 +210,9 @@ def upsert_fai(person, competence_id, license_id, discipline)->(bool, str, str):
 
         status, result = _create_or_update_license(params)
         if status in [200, 201]:
-            return True, result['idlicencee'], result['idlicence']
+            app.logger.info('[FAI] Resulting upsert:')
+            app.logger.info(result)
+            return True, result.get('idlicencee', None), result.get('idlicence', None)
         else:
             app.logger.debug(f'[FAI] Error create or update license, status: {status} and result {result.text}')
 
