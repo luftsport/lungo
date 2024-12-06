@@ -193,24 +193,28 @@ def upsert_fai(person, competence_id, license_id, discipline)->(bool, str, str):
                         'idlicencee': fai_person[0]['idlicencee']
                     })
                 except Exception as e:
+                    app.logger.debug(f'[FAI] Exception finding licensee')
                     app.logger.exception(e)
 
         # We already have the fai license id in our existing competence
         if '_fai' in _competence:
             # Get the license and check if editable!
             try:
-                status_code, response = _get_license(_competence['_fai'].get('license_id'))
+                status_code, response = _get_license(_competence['_fai'].get('license_id', None))
                 if status_code is True and response.get('editable', False) is not False:
                     params.update({
                         'idlicence': _competence['_fai'].get('license_id', None),  # 380469,
                     })
             except Exception as e:
+                app.logger.exception('Error removing competence from person')
                 app.logger.exception(e)
 
         status, result = _create_or_update_license(params)
         if status in [200, 201]:
             r = result.json()
             return True, r['idlicencee'], r['idlicence']
+        else:
+            app.logger.debug(f'[FAI] Error create or update license, status: {status} and result {result.text}')
 
         return False, None, None
 
