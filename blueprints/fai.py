@@ -210,6 +210,22 @@ def upsert_fai(person, competence_id, license_id, discipline)->(bool, str, str):
 
         status, result = _create_or_update_license(params)
         if status in [200, 201]:
+
+            # handle errors anyway!
+            if result.get('success', True) is False:
+                # {'success': False, 'message': }
+                if result.get('message', None) == 'The athlete has a same valid license for this period.':
+                    if 'idlicence' not in params:
+                        try:
+                            return True, params['idlicencee'], [x['idlicence'] for x in fai_person if x['idlicencee'] == params['idlicencee']][0]
+                        except Exception as e:
+                            app.logger.exception(e)
+                    else:
+                        try:
+                            return True, params['idlicencee'], params['idlicence']
+                        except Exception as e:
+                            app.logger.exception(e)
+
             app.logger.info('[FAI] Resulting upsert:')
             app.logger.info(result)
             return True, result.get('idlicencee', None), result.get('idlicence', None)
