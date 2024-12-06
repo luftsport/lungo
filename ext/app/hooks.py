@@ -675,7 +675,8 @@ def on_competence_put(response, original=None):
                                                                            competence_id=response.get('id'),
                                                                            license_id=existing_competence.get('_fai', {}).get('license_id', None),
                                                                            discipline=COMPETENCE_FAI_MAPPING[response['type_id']])
-                    if fai_status is True:
+
+                    if fai_status is True and fai_person_id is not None and fai_license_id is not None:
                         _competence['_fai'] = {
                             'license_id': fai_license_id,
                             'person_id': fai_person_id
