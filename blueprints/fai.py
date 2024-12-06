@@ -129,14 +129,13 @@ def _create_or_update_license(license):
 def _get_ISO_country(country_id):
     if country_id == 0:
         return 'NOR'
+    try:
+        response, _, _, status = getitem_internal('countries', **{'id': country_id})
 
-    response, _, _, status = getitem_internal('countries', **{'id': country_id})
-
-    if status == 200:
-        try:
+        if status == 200:
             return response.json().get('iso_alpha3', 'NOR')
-        except:
-            pass
+    except:
+        pass
 
 
     return 'NOR'
