@@ -115,6 +115,8 @@ def _get_licenses(query, nac='NOR'):
 
 
 def _create_or_update_license(license):
+    app.logger.info('[FAI PARAMS]')
+    app.logger.info(license)
     license.update(make_params())
     r = requests.get(f'{FAI_URL}/create', params=license)
     try:
