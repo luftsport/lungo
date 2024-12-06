@@ -128,7 +128,7 @@ def _get_lungo_person_competences(person_id):
 @NIF.route('/api-doc', methods=['GET'])
 @require_token()
 def get_paths():
-    resp = [str(p) for p in app.url_map.iter_rules() if 'nif' in str(p)]
+    resp = [str(p) for p in app.url_map.iter_rules() if str(p).startswith('/api/v1/nif')]
     return eve_response(resp)
 
 

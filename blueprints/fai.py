@@ -218,6 +218,11 @@ def upsert_fai(person, competence_id, license_id, discipline)->(bool, str, str):
 
         return False, None, None
 
+@Fai.route('/api-doc', methods=['GET'])
+@require_token()
+def get_paths():
+    resp = [str(p) for p in app.url_map.iter_rules() if str(p).startswith('/api/v1/fai')]
+    return eve_response(resp)
 
 @Fai.route("/licenses", methods=['GET'])
 @require_token()
