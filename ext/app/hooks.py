@@ -810,7 +810,8 @@ def _get_pmt_type(text):
     elif 'familie' in text.lower():
         return 'Familiemedlem'
 
-    return None
+    # Just return original text
+    return text
 
 
 def _get_pmt_activity(text):
@@ -1009,10 +1010,6 @@ def on_payment_after_put(item, orginal=None):
                         app.logger.exception(
                             'Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
 
-
-
-
-
             elif type_id == 23:  # Magazines
 
                 magazines = person.get('magazines', [])
@@ -1022,7 +1019,9 @@ def on_payment_after_put(item, orginal=None):
                 else:
                     year = _get_pmt_year(text)
                     # Magazines
-                    name = "Unknown Name"
+                    # Original text
+                    name = text
+                    # CHeck magazines
                     if 'fritt' in text.lower():
                         name = 'Fritt Fall'
                     elif 'flynytt' in text.lower():
@@ -1033,8 +1032,6 @@ def on_payment_after_put(item, orginal=None):
                         name = 'Modellinformasjon'
                     elif 'flukt' in text.lower():
                         name = 'Fri Flukt'
-                    else:
-                        name = text
 
                     magazines.append(
                         {
