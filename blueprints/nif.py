@@ -23,24 +23,6 @@ NIF = Blueprint('NIF tools', __name__)
 API = None
 
 
-def _gen_flydrone_email(first_name, registration, registration_expiry, type_of_change):
-    change_msg = {
-        'created': 'created',
-        'updated': 'updated',
-        'new_registration': 'updated with a new registration number',
-        'new_expiry': 'updated with a new expiry'
-    }
-    msg = f'Hi {first_name}\r\n\r\n'
-    msg += f'Your registration at flydrone.no has been {type_of_change}.\r\n\r\n'
-    msg += f'Registration number: {registration}\r\n'
-    msg += f'Registration expiry: {str(registration_expiry)[:10]}\r\n\r\n'
-    msg += 'Remember to mark your model/drone with your operator number - this is mandatory\r\n\r\n'
-    msg += 'This connects your drone registration to your membership in NLF. You can also view your registration at https://www.flydrone.no.\r\n\r\n'
-    msg += 'This is an automatic generated message from the Norwegian Air Sports Federation, replies will not be answered.\r\n\r\n'
-
-    return msg
-
-
 def get_nif_api_client() -> NifRestApiClient:
     global API
     if API is None:
@@ -123,6 +105,81 @@ def _get_lungo_person_competences(person_id):
         return True, response.get('_items', [])
 
     return False, {}
+
+
+def _gen_flydrone_email(first_name, registration, registration_expiry, type_of_change):
+    change_msg = {
+        'created': 'created',
+        'updated': 'updated',
+        'new_registration': 'updated with a new registration number',
+        'new_expiry': 'updated with a new expiry'
+    }
+    msg = f'Hi {first_name}\r\n\r\n'
+    msg += f'Your registration at flydrone.no has been {type_of_change}.\r\n\r\n'
+    msg += f'Registration number: {registration}\r\n'
+    msg += f'Registration expiry: {str(registration_expiry)[:10]}\r\n\r\n'
+    msg += 'Remember to mark your model/drone with your operator number - this is mandatory\r\n\r\n'
+    msg += 'This connects your drone registration to your membership in NLF. You can also view your registration at https://www.flydrone.no.\r\n\r\n'
+    msg += 'This is an automatic generated message from the Norwegian Air Sports Federation, replies will not be answered.\r\n\r\n'
+
+    return msg
+
+
+def _register_flydrone(person_id):
+    status, result = get_nif_api_client().register_drone_pilot(person_id)
+
+    if status is True:
+        person_status, person = _get_lungo_person(person_id)
+        if person_status is True:
+            lookup = {'_id': person['_id']}
+
+            _fids = person.get('_fids', {})
+
+            # Verfify if changes and what
+            type_of_change = None
+            try:
+                if 'flydrone' not in _fids:
+                    type_of_change = 'created'
+                else:
+                    if result['operatorRegistrationNumber'] != _fids['flydrone']['operatorRegistrationNumber']:
+                        type_of_change = 'new_registration_number'
+                    elif result['expiredOperatorRegistrationNumberTime'] != _fids['flydrone'][
+                        'expiredOperatorRegistrationNumberTime']:
+                        type_of_change = 'new_expiry'
+                    else:
+                        type_of_change = 'updated'
+            except Exception as e:
+                app.logger.error('[FLYDRONE] Could not assign type of change')
+                app.logger.exception(e)
+
+            # Set to new/updated
+            _fids['flydrone'] = result
+
+            resp, _, _, patch_status = patch_internal('persons_process',
+                                                      {'_fids': _fids},
+                                                      False,
+                                                      True,
+                                                      **lookup)
+
+            if patch_status in [200, 201]:
+                # Create email and send!
+                try:
+                    send_email(
+                        recepient=person['primary_email'],
+                        subject='Flydrone.no registration',
+                        message=_gen_flydrone_email(
+                            person['first_name'],
+                            result['operatorRegistrationNumber'],
+                            result['expiredOperatorRegistrationNumberTime'],
+                            type_of_change)
+                    )
+                except Exception as e:
+                    app.logger.error('[FLYDRONE] error while sending email')
+                    app.logger.exception(e)
+
+            return patch_status, result
+
+    return status, result
 
 
 @NIF.route('/api-doc', methods=['GET'])
@@ -283,58 +340,11 @@ def flydrone(person_id):
             404)
 
     elif request.method == 'POST':
-        status, result = get_nif_api_client().register_drone_pilot(person_id)
 
-        if status is True:
-            status, person = _get_lungo_person(person_id)
-            lookup = {'_id': person['_id']}
+        status, result = _register_flydrone(person_id)
+        if status in [200, 201]:  # result from patch, if status is False, error
+            return eve_response(result, status)
 
-            _fids = person.get('_fids', {})
-
-            # Verfify if changes and what
-            type_of_change = None
-            try:
-                if 'flydrone' not in _fids:
-                    type_of_change = 'created'
-                else:
-                    if result['operatorRegistrationNumber'] != _fids['flydrone']['operatorRegistrationNumber']:
-                        type_of_change = 'new_registration_number'
-                    elif result['expiredOperatorRegistrationNumberTime'] != _fids['flydrone'][
-                        'expiredOperatorRegistrationNumberTime']:
-                        type_of_change = 'new_expiry'
-                    else:
-                        type_of_change = 'updated'
-            except Exception as e:
-                app.logger.error('[FLYDRONE] Could not assign type of change')
-                app.logger.exception(e)
-
-            # Set to new/updated
-            _fids['flydrone'] = result
-
-            resp, _, _, patch_status = patch_internal('persons_process',
-                                                      {'_fids': _fids},
-                                                      False,
-                                                      True,
-                                                      **lookup)
-
-            if patch_status in [200, 201]:
-                # Create email and send!
-                try:
-                    send_email(
-                        recepient=person['primary_email'],
-                        subject='Flydrone.no registration',
-                        message=_gen_flydrone_email(
-                            person['first_name'],
-                            result['operatorRegistrationNumber'],
-                            result['expiredOperatorRegistrationNumberTime'],
-                            type_of_change)
-                    )
-                except Exception as e:
-                    app.logger.error('[FLYDRONE] error while sending email')
-                    app.logger.exception(e)
-
-            return eve_response(result, patch_status)
-
-        return eve_error_response(
-            "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
-            404)
+    return eve_error_response(
+        "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+        404)

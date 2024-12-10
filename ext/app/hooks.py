@@ -17,6 +17,7 @@ from ext.app.decorators import _async, debounce
 import time
 import socketio
 from blueprints.fai import upsert_fai
+from blueprints.nif import _register_flydrone
 # import dateutil.parser
 
 FAI_SYNC = True
@@ -1022,7 +1023,13 @@ def on_payment_after_put(item, orginal=None):
                     # Original text
                     name = text
                     # CHeck magazines
-                    if 'fritt' in text.lower():
+                    if 'flydrone' in text.lower():
+                        name = text
+                        flydrone_status, flydrone_result = _register_flydrone(item['person_id'])
+                        if flydrone_status is False:
+                            app.logger.error(f'[FLYDRONE] Error registering flydrone for {item["person_id"]}, result:')
+                            app.logger.error(flydrone_result)
+                    elif 'fritt' in text.lower():
                         name = 'Fritt Fall'
                     elif 'flynytt' in text.lower():
                         name = 'Flynytt'
