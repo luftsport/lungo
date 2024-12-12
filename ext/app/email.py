@@ -13,7 +13,8 @@ def send_email(recepient, subject, message, priority='2'):
         msg['From'] = 'notifications@nlf.no'
         msg['To'] = recepient
         msg['Subject'] = "{}".format(subject)
-        msg.add_header('Content-Type', 'text')
+        msg.add_header('Content-Type', 'text/plain;charset=utf-8')
+        msg.add_header('Content-Disposition', 'inline')
         msg.set_payload(message)
         msg['X-Priority'] = priority
         s = smtplib.SMTP(EMAIL['smtp'], EMAIL['smtp_port'])
