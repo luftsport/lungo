@@ -197,14 +197,13 @@ def _register_flydrone(person_id):
                 # Keep shadow in flydrone
                 if flydrone_status == 200:
                     flydrone_lookup = {'_id': _flydrone['_id']}
-                else:
-                    flydrone_lookup = None
-                flydrone_resp, _, _, put_status = put_internal('flydrone',
-                                                               _fids['flydrone'],
-                                                               False,
-                                                               True,
-                                                               **flydrone_lookup)
-                if put_status == 404:
+
+                    flydrone_resp, _, _, put_status = put_internal('flydrone',
+                                                                   _fids['flydrone'],
+                                                                   False,
+                                                                   True,
+                                                                   **flydrone_lookup)
+                elif flydrone_status == 404:
                     flydrone_resp, _, _, post_status, _ = post_internal(resource='flydrone',
                                                                         payl=_fids['flydrone'],
                                                                         skip_validation=True)
