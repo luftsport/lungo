@@ -147,6 +147,8 @@ def _register_flydrone(person_id):
                     _fids['flydrone']['personId'] = _flydrone['personId']
                     _fids['flydrone']['operatorRegistrationNumber'] = _flydrone['operatorRegistrationNumber']
                     _fids['flydrone']['status'] = _flydrone['status']
+                else:
+                    app.logger.info('[FLYDRONE] No results of flydrone in flydrone register:')
 
             # We already have the registration stored!
             app.logger.info('[FLYDRONE] _fids:')
@@ -211,6 +213,7 @@ def _register_flydrone(person_id):
                 if patch_status in [200, 201]:
                     # Create email and send!
                     try:
+                        app.logger.error(f'[FLYDRONE] sending email to {person_id}')
                         send_email(
                             recepient=person['primary_email'],
                             subject='Flydrone.no registration',
