@@ -127,8 +127,11 @@ def _gen_flydrone_email(first_name, registration, registration_expiry, type_of_c
 
 
 def _register_flydrone(person_id):
-    status, result = get_nif_api_client().register_drone_pilot(person_id)
 
+    status, result = get_nif_api_client().register_drone_pilot(person_id)
+    app.logger.info('[FLYDRONE] Registering process results:')
+    app.logger.info(status)
+    app.logger.info(result)
     if status is True:
         person_status, person = _get_lungo_person(person_id)
         if person_status is True:
