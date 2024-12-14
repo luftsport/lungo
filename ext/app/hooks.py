@@ -20,7 +20,7 @@ from blueprints.fai import upsert_fai
 from blueprints.nif import _register_flydrone
 # import dateutil.parser
 
-FAI_SYNC = True
+from ext.scf import FAI_SYNC
 
 RESOURCE_PERSONS_PROCESS = 'persons_process'
 RESOURCE_FUNCTIONS_PROCESS = 'functions_process'
@@ -704,7 +704,6 @@ def on_competence_put(response, original=None):
                 app.logger.error('[COMPETENCE]')
                 app.logger.exception(e)
 
-
         # Always remove stale competences
         # Note that _code is for removing old competences, should be removed
         competences[:] = [d for d in competences if
@@ -965,7 +964,6 @@ def on_payment_after_put(item, orginal=None):
 
             # Change to group org_id
             type_id = item.get('product_type_id', None)
-
 
             try:
                 item['amount'] = float(item['amount'])
