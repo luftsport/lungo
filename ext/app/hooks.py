@@ -812,7 +812,7 @@ def _get_pmt_type(text):
         return 'Familiemedlem'
 
     # Just return original text
-    return text
+    return None
 
 
 def _get_pmt_activity(text):
@@ -965,7 +965,7 @@ def on_payment_after_put(item, orginal=None):
 
             # Change to group org_id
             type_id = item.get('product_type_id', None)
-            text = item['product_name']
+
 
             try:
                 item['amount'] = float(item['amount'])
@@ -994,7 +994,7 @@ def on_payment_after_put(item, orginal=None):
                             person['memberships'][k]['payment'] = {
                                 'id': item['id'],
                                 'year': _get_pmt_year(item['product_name']),
-                                'exception': _get_pmt_type(text),
+                                'exception': _get_pmt_type(item['product_name']),
                                 'type': _get_pmt_person_age_membership(person),
                                 'amount': item['amount'],
                                 'paid': item['paid_date']
@@ -1018,26 +1018,26 @@ def on_payment_after_put(item, orginal=None):
                 if refund is True:
                     magazines = [x for x in magazines if x.get('id', item['id']) != item['id']]
                 else:
-                    year = _get_pmt_year(text)
+                    year = _get_pmt_year(item['product_name'])
                     # Magazines
                     # Original text
-                    name = text
+                    name = item['product_name']
                     # CHeck magazines
-                    if 'flydrone' in text.lower():
-                        name = text
+                    if 'flydrone' in item['product_name'].lower():
+                        name = item['product_name']
                         flydrone_status, flydrone_result = _register_flydrone(item['person_id'])
                         if flydrone_status is False:
                             app.logger.error(f'[FLYDRONE] Error registering flydrone for {item["person_id"]}, result:')
                             app.logger.error(flydrone_result)
-                    elif 'fritt' in text.lower():
+                    elif 'fritt' in item['product_name'].lower():
                         name = 'Fritt Fall'
-                    elif 'flynytt' in text.lower():
+                    elif 'flynytt' in item['product_name'].lower():
                         name = 'Flynytt'
-                    elif 'gliding' in text.lower():
+                    elif 'gliding' in item['product_name'].lower():
                         name = 'Nordic Gliding'
-                    elif 'modell' in text.lower():
+                    elif 'modell' in item['product_name'].lower():
                         name = 'Modellinformasjon'
-                    elif 'flukt' in text.lower():
+                    elif 'flukt' in item['product_name'].lower():
                         name = 'Fri Flukt'
 
                     magazines.append(
@@ -1066,7 +1066,7 @@ def on_payment_after_put(item, orginal=None):
                 )
 
                 if status != 200:
-                    app.logger.exception('Error {} for payment id {}'.format(name, item['id']))
+                    app.logger.exception('Error {} for payment id {}'.format(item['product_name'], item['id']))
 
             elif type_id in [20, 22]:  # Federation/section
                 # Seksjonsavgifter
@@ -1078,7 +1078,7 @@ def on_payment_after_put(item, orginal=None):
                 else:
                     if type_id == 22:
                         product_type = 'Seksjonskontigent'
-                        activity = _get_pmt_activity(text)
+                        activity = _get_pmt_activity(item['product_name'])
                     else:
                         product_type = 'Forbundskontigent'
                         activity = 27
@@ -1087,8 +1087,8 @@ def on_payment_after_put(item, orginal=None):
                         'id': item['id'],
                         'name': product_type,
                         'activity': activity,
-                        'year': _get_pmt_year(text),
-                        'exception': _get_pmt_type(text),
+                        'year': _get_pmt_year(item['product_name']),
+                        'exception': _get_pmt_type(item['product_name']),
                         'type': _get_pmt_person_age_membership(person),
                         'paid': item['paid_date'],
                         'amount': item['amount'],
@@ -1105,7 +1105,7 @@ def on_payment_after_put(item, orginal=None):
                                                     {'federation': fed},
                                                     False, True, **{'_id': person['_id']})
                 if status != 200:
-                    app.logger.exception('Error {} for payment id {}'.format(product_type, item['id']))
+                    app.logger.exception('Error {} for payment id {}'.format(item['product_name'], item['id']))
 
 
 def on_person_after_post(items):
