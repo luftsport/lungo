@@ -143,12 +143,14 @@ def _register_flydrone(person_id):
                 app.logger.info('[FLYDRONE] No results of flydrone in person, trying flydrone register:')
                 _flydrone, _, _, flydrone_status = getitem_internal('flydrone', **{'personId': person_id})
                 if flydrone_status == 200:
+                    app.logger.info('[FLYDRONE] Found flydrone in flydrone register:')
+                    app.logger.info(_flydrone)
                     _fids['flydrone']['expiredOperatorRegistrationNumberTime'] = _flydrone['expiredOperatorRegistrationNumberTime']
                     _fids['flydrone']['personId'] = _flydrone['personId']
                     _fids['flydrone']['operatorRegistrationNumber'] = _flydrone['operatorRegistrationNumber']
                     _fids['flydrone']['status'] = _flydrone['status']
                 else:
-                    app.logger.info('[FLYDRONE] No results of flydrone in flydrone register:')
+                    app.logger.info(f'[FLYDRONE] No results of flydrone in flydrone register, status {flydrone_status}:')
 
             # We already have the registration stored!
             app.logger.info('[FLYDRONE] _fids:')
@@ -198,6 +200,7 @@ def _register_flydrone(person_id):
                                                           **lookup)
                 # Keep shadow in flydrone
                 if flydrone_status == 200:
+                    app.logger.info('[FLYDRONE] patching flydrone')
                     flydrone_lookup = {'_id': _flydrone['_id']}
 
                     flydrone_resp, _, _, put_status = put_internal('flydrone',
@@ -205,10 +208,17 @@ def _register_flydrone(person_id):
                                                                    False,
                                                                    True,
                                                                    **flydrone_lookup)
+                    app.logger.info('[FLYDRONE] PUT result:')
+                    app.logger.info(put_status)
+                    app.logger.info(flydrone_resp)
                 elif flydrone_status == 404:
+                    app.logger.info('[FLYDRONE] creating nre flydrone')
                     flydrone_resp, _, _, post_status, _ = post_internal(resource='flydrone',
                                                                         payl=_fids['flydrone'],
                                                                         skip_validation=True)
+                    app.logger.info('[FLYDRONE] POST result:')
+                    app.logger.info(post_status)
+                    app.logger.info(flydrone_resp)
 
                 if patch_status in [200, 201]:
                     # Create email and send!
