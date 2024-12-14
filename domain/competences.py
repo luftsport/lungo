@@ -78,6 +78,34 @@ process_definition = {
     'schema': _schema_process
 }
 
+# Search
+search_definition = {
+    'url': 'competences/search',
+    'item_title': 'Competences Search',
+    'datasource': {'source': RESOURCE_COLLECTION,
+                   'projection': {
+                       "_score": {"$meta": "textScore"},
+                       "title": 1,
+                       "type_id": 1,
+                       "id": 1,
+                       "person_id": 1,
+                       "_updated": 1,
+                       "_created": 1,
+                       "_version": 1
+                   },
+                   'default_sort': [("_score", {"$meta": "textScore"})],
+                   #'filter': {'_merged_to': {'$exists': False}}
+                   },
+    'additional_lookup': {
+        'url': 'regex("[\d{1,9}]+")',
+        'field': 'id',
+    },
+    'extra_response_fields': ['id'],
+    'resource_methods': ['GET'],
+    'item_methods': [],
+    'schema': _schema
+}
+
 # Aggregations
 agg_count_codes = {
     'url': 'competences/codes',
