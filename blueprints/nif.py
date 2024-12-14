@@ -149,6 +149,7 @@ def _register_flydrone(person_id):
                     if flydrone_status == 200:
                         app.logger.info('[FLYDRONE] Found flydrone in flydrone register:')
                         app.logger.info(_flydrone)
+                        _fids['flydrone'] = {}
                         _fids['flydrone']['expiredOperatorRegistrationNumberTime'] = _flydrone['expiredOperatorRegistrationNumberTime']
                         _fids['flydrone']['personId'] = _flydrone['personId']
                         _fids['flydrone']['operatorRegistrationNumber'] = _flydrone['operatorRegistrationNumber']
