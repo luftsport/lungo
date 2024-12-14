@@ -135,49 +135,55 @@ def _register_flydrone(person_id):
 
             _fids = person.get('_fids', {})
 
-            # Verfify if changes and what
-            type_of_change = None
-            try:
-                if 'flydrone' not in _fids:
-                    type_of_change = 'created'
-                else:
-                    if result['operatorRegistrationNumber'] != _fids['flydrone']['operatorRegistrationNumber']:
-                        type_of_change = 'new_registration_number'
-                    elif result['expiredOperatorRegistrationNumberTime'] != _fids['flydrone'][
-                        'expiredOperatorRegistrationNumberTime']:
-                        type_of_change = 'new_expiry'
-                    else:
-                        type_of_change = 'updated'
-            except Exception as e:
-                app.logger.error('[FLYDRONE] Could not assign type of change')
-                app.logger.exception(e)
-
-            # Set to new/updated
-            _fids['flydrone'] = result
-
-            resp, _, _, patch_status = patch_internal('persons_process',
-                                                      {'_fids': _fids},
-                                                      False,
-                                                      True,
-                                                      **lookup)
-
-            if patch_status in [200, 201]:
-                # Create email and send!
+            # We already have the registration stored!
+            if 'flydrone' in _fids and \
+                    _fids['flydrone']['operatorRegistrationNumber'] == result['operatorRegistrationNumber'] and \
+                    _fids['flydrone']['expiredOperatorRegistrationNumberTime'] == result['expiredOperatorRegistrationNumberTime']:
+                pass
+            else:
+                # Verfify if changes and what
+                type_of_change = None
                 try:
-                    send_email(
-                        recepient=person['primary_email'],
-                        subject='Flydrone.no registration',
-                        message=_gen_flydrone_email(
-                            person['first_name'],
-                            result['operatorRegistrationNumber'],
-                            result['expiredOperatorRegistrationNumberTime'],
-                            type_of_change)
-                    )
+                    if 'flydrone' not in _fids:
+                        type_of_change = 'created'
+                    else:
+                        if result['operatorRegistrationNumber'] != _fids['flydrone']['operatorRegistrationNumber']:
+                            type_of_change = 'new_registration_number'
+                        elif result['expiredOperatorRegistrationNumberTime'] != _fids['flydrone'][
+                            'expiredOperatorRegistrationNumberTime']:
+                            type_of_change = 'new_expiry'
+                        else:
+                            type_of_change = 'updated'
                 except Exception as e:
-                    app.logger.error('[FLYDRONE] error while sending email')
+                    app.logger.error('[FLYDRONE] Could not assign type of change')
                     app.logger.exception(e)
 
-            return patch_status, result
+                # Set to new/updated
+                _fids['flydrone'] = result
+
+                resp, _, _, patch_status = patch_internal('persons_process',
+                                                          {'_fids': _fids},
+                                                          False,
+                                                          True,
+                                                          **lookup)
+
+                if patch_status in [200, 201]:
+                    # Create email and send!
+                    try:
+                        send_email(
+                            recepient=person['primary_email'],
+                            subject='Flydrone.no registration',
+                            message=_gen_flydrone_email(
+                                person['first_name'],
+                                result['operatorRegistrationNumber'],
+                                result['expiredOperatorRegistrationNumberTime'],
+                                type_of_change)
+                        )
+                    except Exception as e:
+                        app.logger.error('[FLYDRONE] error while sending email')
+                        app.logger.exception(e)
+
+                return patch_status, result
 
     return status, result
 
