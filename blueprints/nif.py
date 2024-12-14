@@ -136,6 +136,21 @@ def _register_flydrone(person_id):
             _fids = person.get('_fids', {})
 
             # We already have the registration stored!
+            app.logger.info('[FLYDRONE] _fids from person:')
+            app.logger.info(_fids)
+            app.logger.info(type(_fids))
+            try:
+                app.logger.info(type(_fids['flydrone']['expiredOperatorRegistrationNumberTime']))
+            except:
+                pass
+            app.logger.info('[FLYDRONE] result from registering in flydrone: ')
+            app.logger.info(result)
+            app.logger.info(type(result))
+            try:
+                app.logger.info(type(result['expiredOperatorRegistrationNumberTime']))
+            except:
+                pass
+
             if 'flydrone' in _fids and \
                     _fids['flydrone']['operatorRegistrationNumber'] == result['operatorRegistrationNumber'] and \
                     _fids['flydrone']['expiredOperatorRegistrationNumberTime'] == result['expiredOperatorRegistrationNumberTime']:
