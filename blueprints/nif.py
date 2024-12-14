@@ -144,17 +144,20 @@ def _register_flydrone(person_id):
             # Make sure to get historical!
             if 'flydrone' not in _fids:
                 app.logger.info('[FLYDRONE] No results of flydrone in person, trying flydrone register:')
-                _flydrone, _, _, flydrone_status = getitem_internal('flydrone', **{'personId': person_id})
-                if flydrone_status == 200:
-                    app.logger.info('[FLYDRONE] Found flydrone in flydrone register:')
-                    app.logger.info(_flydrone)
-                    _fids['flydrone']['expiredOperatorRegistrationNumberTime'] = _flydrone['expiredOperatorRegistrationNumberTime']
-                    _fids['flydrone']['personId'] = _flydrone['personId']
-                    _fids['flydrone']['operatorRegistrationNumber'] = _flydrone['operatorRegistrationNumber']
-                    _fids['flydrone']['status'] = _flydrone['status']
-                else:
-                    app.logger.info(f'[FLYDRONE] No results of flydrone in flydrone register, status {flydrone_status}:')
-
+                try:
+                    _flydrone, _, _, flydrone_status = getitem_internal('flydrone', **{'personId': person_id})
+                    if flydrone_status == 200:
+                        app.logger.info('[FLYDRONE] Found flydrone in flydrone register:')
+                        app.logger.info(_flydrone)
+                        _fids['flydrone']['expiredOperatorRegistrationNumberTime'] = _flydrone['expiredOperatorRegistrationNumberTime']
+                        _fids['flydrone']['personId'] = _flydrone['personId']
+                        _fids['flydrone']['operatorRegistrationNumber'] = _flydrone['operatorRegistrationNumber']
+                        _fids['flydrone']['status'] = _flydrone['status']
+                    else:
+                        app.logger.info(f'[FLYDRONE] No results of flydrone in flydrone register, status {flydrone_status}:')
+                except Exception as e:
+                    app.logger.error('[FLYDRONE] Failed getimtem internal?')
+                    app.logger.exception(e)
             # We already have the registration stored!
             app.logger.info('[FLYDRONE] _fids:')
             app.logger.info(_fids)
