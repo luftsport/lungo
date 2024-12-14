@@ -9,6 +9,7 @@ from ext.app.eve_helper import eve_response, eve_error_response
 from eve.methods.post import post_internal
 from eve.methods.get import getitem_internal, get_internal
 from eve.methods.patch import patch_internal
+from eve.methods.put import put_internal
 from nif_rest_api_client import NifRestApiClient
 from dateutil import parser
 from nif_tools import KA
@@ -135,8 +136,20 @@ def _register_flydrone(person_id):
 
             _fids = person.get('_fids', {})
 
+            flydrone_status = 404
+            _flydrone = None
+            # Make sure to get historical!
+            if 'flydrone' not in _fids:
+                app.logger.info('[FLYDRONE] No results of flydrone in person, trying flydrone register:')
+                _flydrone, _, _, flydrone_status = getitem_internal('flydrone', **{'personId': person_id})
+                if flydrone_status == 200:
+                    _fids['flydrone']['expiredOperatorRegistrationNumberTime'] = _flydrone['expiredOperatorRegistrationNumberTime']
+                    _fids['flydrone']['personId'] = _flydrone['personId']
+                    _fids['flydrone']['operatorRegistrationNumber'] = _flydrone['operatorRegistrationNumber']
+                    _fids['flydrone']['status'] = _flydrone['status']
+
             # We already have the registration stored!
-            app.logger.info('[FLYDRONE] _fids from person:')
+            app.logger.info('[FLYDRONE] _fids:')
             app.logger.info(_fids)
             app.logger.info(type(_fids))
             try:
@@ -181,6 +194,20 @@ def _register_flydrone(person_id):
                                                           False,
                                                           True,
                                                           **lookup)
+                # Keep shadow in flydrone
+                if flydrone_status == 200:
+                    flydrone_lookup = {'_id': _flydrone['_id']}
+                else:
+                    flydrone_lookup = None
+                flydrone_resp, _, _, put_status = put_internal('flydrone',
+                                                               _fids['flydrone'],
+                                                               False,
+                                                               True,
+                                                               **flydrone_lookup)
+                if put_status == 404:
+                    flydrone_resp, _, _, post_status, _ = post_internal(resource='flydrone',
+                                                                        payl=_fids['flydrone'],
+                                                                        skip_validation=True)
 
                 if patch_status in [200, 201]:
                     # Create email and send!
