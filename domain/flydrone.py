@@ -1,10 +1,10 @@
 RESOURCE_COLLECTION = 'flydrone'
 
 _schema = {
-    'personId': {'type': 'int', 'unique': True},
-    'status': {'type': 'str'},
-    'operatorRegistrationNumber': {'type': 'str'},
-    'expiredOperatorRegistrationNumberTime': {'type': 'str'}
+    'personId': {'type': 'integer'},
+    'status': {'type': 'string'},
+    'operatorRegistrationNumber': {'type': 'string'},
+    'expiredOperatorRegistrationNumberTime': {'type': 'string'}
 }
 
 definition = {
@@ -17,10 +17,13 @@ definition = {
         'field': 'personId',
     },
     # 'pagination': False,
-    'extra_response_fields': ['personId'],
-    'versioning': True,
-    #'internal_resource': True,
+    # 'extra_response_fields': ['personId'],
+    'versioning': False,
+    # 'internal_resource': True,
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
+    'mongo_indexes': {
+        'personId': ([('personId', 1)], {'background': True})
+    },
     'schema': _schema
 }
