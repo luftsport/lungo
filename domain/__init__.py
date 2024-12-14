@@ -26,9 +26,9 @@ import aip_airspaces
 import geo_countries
 import geo_admin
 # ADS data from flightradar24
-# import ads
+import ads
 # import test, test_ref
-
+import flydrone
 DOMAIN = {
     # Tests Only local
     # "test": test.definition,
@@ -151,7 +151,10 @@ DOMAIN = {
     "geo_admin": geo_admin.definition,
 
     # ADS Data
-    #"ads": ads.definition,
-    #"ads_process": ads.process_definition,
+    "ads": ads.definition,
+    "ads_process": ads.process_definition,
+
+    # Flydrone (internal only)
+    "flydrone": flydrone.definition
 
 }
