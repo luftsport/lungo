@@ -178,6 +178,13 @@ def _register_flydrone(person_id):
             if 'flydrone' in _fids and \
                     _fids['flydrone']['operatorRegistrationNumber'] == result['operatorRegistrationNumber'] and \
                     _fids['flydrone']['expiredOperatorRegistrationNumberTime'] == result['expiredOperatorRegistrationNumberTime']:
+
+                if 'flydrone' not in person.get('_fids', {}):
+                    resp, _, _, patch_status = patch_internal('persons_process',
+                                                              {'_fids': _fids},
+                                                              False,
+                                                              True,
+                                                              **lookup)
                 pass
             else:
                 # Verfify if changes and what
