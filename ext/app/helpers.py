@@ -30,7 +30,10 @@ def _fix_naive(date_time):
         if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
             """self.org_created is naive, no timezone we assume UTC"""
             # date_time = date_time.replace(tzinfo=tz_local)
-            date_time = (date_time.replace(tzinfo=None) - date_time.utcoffset()).replace(tzinfo=tz_utc)
+            # date_time = (date_time.replace(tzinfo=None) - date_time.utcoffset()).replace(tzinfo=tz_utc)
+
+            offset = date_time.replace(tzinfo=tz_local).utcoffset()
+            date_time = (date_time.replace(tzinfo=None) - offset).replace(tzinfo=tz_utc)
 
     return date_time
 
