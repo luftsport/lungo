@@ -23,7 +23,3 @@ def send_email(recepient, subject, message, priority='2'):
         s.ehlo()
         s.sendmail(msg['From'], [msg['To']], msg.as_string().encode('utf-8'))
         s.quit()
-    else:
-        print(f'DID NOT SEND EMAIL, config is set to {SEND_EMAIL}')
-        print('[EMAIL]')
-        print(message)
