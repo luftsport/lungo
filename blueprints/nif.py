@@ -36,7 +36,7 @@ def get_nif_api_client() -> NifRestApiClient:
 
 def _gen_change_msg(entity_id, entity_type, change_type='Modified', org_id=376, realm='PROD'):
     payload = {}
-    sequence_ordinal = datetime.now(timezone.UTC)
+    sequence_ordinal = datetime.utcnow()
 
     payload['id'] = entity_id
 
@@ -166,7 +166,7 @@ def _register_flydrone(person_id):
                 app.logger.error('[FLYDRONE] error while sending email for created')
                 app.logger.exception(e)
 
-    elif _fix_naive(fid_flydrone['_updated']) > datetime.now(timezone.UTC) - timedelta(minutes=DEBOUNCE_MINUTES):
+    elif _fix_naive(fid_flydrone['_updated']) > datetime.utcnow() - timedelta(minutes=DEBOUNCE_MINUTES):
         return 304, None
     elif CHECK_EXPIRY is True and parser.parse(fid_flydrone['data']['expiredOperatorRegistrationNumberTime']).date() > datetime.now().date():
         return 304, None
