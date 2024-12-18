@@ -10,12 +10,12 @@ tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 
 def _get_end_of_year():
-    return datetime(datetime.utcnow().year, 12, 31, 23, 59, 59, 999999).replace(tzinfo=tz_utc)
+    return datetime(datetime.utcnow().year, 12, 31, 23, 59, 59, 999999).replace(tzinfo=tz_local)
 
 
 def _get_end_of_january():
     """End of jan next year"""
-    return datetime(datetime.utcnow().year + 1, 1, 31, 23, 59, 59, 999999).replace(tzinfo=tz_utc)
+    return datetime(datetime.utcnow().year + 1, 1, 31, 23, 59, 59, 999999).replace(tzinfo=tz_local)
 
 
 def _fix_naive(date_time):
@@ -29,7 +29,7 @@ def _fix_naive(date_time):
     if isinstance(date_time, datetime):
         if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
             """self.org_created is naive, no timezone we assume UTC"""
-            date_time = date_time.replace(tzinfo=tz_utc)
+            date_time = date_time.replace(tzinfo=tz_local)
 
     return date_time
 
