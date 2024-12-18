@@ -1,6 +1,6 @@
 from ext.auth.decorators import require_token, require_superadmin
 from nif_tools import KA
-import datetime
+from datetime import datetime, timezone, timedelta, UTC
 from hashlib import sha224
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
 # from eve.methods.post import post_internal
@@ -15,6 +15,8 @@ from dateutil import parser
 from nif_tools import KA
 from ext.app.product_checker import ProductChecker
 from ext.app.email import send_email
+from ext.app.fids import get_fid, create_fid, update_fid
+from ext.app.helpers import _fix_naive
 
 from functools import wraps
 import inspect
@@ -34,7 +36,7 @@ def get_nif_api_client() -> NifRestApiClient:
 
 def _gen_change_msg(entity_id, entity_type, change_type='Modified', org_id=376, realm='PROD'):
     payload = {}
-    sequence_ordinal = datetime.datetime.utcnow()
+    sequence_ordinal = datetime.now(UTC)
 
     payload['id'] = entity_id
 
@@ -83,7 +85,7 @@ def _get_nif_person_competences_list(person_id) -> list:
         try:
             return [x['id'] for x in result['competences'] if
                     x['passed'] is True or
-                    (x['expires'] is None or parser.parse(x['expires']) > datetime.datetime.now())]
+                    (x['expires'] is None or parser.parse(x['expires']) > datetime.now())]
         except Exception as e:
             pass  # print('[ERR]', e)
 
@@ -116,7 +118,7 @@ def _gen_flydrone_email(first_name, registration, registration_expiry, type_of_c
         'new_expiry': 'updated with a new expiry'
     }
     msg = f'Hi {first_name}\r\n\r\n'
-    msg += f'Your registration at flydrone.no has been {type_of_change}.\r\n\r\n'
+    msg += f'Your registration at flydrone.no has been {change_msg[type_of_change]}.\r\n\r\n'
     msg += f'Registration number: {registration}\r\n'
     msg += f'Registration expiry: {str(registration_expiry)[:10]}\r\n\r\n'
     msg += 'Remember to mark your model/drone with your operator number - this is mandatory\r\n\r\n'
@@ -127,117 +129,64 @@ def _gen_flydrone_email(first_name, registration, registration_expiry, type_of_c
 
 
 def _register_flydrone(person_id):
+    """
+    1. get fids, check if flydrone
+    2. create or update or do nothing
 
-    status, result = get_nif_api_client().register_drone_pilot(person_id)
-    app.logger.info('[FLYDRONE] Registering process results:')
-    app.logger.info(status)
-    app.logger.info(result)
-    if status is True:
-        person_status, person = _get_lungo_person(person_id)
-        if person_status is True:
-            lookup = {'_id': person['_id']}
+    :param person_id:
+    :return:
+    """
+    CHECK_EXPIRY = False
+    DEBOUNCE_MINUTES = 2
 
-            _fids = person.get('_fids', {})
+    fid_flydrone = get_fid(person_id, 'flydrone')
+    if fid_flydrone is None:
+        # CREATE Register new!!
+        status, result = get_nif_api_client().register_drone_pilot(person_id)
 
-            flydrone_status = 404
-            _flydrone = None
-            # Make sure to get historical!
-            if 'flydrone' not in _fids:
-                app.logger.info('[FLYDRONE] No results of flydrone in person, trying flydrone register:')
-                try:
-                    _flydrone, _, _, flydrone_status = getitem_internal('flydrone', **{'personId': person_id})
-                    if flydrone_status == 200:
-                        app.logger.info('[FLYDRONE] Found flydrone in flydrone register:')
-                        app.logger.info(_flydrone)
-                        _fids['flydrone'] = {}
-                        _fids['flydrone']['expiredOperatorRegistrationNumberTime'] = _flydrone['expiredOperatorRegistrationNumberTime']
-                        _fids['flydrone']['personId'] = _flydrone['personId']
-                        _fids['flydrone']['operatorRegistrationNumber'] = _flydrone['operatorRegistrationNumber']
-                        _fids['flydrone']['status'] = _flydrone['status']
-                    else:
-                        app.logger.info(f'[FLYDRONE] No results of flydrone in flydrone register, status {flydrone_status}:')
-                except Exception as e:
-                    app.logger.error('[FLYDRONE] Failed getimtem internal?')
-                    app.logger.exception(e)
-            # We already have the registration stored!
-            app.logger.info('[FLYDRONE] _fids:')
-            app.logger.info(_fids)
-            app.logger.info(type(_fids))
+        if status is True:
             try:
-                app.logger.info(type(_fids['flydrone']['expiredOperatorRegistrationNumberTime']))
-            except:
-                pass
-            app.logger.info('[FLYDRONE] result from registering in flydrone: ')
-            app.logger.info(result)
-            app.logger.info(type(result))
+                create_status, create_resp = create_fid(person_id, 'flydrone', result)
+                if create_status in [200, 201]:
+                    person_status, person = _get_lungo_person(person_id)
+                    app.logger.info(f'[FLYDRONE] sending email to {person_id}')
+                    send_email(
+                        recepient=person['primary_email'],
+                        subject='Flydrone.no registration',
+                        message=_gen_flydrone_email(
+                            person['first_name'],
+                            result['operatorRegistrationNumber'],
+                            result['expiredOperatorRegistrationNumberTime'],
+                            'created')
+                    )
+                    return create_status, create_resp
+                else:
+                    app.logger.info(f'[FLYDRONE] Could not create fid for {person_id}')
+            except Exception as e:
+                app.logger.error('[FLYDRONE] error while sending email for created')
+                app.logger.exception(e)
+
+    elif _fix_naive(fid_flydrone['_updated']) > datetime.now(UTC) - timedelta(minutes=DEBOUNCE_MINUTES):
+        return 304, None
+    elif CHECK_EXPIRY is True and parser.parse(fid_flydrone['data']['expiredOperatorRegistrationNumberTime']).date() > datetime.now().date():
+        return 304, None
+    else:
+        status, result = get_nif_api_client().register_drone_pilot(person_id)
+
+        if status is True:
             try:
-                app.logger.info(type(result['expiredOperatorRegistrationNumberTime']))
-            except:
-                pass
+                type_of_change = 'updated'
+                if fid_flydrone['data']['expiredOperatorRegistrationNumberTime'] != result['expiredOperatorRegistrationNumberTime']:
+                    type_of_change = 'new_expiry'
+                elif fid_flydrone['data']['operatorRegistrationNumber'] != result['operatorRegistrationNumber']:
+                    type_of_change = 'new_registration'
 
-            if 'flydrone' in _fids and \
-                    _fids['flydrone']['operatorRegistrationNumber'] == result['operatorRegistrationNumber'] and \
-                    _fids['flydrone']['expiredOperatorRegistrationNumberTime'] == result['expiredOperatorRegistrationNumberTime']:
+                create_status, create_resp = update_fid(person_id, 'flydrone', result)
+                if create_status in [200, 201]:
+                    person_status, person = _get_lungo_person(person_id)
 
-                if 'flydrone' not in person.get('_fids', {}):
-                    resp, _, _, patch_status = patch_internal('persons_process',
-                                                              {'_fids': _fids},
-                                                              False,
-                                                              True,
-                                                              **lookup)
-                pass
-            else:
-                # Verfify if changes and what
-                type_of_change = None
-                try:
-                    if 'flydrone' not in _fids:
-                        type_of_change = 'created'
-                    else:
-                        if result['operatorRegistrationNumber'] != _fids['flydrone']['operatorRegistrationNumber']:
-                            type_of_change = 'new_registration_number'
-                        elif result['expiredOperatorRegistrationNumberTime'] != _fids['flydrone'][
-                            'expiredOperatorRegistrationNumberTime']:
-                            type_of_change = 'new_expiry'
-                        else:
-                            type_of_change = 'updated'
-                except Exception as e:
-                    app.logger.error('[FLYDRONE] Could not assign type of change')
-                    app.logger.exception(e)
-
-                # Set to new/updated
-                _fids['flydrone'] = result
-
-                resp, _, _, patch_status = patch_internal('persons_process',
-                                                          {'_fids': _fids},
-                                                          False,
-                                                          True,
-                                                          **lookup)
-                # Keep shadow in flydrone
-                if flydrone_status == 200:
-                    app.logger.info('[FLYDRONE] patching flydrone')
-                    flydrone_lookup = {'_id': _flydrone['_id']}
-
-                    flydrone_resp, _, _, put_status = put_internal('flydrone',
-                                                                   _fids['flydrone'],
-                                                                   False,
-                                                                   True,
-                                                                   **flydrone_lookup)
-                    app.logger.info('[FLYDRONE] PUT result:')
-                    app.logger.info(put_status)
-                    app.logger.info(flydrone_resp)
-                elif flydrone_status == 404:
-                    app.logger.info('[FLYDRONE] creating nre flydrone')
-                    flydrone_resp, _, _, post_status, _ = post_internal(resource='flydrone',
-                                                                        payl=_fids['flydrone'],
-                                                                        skip_validation=True)
-                    app.logger.info('[FLYDRONE] POST result:')
-                    app.logger.info(post_status)
-                    app.logger.info(flydrone_resp)
-
-                if patch_status in [200, 201]:
-                    # Create email and send!
-                    try:
-                        app.logger.error(f'[FLYDRONE] sending email to {person_id}')
+                    if type_of_change not in ['updated']:
+                        app.logger.info(f'[FLYDRONE] sending email to {person_id}')
                         send_email(
                             recepient=person['primary_email'],
                             subject='Flydrone.no registration',
@@ -247,13 +196,16 @@ def _register_flydrone(person_id):
                                 result['expiredOperatorRegistrationNumberTime'],
                                 type_of_change)
                         )
-                    except Exception as e:
-                        app.logger.error('[FLYDRONE] error while sending email')
-                        app.logger.exception(e)
+                    return create_status, create_resp
+                else:
+                    app.logger.info(f'[FLYDRONE] Could not create fid for {person_id}')
+                    app.logger.error(f'[FLYDRONE] error while sending email for {type_of_change}')
 
-                return patch_status, result
+            except Exception as e:
+                app.logger.error(f'[FLYDRONE] error while updating flydrone')
+                app.logger.exception(e)
 
-    return status, result
+    return 500, 'Unknown'
 
 
 @NIF.route('/api-doc', methods=['GET'])
@@ -268,7 +220,7 @@ def get_paths():
 def generate_change_message():
     data = request.get_json()
     status, response = _gen_change_msg(data['entity_id'], data['entity_type'])
-    return eve_response(response, 200 if status is True else 500)
+    return eve_response(response, status)
     # return {}, 201
 
 
@@ -335,6 +287,19 @@ def get_organization_licenses(org_id):
     :return:
     """
     status, licenses = get_nif_api_client().get_org_licenses(org_id)
+    return eve_response(licenses, 200 if status is True else 404)
+
+
+@NIF.route('licenses/fed/<string:xorg_id>', methods=['GET'])
+@require_token()
+def get_fed_licenses(xorg_id):
+    """
+    Uses KA, no access in nif api
+    :param org_id:
+    :return:
+    """
+    xorg_id = 'cfp50qbs0001uc7db6o0'
+    status, licenses = get_nif_api_client().get_fed_licenses(xorg_id)
     return eve_response(licenses, 200 if status is True else 404)
 
 
@@ -416,9 +381,9 @@ def flydrone(person_id):
     elif request.method == 'POST':
 
         status, result = _register_flydrone(person_id)
-        if status in [200, 201]:  # result from patch, if status is False, error
+        if status in [200, 201, 304]:  # result from patch, if status is False, error
             return eve_response(result, status)
 
     return eve_error_response(
-        "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.",
+        "The requested URL was not found on the server... If you entered the URL manually please check your spelling and try again.",
         404)

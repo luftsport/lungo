@@ -3,8 +3,7 @@ To hook all the different changes to our api!
 """
 from eve.methods.patch import patch_internal
 from eve.methods.get import get_internal, getitem_internal
-from datetime import datetime, timezone
-from operator import itemgetter
+from datetime import datetime, timezone, UTC
 from dateutil import tz
 from dateutil import parser
 from flask import Response, request as flask_request, abort, current_app as app, g
@@ -19,8 +18,23 @@ import socketio
 from blueprints.fai import upsert_fai
 from blueprints.nif import _register_flydrone
 # import dateutil.parser
+from ext.app.fids import get_fids
 
 from ext.scf import FAI_SYNC
+
+from ext.app.helpers import (
+    _get_merged_from,
+    _get_now,
+    _get_org,
+    _get_person,
+    _get_functions_types,
+    _get_end_of_year,
+    _get_end_of_january,
+    _compare_list_of_dicts,
+    _compare_lists,
+    _compare_list_of_dicts_no_id,
+    _fix_naive
+)
 
 RESOURCE_PERSONS_PROCESS = 'persons_process'
 RESOURCE_FUNCTIONS_PROCESS = 'functions_process'
@@ -115,14 +129,14 @@ def _add_payment_for_next_year(memberships) -> list:
     """
     _payment = {
         "id": 9999999999,
-        "year": datetime.utcnow().year + 1,
+        "year": datetime.now(UTC).year + 1,
         "exception": None,
         "type": "Senior",
         "amount": 0.0,
-        "paid": "{}-11-01T00:00:00.000000Z".format(datetime.utcnow().year + 1)
+        "paid": "{}-11-01T00:00:00.000000Z".format(datetime.now(UTC).year + 1)
     }
     try:
-        _start_date = datetime(datetime.utcnow().year, 11, 1).replace(tzinfo=tz_utc)
+        _start_date = datetime(datetime.now(UTC).year, 11, 1).replace(tzinfo=tz_utc)
 
         for k, v in enumerate(memberships.copy()):
             if 'payment' not in v and 'from_date' in v:
@@ -169,17 +183,24 @@ def _after_get_person(item):
             'secret_phone_work', False) is False:
         item['address'].pop('phone_work', None)
 
+    # Add fids if exists
+    fids = get_fids(item['id'])
+    if fids is not None:
+        item['_fids'] = fids
+
     return item
 
 
 def after_get_person(response):
     if '_merged_to' in response:
         # replace id with _merged_to
-        headers = {
-            'Location': '{}'.format(flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)),
-                                                                                         str(response.get('_merged_to',
-                                                                                                          0))))
+        headers = {'Location': '{}'.format(
+            # Also, rewrites to https
+            flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)), str(response.get('_merged_to', 0)))
+        )
         }
+        #from flask import redirect
+        #return redirect(headers['Location'], 301)
         return abort(
             Response(
                 response=None,
@@ -201,157 +222,6 @@ def assign_lookup(resource, request, lookup):
     if app.auth.resource_lookup is not None:
         for key, val in app.auth.resource_lookup.items():
             lookup[key] = val
-
-
-def _get_end_of_year():
-    return datetime(datetime.utcnow().year, 12, 31, 23, 59, 59, 999999).replace(tzinfo=tz_utc)
-
-
-def _get_end_of_january():
-    """End of jan next year"""
-    return datetime(datetime.utcnow().year + 1, 1, 31, 23, 59, 59, 999999).replace(tzinfo=tz_utc)
-
-
-def _fix_naive(date_time):
-    if date_time is not None:
-        if isinstance(date_time, str):
-            try:
-                date_time = parser.parse(date_time)
-            except:
-                date_time = None
-
-    if isinstance(date_time, datetime):
-        if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
-            """self.org_created is naive, no timezone we assume UTC"""
-            date_time = date_time.replace(tzinfo=tz_utc)
-
-    return date_time
-
-
-def _get_now():
-    return datetime.utcnow().replace(tzinfo=tz_utc)
-
-
-def _get_person(person_id) -> dict:
-    """Get person from persons internal
-
-    :param person_id: Person id
-    :type person_id: int
-    :return org: Returns the person given
-    :rtype: dict
-    """
-    if person_id is not None:
-
-        person, _, _, status, _ = get_internal('persons', **{'id': person_id})
-
-        if status == 200:
-            if '_items' in person and len(person['_items']) == 1:
-                return person['_items'][0]
-
-    return {}
-
-
-def _get_merged_from(person_id) -> list:
-    """Get person ids merged to this person id
-
-    :param person_id:
-    :return:
-    """
-    try:
-        from domain.persons import agg_merged_from, RESOURCE_COLLECTION
-
-        merged_from_ids = []
-
-        pipeline = agg_merged_from.get('datasource', {}).get('aggregation', {}).get('pipeline', [])
-        pipeline[0]["$match"]["id"] = person_id
-        pipeline[2]["$graphLookup"]["startWith"] = person_id
-
-        datasource = agg_merged_from.get('datasource', {}).get('source', RESOURCE_COLLECTION)
-
-        persons = app.data.driver.db[datasource]
-
-        result = list(persons.aggregate(pipeline))
-
-        if len(result) == 1:
-            result = result[0]
-            merged_from_ids = result.get('merged_from', [])
-
-    except Exception as e:
-        app.logger.exception('Aggregation with database layer failed for person_id {}'.format(person_id))
-
-    return merged_from_ids
-
-
-def _compare_list_of_dicts(l1, l2, dict_id='id') -> bool:
-    """Sorts lists then compares on the given id in the dicts
-    :param l1: list of dicts
-    :type l1: list(dict)
-    :param l2: list of dicts
-    :type l2: list(dict)
-    :param dict_id: The id for the dicts
-    :type dict_id: any
-    :return: True if difference, False if not or can't decide
-    """
-    if len(l1) != len(l2):
-        return True
-
-    try:
-        list_1, list_2 = [sorted(l, key=itemgetter(dict_id)) for l in (l1, l2)]
-        pairs = zip(list_1, list_2)
-        if any(x != y for x, y in pairs):
-            return True
-        else:
-            return False  # They are equal
-    except:
-        return True  # We do not know if difference
-
-
-def _compare_list_of_dicts_no_id(l1, l2):
-    return [d for d in l1 if d not in l2] == []
-
-
-def _compare_lists(l1, l2) -> bool:
-    """Just compare set(list)
-    :param l1: list
-    :param l2: list
-    :return: True if difference, False if """
-    return set(l1) != set(l2)
-
-
-def _get_org(org_id) -> dict:
-    """Get org from organizations internal
-
-    :param org_id: Organization id
-    :type org_id: int
-    :return org: Returns the organization
-    :rtype: dict
-    """
-
-    org, _, _, status, _ = get_internal('organizations', **{'id': org_id})
-
-    if status == 200:
-        if '_items' in org and len(org['_items']) == 1:
-            return org['_items'][0]
-
-    return {}
-
-
-def _get_functions_types(type_id) -> dict:
-    """Get org from organizations internal
-
-    :param org_id: Organization id
-    :type org_id: int
-    :return org: Returns the organization
-    :rtype: dict
-    """
-
-    function_type, _, _, status, _ = get_internal('functions_types', **{'id': type_id})
-
-    if status == 200:
-        if '_items' in function_type and len(function_type['_items']) == 1:
-            return function_type['_items'][0]
-
-    return {}
 
 
 def on_function_post(items) -> None:
@@ -418,7 +288,7 @@ def on_function_put(response, original=None) -> None:
                                 'club': c['id'],
                                 'discipline': response['active_in_org_id'],
                                 'activity': org.get('main_activity', {}).get('id', 27),
-                                'from_date': response.get('from_date', datetime.utcnow())
+                                'from_date': response.get('from_date', datetime.now(UTC))
                             })
 
             else:
@@ -490,8 +360,7 @@ def on_function_put(response, original=None) -> None:
                 payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS,
                                                            **{
                                                                'person_id': {'$in': list(
-                                                                   set([person['id']] + _get_merged_from(
-                                                                       person['id'])))},
+                                                                   set([person['id']] + _get_merged_from(person['id'])))},
                                                                'org_id': {
                                                                    '$in': [x['club'] for x in memberships] + [
                                                                        v['org_id'] for k, v in NLF_ORG_STRUCTURE.items()
@@ -706,8 +575,7 @@ def on_competence_put(response, original=None):
 
         # Always remove stale competences
         # Note that _code is for removing old competences, should be removed
-        competences[:] = [d for d in competences if
-                          _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
+        competences[:] = [d for d in competences if _fix_naive(d.get('expiry')) >= _get_now() and d.get('_code', None) is not None]
         # print(competences)
         # If competence valid_to is None # or competence not passed
         if expiry is None:  # or passed is False:
@@ -1024,7 +892,7 @@ def on_payment_after_put(item, orginal=None):
                     if 'flydrone' in item['product_name'].lower():
                         name = item['product_name']
                         flydrone_status, flydrone_result = _register_flydrone(item['person_id'])
-                        if flydrone_status is False:
+                        if flydrone_status not in [200, 201, 304]:
                             app.logger.error(f'[FLYDRONE] Error registering flydrone for {item["person_id"]}, result:')
                             app.logger.error(flydrone_result)
                     elif 'fritt' in item['product_name'].lower():
