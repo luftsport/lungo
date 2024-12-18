@@ -51,7 +51,7 @@ definition = {
                       'receiver': ([('receiver_org_id', 1)], {'background': True}),
                       'paid_date': ([('paid_date', 1)], {'background': True}),
                       'person_id': ([('person_id', 1)], {'background': True}),
-                      'text': ([('product_type', 'text'), ('type_name', 'text')], {'background': True}),
+                      'text': ([('product_type', 'text'), ('product_name', 'text')], {'background': True}),
                       },
     'schema': _schema
 }
