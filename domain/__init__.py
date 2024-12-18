@@ -1,5 +1,12 @@
-import ka_clubs, ka_competence, ka_members, ka_orgs, ka_licenses, ka_org_activity
+import ka_clubs
+import ka_competence
+import ka_members
+import ka_orgs
+import ka_licenses
+import ka_org_activity
+
 import persons
+import persons_fids
 import integration_users, integration_changes
 import organizations, organization_types
 import functions, function_types
@@ -27,8 +34,9 @@ import geo_countries
 import geo_admin
 # ADS data from flightradar24
 import ads
+
 # import test, test_ref
-import flydrone
+
 DOMAIN = {
     # Tests Only local
     # "test": test.definition,
@@ -52,7 +60,8 @@ DOMAIN = {
     "persons_merged_from": persons.agg_merged_from,
     "persons_age_distribution": persons.agg_age_distribution,
     "persons_age_gender_bucket_distribution": persons.agg_age_gender_bucket_distribution,
-
+    # Foreign id/connections
+    "persons_fids": persons_fids.definition,
     # Custom Persons
 
     # Persons test for error id
@@ -154,7 +163,6 @@ DOMAIN = {
     "ads": ads.definition,
     "ads_process": ads.process_definition,
 
-    # Flydrone (internal only)
-    "flydrone": flydrone.definition
+
 
 }
