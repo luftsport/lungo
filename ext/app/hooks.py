@@ -3,7 +3,7 @@ To hook all the different changes to our api!
 """
 from eve.methods.patch import patch_internal
 from eve.methods.get import get_internal, getitem_internal
-from datetime import datetime, timezone, UTC
+from datetime import datetime, timezone, timezone
 from dateutil import tz
 from dateutil import parser
 from flask import Response, request as flask_request, abort, current_app as app, g
@@ -129,14 +129,14 @@ def _add_payment_for_next_year(memberships) -> list:
     """
     _payment = {
         "id": 9999999999,
-        "year": datetime.now(UTC).year + 1,
+        "year": datetime.now(timezone.UTC).year + 1,
         "exception": None,
         "type": "Senior",
         "amount": 0.0,
-        "paid": "{}-11-01T00:00:00.000000Z".format(datetime.now(UTC).year + 1)
+        "paid": "{}-11-01T00:00:00.000000Z".format(datetime.now(timezone.UTC).year + 1)
     }
     try:
-        _start_date = datetime(datetime.now(UTC).year, 11, 1).replace(tzinfo=tz_utc)
+        _start_date = datetime(datetime.now(timezone.UTC).year, 11, 1).replace(tzinfo=tz_utc)
 
         for k, v in enumerate(memberships.copy()):
             if 'payment' not in v and 'from_date' in v:
@@ -288,7 +288,7 @@ def on_function_put(response, original=None) -> None:
                                 'club': c['id'],
                                 'discipline': response['active_in_org_id'],
                                 'activity': org.get('main_activity', {}).get('id', 27),
-                                'from_date': response.get('from_date', datetime.now(UTC))
+                                'from_date': response.get('from_date', datetime.now(timezone.UTC))
                             })
 
             else:
