@@ -19,21 +19,23 @@ def _get_end_of_january():
 
 
 def _fix_naive(date_time):
-    if date_time is not None:
-        if isinstance(date_time, str):
-            try:
-                date_time = parser.parse(date_time)
-            except:
-                date_time = None
+    if date_time is not None and isinstance(date_time, datetime) is False:
+        # if isinstance(date_time, str):
+        try:
+            date_time = parser.parse(date_time)
+        except Exception as e:
+            app.logger.error(f'Fixing naive date time failed: {date_time}')
+            app.logger.exception(e)
+            date_time = None
 
     if isinstance(date_time, datetime):
-        if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
-            """self.org_created is naive, no timezone we assume UTC"""
-            # date_time = date_time.replace(tzinfo=tz_local)
-            # date_time = (date_time.replace(tzinfo=None) - date_time.utcoffset()).replace(tzinfo=tz_utc)
-
-            offset = date_time.replace(tzinfo=tz_local).utcoffset()
-            date_time = (date_time.replace(tzinfo=None) - offset).replace(tzinfo=tz_utc)
+        #if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
+        """self.org_created is naive, no timezone we assume UTC"""
+        # date_time = date_time.replace(tzinfo=tz_local)
+        # date_time = (date_time.replace(tzinfo=None) - date_time.utcoffset()).replace(tzinfo=tz_utc)
+        # All datetime is local from nif
+        offset = date_time.replace(tzinfo=tz_local).utcoffset()
+        date_time = (date_time.replace(tzinfo=None) - offset).replace(tzinfo=tz_utc)
 
     return date_time
 
