@@ -19,7 +19,7 @@ _schema = {
     'iata': {'type': 'string'},
     'icao': {'type': 'string'},
     'flight_no': {'type': 'string'},
-    'on_ground': {'type': 'string'},
+    'on_ground': {'type': 'integer'},
     'origin_iata': {'type': 'string'},
     'dest_iata': {'type': 'string'},
     'registration': {'type': 'string'},
