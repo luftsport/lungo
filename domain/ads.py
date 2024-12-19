@@ -1,7 +1,7 @@
 RESOURCE_COLLECTION = 'ads'
 
 _schema = {
-    #'id': {'type': 'integer',
+    'id': {'type': 'string'},
     #       'required': True,
     #       'unique': True},
     'location': {'type': 'dict',
