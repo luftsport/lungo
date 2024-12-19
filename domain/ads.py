@@ -1,9 +1,9 @@
 RESOURCE_COLLECTION = 'ads'
 
 _schema = {
-    'id': {'type': 'integer',
-           'required': True,
-           'unique': True},
+    #'id': {'type': 'integer',
+    #       'required': True,
+    #       'unique': True},
     'location': {'type': 'dict',
                  'schema': {'geo': {'type': 'point'}}
                  },
