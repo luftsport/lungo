@@ -15,7 +15,7 @@ _schema = {
     'heading': {'type': 'integer'},
 
     'code': {'type': 'string'},
-    'callsign': {'type': 'integer'},
+    'callsign': {'type': 'string'},
     'icao24': {'type': 'string'},
     'iata': {'type': 'number'},
     'icao': {'type': 'integer'},
