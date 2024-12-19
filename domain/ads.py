@@ -13,12 +13,11 @@ _schema = {
     'ground_speed': {'type': 'integer'},
     'vertical_speed': {'type': 'integer'},
     'heading': {'type': 'integer'},
-
     'code': {'type': 'string'},
     'callsign': {'type': 'string'},
     'icao24': {'type': 'string'},
-    'iata': {'type': 'number'},
-    'icao': {'type': 'integer'},
+    'iata': {'type': 'string'},
+    'icao': {'type': 'string'},
     'flight_no': {'type': 'string'},
     'on_ground': {'type': 'string'},
     'origin_iata': {'type': 'string'},
@@ -26,6 +25,7 @@ _schema = {
     'registration': {'type': 'string'},
     'squawk': {'type': 'string'},
     'time': {'type': 'integer'},
+
 }
 
 definition = {
