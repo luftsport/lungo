@@ -185,8 +185,9 @@ def _after_get_person(item):
             'secret_phone_work', False) is False:
         item['address'].pop('phone_work', None)
 
-    # Add fids if exists
-    if GET_PERSON_FIDS is True:
+    if flask_request.args.get('embedded', None) is not None and json.loads(flask_request.args.get('embedded', {})).get('fids', 0)==1:
+        # Add fids if exists
+        # if GET_PERSON_FIDS is True:
         fids = get_fids(item['id'])
         if fids is not None:
             item['_fids'] = fids

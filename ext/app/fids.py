@@ -34,15 +34,18 @@ def get_fid(person_id, fid_type):
 
 
 def get_fids(person_id):
-    person_ids = list(set(_get_merged_from(person_id) + [person_id]))
-    response, _, _, status, _ = get_internal(resource='persons_fids', **{'person_id': {'$in': person_ids}})
-    if status == 200:
-        fids = {}
+    response, _, _, status, _ = get_internal(resource='persons_fids', **{'person_id': person_id})
+    if status != 200:
+        person_ids = list(set(_get_merged_from(person_id) + [person_id]))
+        response, _, _, status, _ = get_internal(resource='persons_fids', **{'person_id': {'$in': person_ids}})
 
+    if status==200:
+        fids = {}
         for fid in response.get('_items', []):
             fids[fid['fid_type']] = fid['data']
 
-        return fids
+        return fids if len(fids)>0 else None
+
     return None
 
 
