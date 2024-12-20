@@ -92,6 +92,8 @@ COMPETENCE_FAI_MAPPING = {
 }
 # If True, will always run the patch on person object and not verify changes exists
 ALWAYS_PATCH = True
+# Merge in fids?
+GET_PERSON_FIDS = False
 
 NLF_ORG_STRUCTURE = {
     'fallskjerm': {'activity': 109, 'org_id': 90972},
@@ -184,9 +186,10 @@ def _after_get_person(item):
         item['address'].pop('phone_work', None)
 
     # Add fids if exists
-    fids = get_fids(item['id'])
-    if fids is not None:
-        item['_fids'] = fids
+    if GET_PERSON_FIDS is True:
+        fids = get_fids(item['id'])
+        if fids is not None:
+            item['_fids'] = fids
 
     return item
 
