@@ -16,7 +16,7 @@ from ext.app.decorators import _async, debounce
 import time
 import socketio
 from blueprints.fai import upsert_fai
-from blueprints.nif import _register_flydrone
+from blueprints.nif import _register_flydrone, get_person as get_nif_person
 # import dateutil.parser
 from ext.app.fids import get_fids
 
@@ -149,6 +149,19 @@ def _add_payment_for_next_year(memberships) -> list:
 
     return memberships
 
+def _verify_person(person):
+    status, nif_person = get_nif_person(person['id'])
+
+    if status is True:
+        try:
+            person['address']['country_id'] = nif_person['countryId']
+            return person
+        except KeyError as e:
+            pass
+        except Exception as e:
+            pass
+
+    return person
 
 def _after_get_person(item):
     # Modify memberships add missing payments
@@ -984,6 +997,10 @@ def on_person_after_post(items):
 
 
 def on_person_before_put(item, original):
+
+    # Verify with new nif api
+    item = _verify_person(item)
+
     # if original then use and not rebuild because
     # functions, competences, licenses, memberships and clubs, activities
     item['functions'] = original.get('functions', [])
