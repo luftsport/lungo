@@ -999,7 +999,10 @@ def on_person_after_post(items):
 def on_person_before_put(item, original):
 
     # Verify with new nif api
-    item = _verify_person(item)
+    try:
+        item = _verify_person(item)
+    except Exception as e:
+        app.logger.error('Could not verify person with nif api')
 
     # if original then use and not rebuild because
     # functions, competences, licenses, memberships and clubs, activities
