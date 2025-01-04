@@ -16,7 +16,7 @@ from ext.app.decorators import _async, debounce
 import time
 import socketio
 from blueprints.fai import upsert_fai
-from blueprints.nif import _register_flydrone, get_person as get_nif_person
+from blueprints.nif import _register_flydrone, get_nif_api_client
 # import dateutil.parser
 from ext.app.fids import get_fids
 
@@ -150,7 +150,7 @@ def _add_payment_for_next_year(memberships) -> list:
     return memberships
 
 def _verify_person(person):
-    status, nif_person = get_nif_person(person['id'])
+    status, nif_person = get_nif_api_client().get_person(person['id'])
 
     if status is True:
         try:
