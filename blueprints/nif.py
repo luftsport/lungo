@@ -72,6 +72,16 @@ def _get_ka_person_licenses(person_id):
     return ka.get_person_licenses(person_id)
 
 
+def _get_ka_invoice_logs():
+    ka = KA(KA_USERNAME, KA_PASSWORD)
+    return ka.get_invoice_jobs()
+
+
+def _get_ka_invoice_log(job_id):
+    ka = KA(KA_USERNAME, KA_PASSWORD)
+    return ka.get_invoice_job(job_id)
+
+
 def _get_nif_person_competences_list(person_id) -> list:
     """
     Get competences for person then mk list and return only unique id's for valid competence id's
@@ -387,3 +397,17 @@ def flydrone(person_id):
     return eve_error_response(
         "The requested URL was not found on the server... If you entered the URL manually please check your spelling and try again.",
         404)
+
+
+@NIF.route('ka/invoices/logs', methods=['GET'])
+@require_token()
+def ka_get_invoice_logs():
+    status, logs = _get_ka_invoice_logs()
+    return eve_response(logs, status)
+
+
+@NIF.route('ka/invoices/logs/<int:job_id>', methods=['GET'])
+@require_token()
+def ka_get_invoice_log(job_id):
+    status, logs = _get_ka_invoice_log(job_id)
+    return eve_response(logs, status)
