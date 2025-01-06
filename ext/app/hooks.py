@@ -123,32 +123,6 @@ def broadcast(change_data):
         pass
 
 
-def _add_payment_for_next_year(memberships) -> list:
-    """
-    Adding missing payments when members pay for next year before year end
-    :param memberships: list of membership dicts
-    :return: memberships
-    """
-    _payment = {
-        "id": 9999999999,
-        "year": datetime.utcnow().year + 1,
-        "exception": None,
-        "type": "Senior",
-        "amount": 0.0,
-        "paid": "{}-11-01T00:00:00.000000Z".format(datetime.utcnow().year + 1)
-    }
-    try:
-        _start_date = datetime(datetime.utcnow().year, 11, 1).replace(tzinfo=tz_utc)
-
-        for k, v in enumerate(memberships.copy()):
-            if 'payment' not in v and 'from_date' in v:
-                if v['from_date'] > _start_date:
-                    memberships[k]['payment'] = _payment
-    except Exception as e:
-        app.logger.error('Error adding next years payment to memberships for person', e)
-
-    return memberships
-
 def _verify_person(person):
     status, nif_person = get_nif_api_client().get_person(person['id'])
 
@@ -163,14 +137,10 @@ def _verify_person(person):
 
     return person
 
-def _after_get_person(item):
-    # Modify memberships add missing payments
-    if len(item.get('memberships', [])) > 0:
-        item['memberships'] = _add_payment_for_next_year(item.get('memberships', []))
 
+def _after_get_person(item):
     # Remove secret values
-    if item.get('address', {}).get('secret_address', False) is True and g.whitelist_secret_contact.get('secret_address',
-                                                                                                       False) is False:
+    if item.get('address', {}).get('secret_address', False) is True and g.whitelist_secret_contact.get('secret_address', False) is False:
         item['address'].pop('contact_id', None)
         item['address'].pop('contact_information_id', None)
         item['address'].pop('country_id', None)
@@ -198,7 +168,7 @@ def _after_get_person(item):
             'secret_phone_work', False) is False:
         item['address'].pop('phone_work', None)
 
-    if flask_request.args.get('embedded', None) is not None and json.loads(flask_request.args.get('embedded', {})).get('fids', 0)==1:
+    if flask_request.args.get('embedded', None) is not None and json.loads(flask_request.args.get('embedded', {})).get('fids', 0) == 1:
         # Add fids if exists
         # if GET_PERSON_FIDS is True:
         fids = get_fids(item['id'])
@@ -211,13 +181,14 @@ def _after_get_person(item):
 def after_get_person(response):
     if '_merged_to' in response:
         # replace id with _merged_to
-        headers = {'Location': '{}'.format(
-            # Also, rewrites to https
-            flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)), str(response.get('_merged_to', 0)))
-        )
+        headers = {
+            'Location': '{}'.format(
+                # Also, rewrites to https
+                flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)), str(response.get('_merged_to', 0)))
+            )
         }
-        #from flask import redirect
-        #return redirect(headers['Location'], 301)
+        # from flask import redirect
+        # return redirect(headers['Location'], 301)
         return abort(
             Response(
                 response=None,
@@ -1004,7 +975,6 @@ def on_person_after_post(items):
 
 
 def on_person_before_put(item, original):
-
     # Verify with new nif api
     try:
         item = _verify_person(item)
