@@ -720,25 +720,30 @@ def _get_pmt_activity(text):
     return 27
 
 
-def _get_pmt_person_age_membership(person):
-    membership = 'Senior'
+def _get_pmt_person_age_membership(person, year):
+    """
+    If person becomes older
+    :param person:
+    :param year:
+    :return:
+    """
     try:
-        age = datetime.now().year - person.get('birth_date').year - 1
+        age = year - person.get('birth_date').year
     except:
-        age = datetime.now().year - date_parse(person.get('birth_date')).year - 1
+        age = year - date_parse(person.get('birth_date')).year
 
     if age <= 12:
-        membership = 'Barn'
+        return 'Barn'
     elif age > 12 and age <= 18:
-        membership = 'Ungdom'
+        return 'Ungdom'
     elif age > 18 and age <= 25:
-        membership = 'Junior'
+        return 'Junior'
     elif age > 25 and age <= 66:
-        membership = 'Senior'
-    elif age > 66:
-        membership = 'Pensjonist'
+        return 'Senior'
+    elif age >= 67:
+        return 'Pensjonist'
 
-    return membership
+    return 'Senior'
 
 
 def _get_org_id_and_activity(club_id):
@@ -874,11 +879,12 @@ def on_payment_after_put(item, orginal=None):
                         if refund is True:
                             person['memberships'][k].pop('payment', None)
                         else:
+                            year = _get_pmt_year(item['product_name'])
                             person['memberships'][k]['payment'] = {
                                 'id': item['id'],
-                                'year': _get_pmt_year(item['product_name']),
+                                'year': year,
                                 'exception': _get_pmt_type(item['product_name']),
-                                'type': _get_pmt_person_age_membership(person),
+                                'type': _get_pmt_person_age_membership(person, year),
                                 'amount': item['amount'],
                                 'paid': item['paid_date']
                             }
@@ -966,13 +972,14 @@ def on_payment_after_put(item, orginal=None):
                         product_type = 'Forbundskontigent'
                         activity = 27
 
+                    year = _get_pmt_year(item['product_name'])
                     fed.append({
                         'id': item['id'],
                         'name': product_type,
                         'activity': activity,
                         'year': _get_pmt_year(item['product_name']),
                         'exception': _get_pmt_type(item['product_name']),
-                        'type': _get_pmt_person_age_membership(person),
+                        'type': _get_pmt_person_age_membership(person, year),
                         'paid': item['paid_date'],
                         'amount': item['amount'],
                     })
