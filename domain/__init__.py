@@ -34,6 +34,7 @@ import geo_countries
 import geo_admin
 # ADS data from flightradar24
 import ads
+import dev
 
 # import test, test_ref
 
@@ -163,6 +164,7 @@ DOMAIN = {
     "ads": ads.definition,
     "ads_process": ads.process_definition,
 
-
+    # Dev
+    "dev": dev.definition,
 
 }
