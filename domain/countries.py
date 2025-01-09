@@ -3,6 +3,7 @@ _schema = {
     'id': {'type': 'integer',
            'required': True},
     'name': {'type': 'string'},
+    'name_en': {'type': 'string'},
     'iso_alpha2': {'type': 'string'},
     'iso_alpha3': {'type': 'string'}
 }
@@ -21,7 +22,7 @@ definition = {
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'mongo_indexes': {'country_id': ([('id', 1)], {'background': True}),
-                      'country_name': ([('name', 'text')], {'background': True})
+                      'country_name': ([('name', 'text'), ('name_en', 'text')], {'background': True})
                       },
     'schema': _schema
 }

@@ -123,13 +123,25 @@ def broadcast(change_data):
         pass
 
 
+def _get_country_id_from_name(country_name):
+    try:
+        response, _, _, status = getitem_internal('countries', **{'name_en': country_name})
+
+        if status == 200:
+            return response['id']
+    except:
+        pass
+
+    return 1500152
+
+
 def _verify_person(person):
     status, nif_person = get_nif_api_client().get_person(person['id'])
 
     if status is True:
         try:
             if person['address']['country_id'] in [0, None]:
-                person['address']['country_id'] = nif_person['countryId']
+                person['address']['country_id'] = _get_country_id_from_name(nif_person['country'])
             if person['nationality_id'] in [0, None]:
                 person['nationality_id'] = nif_person['countryId']
             return person
