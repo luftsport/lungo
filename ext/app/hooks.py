@@ -125,7 +125,7 @@ def broadcast(change_data):
 
 def _get_country_id_from_name(country_name):
     try:
-        response, _, _, status = getitem_internal('countries', **{'name_en': country_name})
+        response, _, _, status = getitem_internal('countries', **{'name': country_name})
 
         if status == 200:
             return response['id']
