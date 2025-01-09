@@ -128,7 +128,10 @@ def _verify_person(person):
 
     if status is True:
         try:
-            person['address']['country_id'] = nif_person['countryId']
+            if person['address']['country_id'] in [0, None]:
+                person['address']['country_id'] = nif_person['countryId']
+            if person['nationality_id'] in [0, None]:
+                person['nationality_id'] = nif_person['countryId']
             return person
         except KeyError as e:
             pass
