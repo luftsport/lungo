@@ -62,24 +62,33 @@ def _gen_change_msg(entity_id, entity_type, change_type='Modified', org_id=376, 
     return status, response
 
 
+def _get_KA():
+    return KA(KA_USERNAME, KA_PASSWORD)
+
+
 def _get_ka_person_competences(person_id):
-    ka = KA(KA_USERNAME, KA_PASSWORD)
+    ka = _get_KA()
     return ka.get_person_competence(person_id)
 
 
 def _get_ka_person_licenses(person_id):
-    ka = KA(KA_USERNAME, KA_PASSWORD)
+    ka = _get_KA()
     return ka.get_person_licenses(person_id)
 
 
 def _get_ka_invoice_logs():
-    ka = KA(KA_USERNAME, KA_PASSWORD)
+    ka = _get_KA()
     return ka.get_invoice_jobs()
 
 
 def _get_ka_invoice_log(job_id):
-    ka = KA(KA_USERNAME, KA_PASSWORD)
+    ka = _get_KA()
     return ka.get_invoice_job(job_id)
+
+
+def _get_ka_person_details(person_id):
+    ka = _get_KA()
+    return ka.get_person_details(person_id)
 
 
 def _get_nif_person_competences_list(person_id) -> list:
@@ -411,3 +420,10 @@ def ka_get_invoice_logs():
 def ka_get_invoice_log(job_id):
     status, logs = _get_ka_invoice_log(job_id)
     return eve_response(logs, status)
+
+
+@NIF.route('ka/persons/details/<int:person_id>', methods=['GET'])
+@require_token()
+def ka_get_person_details(person_id):
+    status, details = _get_ka_person_details(person_id)
+    return eve_response(details, status)
