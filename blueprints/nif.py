@@ -86,6 +86,11 @@ def _get_ka_invoice_log(job_id):
     return ka.get_invoice_job(job_id)
 
 
+def _get_ka_person(person_id):
+    ka = _get_KA()
+    return ka.get_person(person_id)
+
+
 def _get_ka_person_details(person_id):
     ka = _get_KA()
     return ka.get_person_details(person_id)
@@ -427,3 +432,10 @@ def ka_get_invoice_log(job_id):
 def ka_get_person_details(person_id):
     status, details = _get_ka_person_details(person_id)
     return eve_response(details, status)
+
+
+@NIF.route('ka/persons/<int:person_id>', methods=['GET'])
+@require_token()
+def ka_get_person(person_id):
+    status, person = _get_ka_person(person_id)
+    return eve_response(person, status)
