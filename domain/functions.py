@@ -121,7 +121,7 @@ search_definition = {
                        "_version": 1
                    },
                    'default_sort': [("_score", {"$meta": "textScore"})],
-                   #'filter': {'_merged_to': {'$exists': False}}
+                   # 'filter': {'_merged_to': {'$exists': False}}
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
@@ -248,6 +248,79 @@ agg_count_members_in_disciplines = {
                 {"$match": {"type_id": 10000000, "org_type_id": 14}},
                 {"$group": {"_id": {"org": "$active_in_org_id"}, "count": {"$sum": 1}}},
                 {"$sort": {"count": -1}}
+            ]
+        }
+    }
+}
+
+agg_count_cancelled_memberships_by_activity = {
+    'url': 'functions/memberships/activities/cancelled/count',
+    'item_title': 'Number of memberships cancelled per day for activities',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$match": {
+                    "type_id": 10000000,
+                    "to_date": {"$gte": "$from_date", "$lte": "$end_date"},
+                }},
+                {
+                    "$lookup": {
+                        "from": "organizations",
+                        "localField": "org_id",
+                        "foreignField": "id",
+                        "as": "ref_org"
+                    }
+                },
+                {"$unwind": '$ref_org'},
+                {"$match": {"ref_org.activities.id": {"$in": "$activities"}}},
+                {"$addFields": {
+                    "ddaaa": {
+                        "$toDate": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%d",
+                                "date": "$to_date"
+                            }
+                        }
+                    }
+                }
+                },
+                {"$group": {"_id": {"person": "$person_id", "ddate": "$ddaaa"}, "person_count": {"$sum": 1}}},
+                {"$group": {"_id": {"date": "$_id.ddate"}, "count": {"$sum": 1}}},
+                {"$sort": {"_id.date": -1}}
+            ]
+        }
+    }
+}
+
+agg_count_cancelled_memberships_by_org = {
+    'url': 'functions/memberships/organization/cancelled/count',
+    'item_title': 'Number of memberships cancelled per day for activities',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$match": {
+                    "org_id": "$organization_id",
+                    "type_id": 10000000,
+                    "to_date": {"$gte": "$from_date", "$lte": "$end_date"},
+                }},
+                {"$addFields": {
+                    "ddaaa": {
+                        "$toDate": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%d",
+                                "date": "$to_date"
+                            }
+                        }
+                    }
+                }
+                },
+                {"$group": {"_id": {"person": "$person_id", "ddate": "$ddaaa"}, "person_count": {"$sum": 1}}},
+                {"$group": {"_id": {"date": "$_id.ddate"}, "count": {"$sum": 1}}},
+                {"$sort": {"_id.date": -1}}
             ]
         }
     }
