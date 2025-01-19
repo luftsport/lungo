@@ -88,9 +88,12 @@ DOMAIN = {
     "functions_get_persons_by_type_and_orgs": functions.agg_get_persons_by_type_and_orgs,
     "functions_memberships_count": functions.agg_count_members_on_date,
     "functions_memberships_disciplines_count": functions.agg_count_members_in_disciplines,
+    "functions_count_cancelled_memberships_by_activity": functions.agg_count_cancelled_memberships_by_activity,
+    "functions_count_cancelled_memberships_by_org_id": functions.agg_count_cancelled_memberships_by_org,
     # Functions types
     "functions_types": function_types.definition,
     "functions_types_search": function_types.search_definition,
+
 
     # Competences
     "competences": competences.definition,
