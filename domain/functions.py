@@ -237,6 +237,7 @@ agg_count_members_on_date = {
     }
 }
 
+
 agg_count_members_in_disciplines = {
     'url': 'functions/memberships/disciplines/count',
     'item_title': 'Number of memberships for all disciplines',
@@ -253,6 +254,7 @@ agg_count_members_in_disciplines = {
     }
 }
 
+# aggregate={"$start_date": "2024-01-01T00:00:00.000000Z", "$end_date": "2025-04-19T08:19:41.470000Z", "$activities": [237,238]}
 agg_count_cancelled_memberships_by_activity = {
     'url': 'functions/memberships/activities/cancelled/count',
     'item_title': 'Number of memberships cancelled per day for activities',
@@ -263,7 +265,7 @@ agg_count_cancelled_memberships_by_activity = {
             'pipeline': [
                 {"$match": {
                     "type_id": 10000000,
-                    "to_date": {"$gte": "$from_date", "$lte": "$end_date"},
+                    "to_date": {"$gte": "$start_date", "$lte": "$end_date"},
                 }},
                 {
                     "$lookup": {
@@ -294,6 +296,7 @@ agg_count_cancelled_memberships_by_activity = {
     }
 }
 
+# aggregate={"$from_date": "2020-01-01T00:00:00.000000Z", "$start_date": "2025-04-19T08:19:41.470000Z", "$organization_id": 811163}
 agg_count_cancelled_memberships_by_org = {
     'url': 'functions/memberships/organization/cancelled/count',
     'item_title': 'Number of memberships cancelled per day for activities',
@@ -305,7 +308,7 @@ agg_count_cancelled_memberships_by_org = {
                 {"$match": {
                     "org_id": "$organization_id",
                     "type_id": 10000000,
-                    "to_date": {"$gte": "$from_date", "$lte": "$end_date"},
+                    "to_date": {"$gte": "$start_date", "$lte": "$end_date"},
                 }},
                 {"$addFields": {
                     "ddaaa": {
@@ -313,6 +316,80 @@ agg_count_cancelled_memberships_by_org = {
                             "$dateToString": {
                                 "format": "%Y-%m-%d",
                                 "date": "$to_date"
+                            }
+                        }
+                    }
+                }
+                },
+                {"$group": {"_id": {"person": "$person_id", "ddate": "$ddaaa"}, "person_count": {"$sum": 1}}},
+                {"$group": {"_id": {"date": "$_id.ddate"}, "count": {"$sum": 1}}},
+                {"$sort": {"_id.date": -1}}
+            ]
+        }
+    }
+}
+
+agg_count_started_memberships_by_activity = {
+    'url': 'functions/memberships/activities/started/count',
+    'item_title': 'Number of memberships cancelled per day for activities',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$match": {
+                    "type_id": 10000000,
+                    "from_date": {"$gte": "$start_date", "$lte": "$end_date"},
+                }},
+                {
+                    "$lookup": {
+                        "from": "organizations",
+                        "localField": "org_id",
+                        "foreignField": "id",
+                        "as": "ref_org"
+                    }
+                },
+                {"$unwind": '$ref_org'},
+                {"$match": {"ref_org.activities.id": {"$in": "$activities"}}},
+                {"$addFields": {
+                    "ddaaa": {
+                        "$toDate": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%d",
+                                "date": "$from_date"
+                            }
+                        }
+                    }
+                }
+                },
+                {"$group": {"_id": {"person": "$person_id", "ddate": "$ddaaa"}, "person_count": {"$sum": 1}}},
+                {"$group": {"_id": {"date": "$_id.ddate"}, "count": {"$sum": 1}}},
+                {"$sort": {"_id.date": -1}}
+            ]
+        }
+    }
+}
+
+# aggregate={"$from_date": "2020-01-01T00:00:00.000000Z", "$end_date": "2025-04-19T08:19:41.470000Z", "$organization_id": 811163}
+agg_count_started_memberships_by_org = {
+    'url': 'functions/memberships/organization/started/count',
+    'item_title': 'Number of memberships started per day for activities',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$match": {
+                    "org_id": "$organization_id",
+                    "type_id": 10000000,
+                    "from_date": {"$gte": "$start_date", "$lte": "$end_date"},
+                }},
+                {"$addFields": {
+                    "ddaaa": {
+                        "$toDate": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%d",
+                                "date": "$from_date"
                             }
                         }
                     }
