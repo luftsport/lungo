@@ -12,7 +12,7 @@ from eve.methods.patch import patch_internal
 from eve.methods.put import put_internal
 from nif_rest_api_client import NifRestApiClient
 from dateutil import parser
-from nif_tools import KA
+from nif_tools import KA, SA
 from ext.app.product_checker import ProductChecker
 from ext.app.email import send_email
 from ext.app.fids import get_fid, create_fid, update_fid
@@ -66,6 +66,10 @@ def _get_KA():
     return KA(KA_USERNAME, KA_PASSWORD)
 
 
+def _get_SA():
+    return SA(KA_USERNAME, KA_PASSWORD)
+
+
 def _get_ka_person_competences(person_id):
     ka = _get_KA()
     return ka.get_person_competence(person_id)
@@ -94,6 +98,11 @@ def _get_ka_person(person_id):
 def _get_ka_person_details(person_id):
     ka = _get_KA()
     return ka.get_person_details(person_id)
+
+
+def _get_sa_organization(org_id):
+    sa = _get_SA()
+    return sa.get_organization(org_id)
 
 
 def _get_nif_person_competences_list(person_id) -> list:
@@ -192,7 +201,8 @@ def _register_flydrone(person_id):
 
     elif _fix_naive(fid_flydrone['_updated']) > _fix_naive(datetime.utcnow() - timedelta(minutes=DEBOUNCE_MINUTES)):
         return 304, None
-    elif CHECK_EXPIRY is True and parser.parse(fid_flydrone['data']['expiredOperatorRegistrationNumberTime']).date() > datetime.now().date():
+    elif CHECK_EXPIRY is True and parser.parse(
+            fid_flydrone['data']['expiredOperatorRegistrationNumberTime']).date() > datetime.now().date():
         return 304, None
     else:
         status, result = get_nif_api_client().register_drone_pilot(person_id)
@@ -200,7 +210,8 @@ def _register_flydrone(person_id):
         if status is True:
             try:
                 type_of_change = 'updated'
-                if fid_flydrone['data']['expiredOperatorRegistrationNumberTime'] != result['expiredOperatorRegistrationNumberTime']:
+                if fid_flydrone['data']['expiredOperatorRegistrationNumberTime'] != result[
+                    'expiredOperatorRegistrationNumberTime']:
                     type_of_change = 'new_expiry'
                 elif fid_flydrone['data']['operatorRegistrationNumber'] != result['operatorRegistrationNumber']:
                     type_of_change = 'new_registration'
@@ -378,7 +389,7 @@ def product_checker(person_id):
         if '/healthcheck' not in r:
             print(r)
     try:
-        ka = KA(KA_USERNAME, KA_PASSWORD)
+        ka = _get_KA()
         pc = ProductChecker(ka=ka)
         status, response = pc.check(person_id, dry_run=True)
         return eve_response(response, 200 if status is False else 201)
@@ -439,3 +450,10 @@ def ka_get_person_details(person_id):
 def ka_get_person(person_id):
     status, person = _get_ka_person(person_id)
     return eve_response(person, status)
+
+
+@NIF.route('sa/organizations/<int:org_id>', methods=['GET'])
+@require_token()
+def sa_get_organization(org_id):
+    status, organization = _get_sa_organization(org_id)
+    return eve_response(organization, status)
