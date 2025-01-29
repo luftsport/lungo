@@ -5,10 +5,13 @@ from urllib.parse import urlencode
 import base64
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
 from ext.auth.decorators import require_token
-from ext.scf import FAI_USERNAME, FAI_PASSWD, FAI_URL
+from ext.scf import FAI_USERNAME, FAI_PASSWD, FAI_URL, COMPETENCE_FAI_MAPPING_IDS, FAI_ID_MAPPINGS_INV, COMPETENCE_FAI_MAPPING
 from ext.app.eve_helper import eve_response, eve_abort
 from eve.methods.get import getitem_internal
+from eve.methods.post import post_internal
+from eve.methods.patch import patch_internal
 from datetime import datetime
+from dateutil import parser
 
 Fai = Blueprint('FAI resources', __name__)
 
@@ -84,7 +87,7 @@ def make_params():
     params = {
         'auth_username': FAI_USERNAME,
         'auth_password': base64.b64encode(FAI_PASSWD),
-        'country': 'NOR'
+        # 'country': 'NOR'
     }
     return params
 
@@ -94,8 +97,8 @@ def _get_license(license_id):
 
     try:
         return r.status_code, r.json()
-    except:
-        pass
+    except Exception as e:
+        app.logger.exception(f'[FAI] get license {license_id} gave status {r.status_code} with response {r.text}')
 
     return 500, 'Unknown error'
 
@@ -105,24 +108,21 @@ def _get_licenses(query, nac='NOR'):
 
     r = requests.get(f'{FAI_URL}/licences', params=query)
     try:
-        result = sorted([x for x in r.json() if x['IOC'] == nac and x['editable'] is True],
-                        key=lambda d: datetime.strptime(d["validuntil_lic"], '%Y-%m-%d'))
+        result = sorted([x for x in r.json() if x['IOC'] == nac and x['editable'] is True], key=lambda d: datetime.strptime(d["validuntil_lic"], '%Y-%m-%d'))
         return r.status_code, result
-    except:
-        pass
+    except Exception as e:
+        app.logger.exception(f'[FAI] get licenses with query {query} gave status {r.status_code} with response {r.text} and sorted {result}')
 
     return 500, 'Unknown error'
 
 
 def _create_or_update_license(license):
-    app.logger.info('[FAI PARAMS]')
-    app.logger.info(license)
     license.update(make_params())
     r = requests.get(f'{FAI_URL}/create', params=license)
     try:
         return r.status_code, r.json()
-    except:
-        pass
+    except Exception as e:
+        app.logger.exception(f'[FAI] create or update failed with status code {r.status_code} and response {r.text}')
 
     return 500, 'Unknown error'
 
@@ -133,120 +133,216 @@ def _get_ISO_country(country_id):
 
     try:
         response, _, _, status = getitem_internal('countries', **{'id': country_id})
-
         if status == 200:
             return response.get('iso_alpha3', 'NOR')
-    except:
-        pass
+    except Exception as e:
+        app.logger.exception(f'[FAI] error getting ISO country from id {country_id}')
 
     return 'NOR'
 
 
-def upsert_fai(person, competence_id, license_id, discipline) -> (bool, str, str):
-    """
-
-    :param person:
-    :param competence_id:
-    :param license_id:
-    :param discipline:
-    :return: bool status, str fai_person_id, int fai_license_id
-    """
-
+def _get_ISO_country_from_name(country_name):
     try:
-        _competence = next(x for x in person.get('competences') if x['id'] == competence_id)
+        response, _, _, status = getitem_internal('countries', **{'name_en': country_name})
+        if status == 200:
+            return response.get('iso_alpha3', 'NOR')
+    except Exception as e:
+        app.logger.exception(f'[FAI] error getting ISO country from name {country_name}')
 
-    except:
-        _competence = None
+    return 'NOR'
 
-    if _competence is not None:
 
-        params = {
-            'address1': person.get('address', {}).get('street_address', ''),
-            'address3': person.get('address', {}).get('zip', '') + ' ' + person.get('address', {}).get('city', ''),
-            'address_country': _get_ISO_country(person.get('address', {}).get('country_id', 1500152)),
-            'licence_number': person['id'],
-            'licencee_birthdate': str(person.get('birth_date', '1900-01-01'))[0:10],
-            'licencee_email': person.get('primary_email', ' ').strip(),
-            'licencee_firstname': person.get('first_name', '').strip(),
-            'licencee_gender': person.get('gender', ''),
-            'licencee_lastname': person.get('last_name', '').strip(),
-            'licencee_nationality': _get_ISO_country(person.get('nationality_id', 1500152)),
-            'licencee_residencecountry': _get_ISO_country(person.get('address', {}).get('country_id', 1500152)),
-            'phonemobile': person.get('address', {}).get('phone_mobile', ''),
+def _get_person(person_id):
+    response, _, _, status = getitem_internal('persons', **{'id': person_id})
+    return status, response
 
-            'dateissued': str(datetime.now().date()),
-            'discipline': discipline,
-            'validuntil': str(_competence.get('expiry', datetime.now().date()))[0:10]
+
+def _get_fid(person_id, fid_type='fai'):
+    response, _, _, status = getitem_internal('persons_fids', **{'person_id': person_id, 'fid_type': fid_type})
+    return status, response
+
+
+def _create_fid(fid):
+    response, _, _, status, location_header = post_internal('persons_fids', payl=fid)
+    return status, response
+
+
+def _update_fid(_id, fid):
+    # resource, payload=None, concurrency_check=False, skip_validation=False, **lookup
+    response, last_modified, etag, status = patch_internal('persons_fids', payload=fid, concurrency_check=False, skip_validation=False, **{'_id': _id})
+    return status, response
+
+
+def fix_fid(person_id, fai_person_id):
+    status, fid = _get_fid(person_id)
+    if status == 404:
+        return _create_fid({'person_id': person_id, 'fid_type': 'fai', 'data': {'fai_person_id': fai_person_id}})
+    elif status == 200:
+        return _update_fid(fid['_id'], {'data': {'fai_person_id': fai_person_id}})
+
+    app.logger.error(f'[FAI] Error sorting out fid gave status {status} and fid {fid}')
+    return 500, None
+
+
+def fai_create(person, competence, fai_person_id=None):
+    # Build license object:
+    license = {
+        'address1': person.get('address', {}).get('street_address', ''),
+        'address3': person.get('address', {}).get('zip', '') + ' ' + person.get('address', {}).get('city', ''),
+        'address_country': _get_ISO_country(person.get('address', {}).get('country_id', 0)),
+        'phone_mobile': person.get('address', {}).get('phone_mobile', ''),
+        'licence_number': str(person['id']),
+        'licencee_birthdate': str(person['birth_date'])[:10],
+        'licencee_email': person['primary_email'],
+        'licencee_firstname': person['first_name'],
+        'licencee_gender': person['gender'],
+        'licencee_lastname': person['last_name'],
+        'licencee_nationality': _get_ISO_country(person.get('nationality_id', 0)),
+        'licencee_residencecountry': _get_ISO_country(person.get('address', {}).get('country_id', 0)),
+        'dateissued': str(competence.get('date', datetime.now()))[:10],
+        'discipline': COMPETENCE_FAI_MAPPING_IDS[competence['type_id']],
+        'validuntil': str(competence['valid_until'])[:10],
+    }
+
+    # If we have the fai person id:
+    if fai_person_id is not None:
+        license['idlicencee'] = fai_person_id
+
+    # Add required params
+    license.update(make_params())
+
+    # Let's go!
+    s, r = _create_or_update_license(license)
+    if s in [200, 201]:
+        app.logger.debug(f'[FAI] created or updated fai license for competence {competence['id']}')
+
+    # If we also created the fai person then we need to get that id
+    if fai_person_id is None and r.get('success', False) is True:
+        # get license, then extract idlicencee
+        status, license = _get_license(r['idlicence'])
+        if status == 200:
+            r['fai_person_id'] = license['idlicencee_lic']
+
+    return s, r
+
+
+def fai_update(person, competence, fai_license_id):
+    # Get the licence
+    fai_status, fai_license = _get_license(fai_license_id)
+
+    if fai_status == 200:  # and fai_license.get('success', False) is True:
+
+        # Let's make it as simple as possible
+        license = {
+            'idlicence': fai_license['idlicence'],
+            'idlicencee': fai_license['idlicencee_lic'],
+            'licence_number': str(person['id']),
+            'licencee_birthdate': fai_license['birthdate_lip'],
+            'licencee_email': person['primary_email'],
+            'licencee_firstname': fai_license['givenname_lip'],
+            'licencee_gender': fai_license['gender_lip'],
+            'licencee_lastname': fai_license['surname_lip'],
+            'licencee_nationality': _get_ISO_country_from_name(fai_license['idnationality_lip']),
+            'licencee_residencecountry': _get_ISO_country_from_name(fai_license['idresidencecountry_lip']),
+            'dateissued': fai_license['dateissued_lic'],
+            'discipline': FAI_ID_MAPPINGS_INV[fai_license['idsport_lic']],
+            'validuntil': str(competence['valid_until'])[:10],
         }
 
-        # We have a fai id?
-        if '_fids' in person and 'fai_person_id' in person['_fids']:
-            params.update({
-                'idlicencee': person['_fids']['fai_person_id']
-            })
+        # Add required params
+        license.update(make_params())
+
+        # Let's go!
+        s, r = _create_or_update_license(license)
+
+        # Add fai person id, same as fai_license['idlicencee_lic']
+        r['idlicencee'] = license['idlicencee']
+
+        return s, r
+
+    app.logger.error(f'[FAI] Error getting fai license {fai_license_id} for updating triggered by competence {competence['id']}')
+    return fai_status, None
+
+
+def upsert_fai(competence):
+    # Get person
+    status, person = _get_person(competence['person_id'])
+    if status == 200:
+
+        # make sure it's the correct fai license, get existing from person competences!
+        person_competences = [x for x in person.get('competences', []) if x['type_id'] == competence['type_id']]
+
+        if len(person_competences) == 1:  # Exactly one - perfect!
+            person_competence = person_competences[0]
+        elif len(person_competences) > 1:  # Multiple, then choose newst
+            person_competence = sorted(person_competences, key=lambda d: parser.parse(d['valid_until']))
         else:
-            # Try to get person!
-            status, fai_person = _get_licenses(
-                query={'nac_org': 'NOR', 'search_number': person['id'], 'include_invalid': 0})
-            if status in [200]:
+            person_competence = None
+
+        # Assign the used fai license id if exists
+        if person_competence is not None and '_fai' in person_competence:
+            _fai_license_id = person_competence['_fai']['license_id']
+        else:
+            _fai_license_id = None
+
+        # We have a competence, person, now get those fai licenses?
+        fai_status, licenses = _get_licenses(query={'search_number': competence['person_id'], 'include_invalid': 0, 'discipline': COMPETENCE_FAI_MAPPING_IDS[competence['type_id']]})
+
+        if fai_status == 200:
+
+            # Get fai license - newest!
+            fai_licenses = [x for x in licenses if x['licencenumber_lic'] == f"{person['id']}" and x['Sport'] == COMPETENCE_FAI_MAPPING[competence['type_id']] and x['editable'] is True]
+
+            if len(fai_licenses) == 1:  # Exactly one - perfect!
+                fai_license = fai_licenses[0]
+            elif len(fai_licenses) > 1:  # Multiple, then choose newest expiry and then newest issued date
+                fai_license = [y[2] for y in sorted([(parser.parse(x['validuntil_lic']), parser.parse(x['dateissued_lic']), x) for x in fai_licenses], reverse=True)][0]
+            else:
+                fai_license = None
+
+            # Try to set fai person id, also if no
+            if fai_license is None:
+                # Try if other
                 try:
-                    params.update({
-                        'idlicencee': fai_person[0]['idlicencee']
-                    })
-                except Exception as e:
-                    app.logger.debug(f'[FAI] Exception finding licensee')
-                    app.logger.exception(e)
+                    fai_person_id = [x for x in fai_licenses if str(x['licencenumber_lic']) == str(person['id'])][0]['idlicencee']
+                except:
+                    fai_person_id = None
+            else:
+                fai_person_id = fai_license['idlicencee']
 
-        # We already have the fai license id in our existing competence
-        if '_fai' in _competence:
-            # Get the license and check if editable!
-            try:
-                status_code, response = _get_license(_competence['_fai'].get('license_id', None))
-                if status_code is True and response.get('editable', False) is not False:
-                    params.update({
-                        'idlicence': _competence['_fai'].get('license_id', None),  # 380469,
-                    })
-            except Exception as e:
-                app.logger.exception('Error removing competence from person')
-                app.logger.exception(e)
+            # See if we need to change anything?
+            if fai_license is not None:
+                if fai_license['validuntil_lic'] == str(competence["valid_until"][:10]):
+                    app.logger.debug(f'[FAI] Same date, no action taken for compentence {competence['id']} fai license {fai_license['idlicence']}')
+                    return 304, {'success': True, 'idlicence': fai_license['idlicence'], 'idlicencee': fai_person_id}
+                elif parser.parse(fai_license['validuntil_lic']) < parser.parse(str(competence["valid_until"][:10])):
+                    app.logger.debug(f'[FAI] Updating expiry longer for compentence {competence['id']} fai license {fai_license['idlicence']}')
+                    s, r = fai_update(person, competence, fai_license['idlicence'])
+                    if s in [200, 201]:
+                        _, _ = fix_fid(person['id'], fai_person_id)
+                    return s, r
+                elif parser.parse(fai_license['validuntil_lic']) > parser.parse(str(competence["valid_until"][:10])):
+                    app.logger.debug(f'[FAI] Updating expiry shorter for compentence {competence['id']} fai license {fai_license['idlicence']}')
+                    s, r = fai_update(person, competence, fai_license['idlicence'])
+                    if s in [200, 201]:
+                        _, _ = fix_fid(person['id'], fai_person_id)
+                    return s, r
 
-        status, result = _create_or_update_license(params)
-        app.logger.info('[FAI UPSERT 1]')
-        app.logger.info(result)
-        if status in [200, 201]:
+            elif fai_license is None:
+                app.logger.debug(f'[FAI] Creating new fai license for compentence {competence['id']}')
+                if fai_person_id is None:
+                    app.logger.debug(f'[FAI] No person in fai for person_id {competence['person_id']}')
+                s, r = fai_create(person, competence, fai_person_id)
+                if s in [200, 201]:
+                    _, _ = fix_fid(person['id'], r['fai_person_id'])
+                return s, r
 
-            # handle errors anyway!
-            if result.get('success', True) is False:
-                # {'success': False, 'message': }
-                if result.get('message', None) == 'The athlete has a same valid license for this period.':
-                    if 'idlicence' not in params:
-                        try:
-                            return True, params['idlicencee'], [x['idlicence'] for x in fai_person if x['idlicencee'] == params['idlicencee']][0]
-                        except Exception as e:
-                            app.logger.exception(e)
-                    else:
-                        try:
-                            return True, params['idlicencee'], params['idlicence']
-                        except Exception as e:
-                            app.logger.exception(e)
-                else:
-
-                    params.pop('idlicence', None)
-                    params.pop('idlicencee', None)
-                    status, result = _create_or_update_license(params)
-                    app.logger.info('[FAI UPSERT 2]')
-                    app.logger.info(result)
-                    if status in [200, 201]:
-                        return True, result.get('idlicencee', None), result.get('idlicence', None)
-
-            elif result.get('success', False) is True:
-                app.logger.info('[FAI] Resulting upsert:')
-                app.logger.info(result)
-                return True, result.get('idlicencee', None), result.get('idlicence', None)
         else:
-            app.logger.debug(f'[FAI] Error create or update license, status: {status} and result {result.text}')
+            app.logger.error(f'[FAI] Error getting licenses compentence {competence['id']} gave status {fai_status} and response {licenses}')
+            return fai_status, None
 
-        return False, None, None
+    app.logger.error(f'[FAI] Error getting person for compentence {competence['id']} gave status {status} and response {person}')
+    return status, None
 
 
 @Fai.route('/api-doc', methods=['GET'])
@@ -439,3 +535,9 @@ def update(licensee_id):
 
     response = requests.get('{}/create?{}'.format(FAI_URL, urlencode(query)))
     return eve_response(response.json(), response.status_code)
+
+
+@Fai.route("/country/<int:country_id>", methods=['GET'])
+@require_token()
+def get_country(country_id):
+    return eve_response(_get_ISO_country(country_id))
