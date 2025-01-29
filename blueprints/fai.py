@@ -136,7 +136,9 @@ def fai_create(person, competence, fai_person_id=None):
         status, license = _get_license(r['idlicence'])
         if status == 200:
             r['fai_person_id'] = license['idlicencee_lic']
-
+    elif fai_person_id:
+        r['fai_person_id'] = fai_person_id
+        
     return s, r
 
 
