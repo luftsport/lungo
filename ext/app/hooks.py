@@ -827,8 +827,7 @@ def on_payment_after_put(item, orginal=None):
                                                         True,
                                                         **{'_id': person['_id']})
                     if status != 200:
-                        app.logger.exception(
-                            'Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
+                        app.logger.exception('Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
 
             elif type_id == 23:  # Magazines
 

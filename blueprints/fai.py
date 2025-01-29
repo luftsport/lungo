@@ -16,73 +16,6 @@ from dateutil import parser
 
 Fai = Blueprint('FAI resources', __name__)
 
-"""
-Mapping:
-A = Motorfly 
-F = Fallskjerm
-H = HPS
-M = Modellfly (Aeromodelling hos FAI vel)
-B = Ballong
-S = Seilfly
-U = Sportsfly (som jeg vil anta er general aviation)
-
-MAPPING = {
-    109: "Parachuting",
-    111: "Gliding",
-    238: "General Aviation",
-    236: "Aeromodelling and Spacemodelling",
-    222: "Ballooning",
-    110: "Hang Gliding and Paragliding"
-}
-
-{
-17: '-',
-7: 'Aerobatics', 
-9: 'Aeromodelling',
-5: 'Aeromodelling and Spacemodelling',
-21: 'Airships',
-15: 'Amateur-built and Experimental Aircraft',
-16: 'Astronautics',
-1: 'Ballooning',
-23: 'FPV Racing',
-3: 'General Aviation',
-2: 'Gliding',
-13: 'Hang Gliding',
-4: 'Hang Gliding and Paragliding',
-20: 'Human Powered',
-11: 'Microlights and Paramotors',
-12: 'Motor Gliding',
-6: 'Parachuting',
-14: 'Paragliding',
-10: 'Rotorcraft',
-18: 'Space Modelling',
-22: 'Special Projects',
-19: 'UAV',
-8: 'Universal'
-}
-"""
-
-FAI_SPORTING_CODES = {
-    1: {'name': "Ballooning", 'initials': 'CIA', 'classes': [{'A': 'Free Balloons'}, {'B': 'Dirigibles, Airships'}]},
-    2: {'name': "General Aviation", 'initials': 'GAC', 'classes': [{'C': 'Aeroplanes'}, {'H': 'Dirigibles, Airships'}]},
-    3: {'name': "Gliding", 'initials': 'IGC', 'classes': [{'D': 'Gliders'}, {'DM': 'Motor Gliders'}]},
-    4: {'name': "Aeromodelling", 'initials': 'CIAM',
-        'classes': [{'F': 'Model Aircragt'}, {'S': 'Space Models'}, {'U': 'Unmanned Aerial Veichles'}]},
-    5: {'name': "Parachuting and Indoor Skydiving", 'initials': 'ISC', 'classes': [{'G': 'Parachutes, Wind Tunnels'}]},
-    6: {'name': "Aerobatics", 'initials': 'CIVA', 'classes': [{'C': 'Aeroplanes'}, {'D': 'Gliders'}]},
-    7: {'name': "Hang Gliding", 'initials': 'CIVL', 'classes': [{'O': 'Hang Gliders, Paragliders'}]},
-    8: {'name': "Astronautics", 'initials': 'ICARE', 'classes': [{'K': 'Spacecraft'}, {'P': 'Aero-Spacecraft'}]},
-    9: {'name': "Rotocraft", 'initials': 'CIG',
-        'classes': [{'E': 'Helicopters, Tilt Rotocraft, Autogyros, Multi-Rotors, Compound Helicopters'},
-                    {'M': 'Tilt-Wing/Tilt-Engine Aircraft'}]},
-    10: {'name': "Microlights and Paramotors", 'initials': 'CIMA',
-         'classes': [{'R': 'Microlight Aircraft, Microlight Autogyros, Powered Hang Gliders, Paramotors'}]},
-    11: {'name': "General", 'initials': 'CASI', 'classes': [{'I': 'Human Powered Aircraft'}, {'J': 'Jet Pack'}]},
-    12: {'name': "General", 'initials': 'CASI', 'classes': [{'All': 'All Classes'}]},
-    13: {'name': "General Aviation", 'initials': 'CIACA',
-         'classes': [{'CS': 'Solar-powered Aircraft'}, {'CE': 'Electrically powered aircraft'}]},
-}
-
 
 def make_params():
     params = {
@@ -195,7 +128,7 @@ def fai_create(person, competence, fai_person_id=None):
     # Let's go!
     s, r = _create_or_update_license(license)
     if s in [200, 201]:
-        app.logger.debug(f'[FAI] created or updated fai license for competence {competence['id']}')
+        app.logger.debug(f'[FAI] created or updated fai license for competence {competence["id"]}')
 
     # If we also created the fai person then we need to get that id
     if fai_person_id is None and r.get('success', False) is True:
@@ -241,7 +174,7 @@ def fai_update(person, competence, fai_license_id):
 
         return s, r
 
-    app.logger.error(f'[FAI] Error getting fai license {fai_license_id} for updating triggered by competence {competence['id']}')
+    app.logger.error(f'[FAI] Error getting fai license {fai_license_id} for updating triggered by competence {competence["id"]}')
     return fai_status, None
 
 
@@ -293,36 +226,36 @@ def upsert_fai(competence):
 
             # See if we need to change anything?
             if fai_license is not None:
-                if fai_license['validuntil_lic'] == str(competence["valid_until"][:10]):
-                    app.logger.debug(f'[FAI] Same date, no action taken for compentence {competence['id']} fai license {fai_license['idlicence']}')
+                if fai_license['validuntil_lic'] == str(competence["valid_until"])[:10]:
+                    app.logger.debug(f'[FAI] Same date, no action taken for compentence {competence["id"]} fai license {fai_license["idlicence"]}')
                     return 304, {'success': True, 'idlicence': fai_license['idlicence'], 'idlicencee': fai_person_id}
-                elif parser.parse(fai_license['validuntil_lic']) < parser.parse(str(competence["valid_until"][:10])):
-                    app.logger.debug(f'[FAI] Updating expiry longer for compentence {competence['id']} fai license {fai_license['idlicence']}')
+                elif parser.parse(fai_license['validuntil_lic']) < parser.parse(str(competence["valid_until"])[:10]):
+                    app.logger.debug(f'[FAI] Updating expiry longer for compentence {competence["id"]} fai license {fai_license["idlicence"]}')
                     s, r = fai_update(person, competence, fai_license['idlicence'])
                     if s in [200, 201]:
                         _, _ = fix_fid(person['id'], fai_person_id)
                     return s, r
-                elif parser.parse(fai_license['validuntil_lic']) > parser.parse(str(competence["valid_until"][:10])):
-                    app.logger.debug(f'[FAI] Updating expiry shorter for compentence {competence['id']} fai license {fai_license['idlicence']}')
+                elif parser.parse(fai_license['validuntil_lic']) > parser.parse(str(competence["valid_until"])[:10]):
+                    app.logger.debug(f'[FAI] Updating expiry shorter for compentence {competence["id"]} fai license {fai_license["idlicence"]}')
                     s, r = fai_update(person, competence, fai_license['idlicence'])
                     if s in [200, 201]:
                         _, _ = fix_fid(person['id'], fai_person_id)
                     return s, r
 
             elif fai_license is None:
-                app.logger.debug(f'[FAI] Creating new fai license for compentence {competence['id']}')
+                app.logger.debug(f'[FAI] Creating new fai license for compentence {competence["id"]}')
                 if fai_person_id is None:
-                    app.logger.debug(f'[FAI] No person in fai for person_id {competence['person_id']}')
+                    app.logger.debug(f'[FAI] No person in fai for person_id {competence["person_id"]}')
                 s, r = fai_create(person, competence, fai_person_id)
                 if s in [200, 201]:
                     _, _ = fix_fid(person['id'], r['fai_person_id'])
                 return s, r
 
         else:
-            app.logger.error(f'[FAI] Error getting licenses compentence {competence['id']} gave status {fai_status} and response {licenses}')
+            app.logger.error(f'[FAI] Error getting licenses compentence {competence["id"]} gave status {fai_status} and response {licenses}')
             return fai_status, None
 
-    app.logger.error(f'[FAI] Error getting person for compentence {competence['id']} gave status {status} and response {person}')
+    app.logger.error(f'[FAI] Error getting person for compentence {competence["id"]} gave status {status} and response {person}')
     return status, None
 
 
