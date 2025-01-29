@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 import base64
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
 from ext.auth.decorators import require_token
+from ext.app.fids import fid_exists, create_fid, update_fid
 from ext.scf import FAI_USERNAME, FAI_PASSWD, FAI_URL, COMPETENCE_FAI_MAPPING_IDS, FAI_ID_MAPPINGS_INV, COMPETENCE_FAI_MAPPING
 from ext.app.eve_helper import eve_response, eve_abort
 from eve.methods.get import getitem_internal
@@ -157,31 +158,11 @@ def _get_person(person_id):
     return status, response
 
 
-def _get_fid(person_id, fid_type='fai'):
-    response, _, _, status = getitem_internal('persons_fids', **{'person_id': person_id, 'fid_type': fid_type})
-    return status, response
-
-
-def _create_fid(fid):
-    response, _, _, status, location_header = post_internal('persons_fids', payl=fid)
-    return status, response
-
-
-def _update_fid(_id, fid):
-    # resource, payload=None, concurrency_check=False, skip_validation=False, **lookup
-    response, last_modified, etag, status = patch_internal('persons_fids', payload=fid, concurrency_check=False, skip_validation=False, **{'_id': _id})
-    return status, response
-
-
 def fix_fid(person_id, fai_person_id):
-    status, fid = _get_fid(person_id)
-    if status == 404:
-        return _create_fid({'person_id': person_id, 'fid_type': 'fai', 'data': {'fai_person_id': fai_person_id}})
-    elif status == 200:
-        return _update_fid(fid['_id'], {'data': {'fai_person_id': fai_person_id}})
+    if fid_exists(person_id, 'fai'):
+        return update_fid(person_id, 'fai', {'fai_person_id': fai_person_id})
 
-    app.logger.error(f'[FAI] Error sorting out fid gave status {status} and fid {fid}')
-    return 500, None
+    return create_fid(person_id, 'fai', {'fai_person_id': fai_person_id})
 
 
 def fai_create(person, competence, fai_person_id=None):
