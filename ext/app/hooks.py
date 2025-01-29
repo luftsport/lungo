@@ -20,7 +20,7 @@ from blueprints.nif import _register_flydrone, get_nif_api_client
 # import dateutil.parser
 from ext.app.fids import get_fids
 
-from ext.scf import FAI_SYNC
+from ext.scf import FAI_SYNC, COMPETENCE_FAI_MAPPING_IDS
 
 from ext.app.helpers import (
     _get_merged_from,
@@ -47,49 +47,8 @@ RESOURCE_MERGED_FROM = 'persons_merged_from'
 # meta types which are considered "kompetanse"
 COMPETENCE_META_TYPES = ['Kompetansedefinisjon']
 COMPETENCE_ATTESTATION_TYPES = [66677325, 66677394, 66679452, 66679458]
-"""
-66667584 A-SPO - SPORTSLISENS [238]
-66667674 M-SPO - SPORTSLISENS [27, 236]
-66669579 U-SPO - SPORTSLISENS [27, 237]
-66667695 NLF-S-SPO - SPORTSLISENS [27, 111]
-66667588 NLF-B-SPO - SPORTSLISENS [27, 235]
-66667720 NLF-U-SPO - Ikke i bruk [27, 237]
-66667614 F-SPO - FAI SPORTING LICENCE [109]
-66667663 H-SPO - NLF/HPS SPORTING LICENSE [110]
-17: '-',
-7: 'Aerobatics', 
-9: 'Aeromodelling',
-5: 'Aeromodelling and Spacemodelling',
-21: 'Airships',
-15: 'Amateur-built and Experimental Aircraft',
-16: 'Astronautics',
-1: 'Ballooning',
-23: 'FPV Racing',
-3: 'General Aviation',
-2: 'Gliding',
-13: 'Hang Gliding',
-4: 'Hang Gliding and Paragliding',
-20: 'Human Powered',
-11: 'Microlights and Paramotors',
-12: 'Motor Gliding',
-6: 'Parachuting',
-14: 'Paragliding',
-10: 'Rotorcraft',
-18: 'Space Modelling',
-22: 'Special Projects',
-19: 'UAV',
-8: 'Universal'
-"""
-COMPETENCE_FAI_MAPPING = {
-    66667584: 3,  # {'fai_type_id': 3 #'General Aviation'}, , , ]
-    66667674: 5,
-    66669579: 15,
-    66667695: 2,
-    66667588: 1,
-    # 66667720:
-    66667614: 6,
-    66667663: 4
-}
+
+
 # If True, will always run the patch on person object and not verify changes exists
 ALWAYS_PATCH = True
 # Merge in fids?
@@ -541,39 +500,24 @@ def on_competence_put(response, original=None):
 
             # Handle Fai sporting codes
             try:
-                if FAI_SYNC is True and response['type_id'] in list(COMPETENCE_FAI_MAPPING.keys()):
+                if FAI_SYNC is True and response['type_id'] in list(COMPETENCE_FAI_MAPPING_IDS.keys()):
 
                     # True, r['idlicencee'], r['idlicence']
-                    fai_status, fai_person_id, fai_license_id = upsert_fai(person,
-                                                                           competence_id=response.get('id'),
-                                                                           license_id=existing_competence.get('_fai', {}).get('license_id', None),
-                                                                           discipline=COMPETENCE_FAI_MAPPING[response['type_id']])
+                    fai_status, fai_result = upsert_fai(response)
 
-                    if fai_status is True and fai_person_id is not None and fai_license_id is not None:
+                    if fai_status in [200,201,304] and fai_result.get('success', False) is True:
                         _competence['_fai'] = {
-                            'license_id': fai_license_id,
-                            'person_id': fai_person_id
+                            'license_id': fai_result.get('idlicence', None),
+                            'person_id': fai_result.get('fai_person_id', None)
                         }
             except Exception as e:
-                app.logger.error('[FAI] error handling FAI competence')
-                app.logger.error('[FAI] List of competencens:')
-                try:
-                    app.logger.error(str(COMPETENCE_FAI_MAPPING))
-                except:
-                    app.logger.error('Could not log list of competences')
-                app.logger.error('[FAI] response:')
-                try:
-                    app.logger.error(str(response))
-                except:
-                    app.logger.error('Could not log response')
-                app.logger.exception(e)
+                app.logger.exception('[HOOK] Error handling FAI competence in hook')
 
             # Append the competence to the existing competences
             try:
-                # print('append')
                 competences.append(_competence)
             except Exception as e:
-                app.logger.error('[COMPETENCE]')
+                app.logger.error('[COMPETENCE] Error appending competence to competences!')
                 app.logger.exception(e)
 
         # Always remove stale competences
