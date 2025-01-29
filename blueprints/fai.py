@@ -138,7 +138,7 @@ def fai_create(person, competence, fai_person_id=None):
             r['fai_person_id'] = license['idlicencee_lic']
     elif fai_person_id:
         r['fai_person_id'] = fai_person_id
-        
+
     return s, r
 
 
@@ -172,7 +172,7 @@ def fai_update(person, competence, fai_license_id):
         s, r = _create_or_update_license(license)
 
         # Add fai person id, same as fai_license['idlicencee_lic']
-        r['idlicencee'] = license['idlicencee']
+        r['fai_person_id'] = license['idlicencee']
 
         return s, r
 
