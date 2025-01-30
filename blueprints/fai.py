@@ -311,14 +311,13 @@ def get_licenses():
     """
 
     query_params = request.args.lists()  # get_json()
-
     query = {}
 
     for key, value in list(query_params):
         if key == 'where':
             query.update(json.loads(value[0]))
         else:
-            query[key] = value
+            query[key] = value[0]
 
     query['nac_org'] = 'NOR'
 
@@ -327,7 +326,7 @@ def get_licenses():
 
     # Translate
     if 'max_results' in query:
-        query['limit_length'] = query['max_results']
+        query['limit_length'] = int(query['max_results'])
         query.pop('max_results', None)
     if 'page' in query:
         query['limit_start'] = query['page']
