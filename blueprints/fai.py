@@ -245,13 +245,13 @@ def upsert_fai(competence):
                     app.logger.debug(f'[FAI] Same date, no action taken for compentence {competence["id"]} fai license {fai_license["idlicence"]}')
                     _, _ = fix_fid(person['id'], fai_person_id)
                     return 304, {'success': True, 'idlicence': fai_license['idlicence'], 'fai_person_id': fai_person_id}
-                elif parser.parse(fai_license['validuntil_lic']) < parser.parse(str(competence["valid_until"])[:10]):
+                elif parser.parse(str(fai_license['validuntil_lic'])) < parser.parse(str(competence["valid_until"])[:10]):
                     app.logger.debug(f'[FAI] Updating expiry longer for compentence {competence["id"]} fai license {fai_license["idlicence"]}')
                     s, r = fai_update(person, competence, fai_license['idlicence'])
                     if s in [200, 201]:
                         _, _ = fix_fid(person['id'], fai_person_id)
                     return s, r
-                elif parser.parse(fai_license['validuntil_lic']) > parser.parse(str(competence["valid_until"])[:10]):
+                elif parser.parse(str(fai_license['validuntil_lic'])) > parser.parse(str(competence["valid_until"])[:10]):
                     app.logger.debug(f'[FAI] Updating expiry shorter for compentence {competence["id"]} fai license {fai_license["idlicence"]}')
                     s, r = fai_update(person, competence, fai_license['idlicence'])
                     if s in [200, 201]:
