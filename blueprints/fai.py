@@ -191,7 +191,7 @@ def upsert_fai(competence):
         if len(person_competences) == 1:  # Exactly one - perfect!
             person_competence = person_competences[0]
         elif len(person_competences) > 1:  # Multiple, then choose newst
-            person_competence = sorted(person_competences, key=lambda d: parser.parse(d['valid_until']))
+            person_competence = sorted(person_competences, key=lambda d: parser.parse(d['expiry']))
         else:
             person_competence = None
 
@@ -212,7 +212,12 @@ def upsert_fai(competence):
             if len(fai_licenses) == 1:  # Exactly one - perfect!
                 fai_license = fai_licenses[0]
             elif len(fai_licenses) > 1:  # Multiple, then choose newest expiry and then newest issued date
-                fai_license = [y[2] for y in sorted([(parser.parse(x['validuntil_lic']), parser.parse(x['dateissued_lic']), x) for x in fai_licenses], reverse=True)][0]
+                try:
+                    fai_license = [y[2] for y in sorted([(parser.parse(x['validuntil_lic']), parser.parse(x['dateissued_lic']), x) for x in fai_licenses], reverse=True)][0]
+                except Exception as e:
+                    app.logger.exception(f'[FAI] error sorting fai_licenses response: {fai_licenses}')
+                    app.logger.debug('[FAI] Using first instance in list as license')
+                    fai_license = fai_licenses[0]
             else:
                 fai_license = None
 
