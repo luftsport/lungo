@@ -505,7 +505,7 @@ def on_competence_put(response, original=None):
                     # True, r['idlicencee'], r['idlicence']
                     fai_status, fai_result = upsert_fai(response)
 
-                    if fai_status in [200,201,304] and fai_result.get('success', False) is True:
+                    if fai_status in [200,201,304] and fai_result is not None and fai_result.get('success', False) is True:
                         _competence['_fai'] = {
                             'license_id': fai_result.get('idlicence', None),
                             'person_id': fai_result.get('fai_person_id', None)

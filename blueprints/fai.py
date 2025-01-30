@@ -93,11 +93,14 @@ def _get_person(person_id):
 
 
 def fix_fid(person_id, fai_person_id):
-    if fid_exists(person_id, 'fai'):
-        return update_fid(person_id, 'fai', {'fai_person_id': fai_person_id})
+    if fai_person_id is not None:
+        if fid_exists(person_id, 'fai'):
+            return update_fid(person_id, 'fai', {'fai_person_id': fai_person_id})
 
-    return create_fid(person_id, 'fai', {'fai_person_id': fai_person_id})
+        return create_fid(person_id, 'fai', {'fai_person_id': fai_person_id})
 
+    app.logger.error(f'[FAI] Error fixing fid for {person_id} where fai person id is {fai_person_id}')
+    return 500, None
 
 def fai_create(person, competence, fai_person_id=None):
     # Build license object:
