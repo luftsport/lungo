@@ -267,7 +267,11 @@ def upsert_fai(competence):
                     app.logger.debug(f'[FAI] No person in fai for person_id {competence["person_id"]}')
                 s, r = fai_create(person, competence, fai_person_id)
                 if s in [200, 201]:
-                    _, _ = fix_fid(person['id'], r['fai_person_id'])
+                    if r.get('fai_person_id', None) is None:
+                        app.logger.error('[FAI] fai_create did not return a person_id!')
+                        app.logger.error(f'Fai license id: {r.get("idlicence", "Unknown")}')
+                        app.logger.error(f'Competence id: {competence["id"]}')
+                    _, _ = fix_fid(person['id'], r.get('fai_person_id', None))
                 return s, r
 
         else:
