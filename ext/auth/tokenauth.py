@@ -12,8 +12,8 @@ from eve.auth import TokenAuth
 from flask import current_app as app, request, Response, abort, g
 
 # Not in github
-from ext.auth.clients import users
-import string
+from ext.auth.clients import users as USERS
+from datetime import datetime
 
 
 # from eve.methods.get import getitem as get_internal
@@ -28,31 +28,35 @@ class NlfTokenAuth(TokenAuth):
         """Simple token check. Tokens comes in the form of request.authorization['username']
         Token is decoded request.authorization['username']
         """
+
+        if 'expiry' in USERS[token] and USERS[token]['expiry'] < datetime.now():
+            abort(451)
+
         if resource is None:
             resource = ''
 
         # if this is not a collection /
         if '_' not in resource and resource[-1:] != '/':
 
-            if resource + '/' in users[token]['resources']:
+            if resource + '/' in USERS[token]['resources']:
                 resource = resource + '/'
 
-            elif resource not in users[token]['resources'] and resource + '/' not in users[token]['resources']:
+            elif resource not in USERS[token]['resources'] and resource + '/' not in USERS[token]['resources']:
                 # Remove last part of
-                if '/'.join(resource.split('/')[:-1])+'/*' in users[token]['resources']:
-                    resource = '/'.join(resource.split('/')[:-1])+'/*'
+                if '/'.join(resource.split('/')[:-1]) + '/*' in USERS[token]['resources']:
+                    resource = '/'.join(resource.split('/')[:-1]) + '/*'
 
         try:
-            if token in users.keys() and method in users[token]['resources'][resource]['methods']:
+            if token in USERS.keys() and method in USERS[token]['resources'][resource]['methods']:
 
-                self.resource_lookup = users[token]['resources'][resource]['lookup']
-                self.user_id = users[token]['id']
+                self.resource_lookup = USERS[token]['resources'][resource]['lookup']
+                self.user_id = USERS[token]['id']
 
                 # globals
                 g.client_id = self.user_id
                 # X-on-behalf-of => person_id
                 try:
-                    g.whitelist_secret_contact = users[token].get('whitelist_secret_contact', {})
+                    g.whitelist_secret_contact = USERS[token].get('whitelist_secret_contact', {})
                 except:
                     g.whitelist_secret_contact = {}
 
