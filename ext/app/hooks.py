@@ -500,7 +500,7 @@ def on_competence_put(response, original=None):
 
             # Handle Fai sporting codes
             try:
-                if FAI_SYNC is True and response['type_id'] in list(COMPETENCE_FAI_MAPPING_IDS.keys()):
+                if FAI_SYNC is True and response['type_id'] in list(COMPETENCE_FAI_MAPPING_IDS.keys()) and response.get('passed', False) is True and 'valid_until' in response:
 
                     # True, r['idlicencee'], r['idlicence']
                     fai_status, fai_result = upsert_fai(response)
