@@ -89,6 +89,7 @@ def _acl_from_functions(person_id):
 
     return status, function_acl
 
+
 @ACL.route('/whoami', methods=['GET'])
 @require_token()
 def whoami():
@@ -103,6 +104,7 @@ def whoami():
         pass
 
     return eve_abort(403)
+
 
 @ACL.route('/<int:person_id>', methods=['GET'])
 @require_token()
@@ -244,7 +246,7 @@ def acl_activity_roles(activity_id):
     return eve_response([], status)
 
 
-@ACL.route('/roles/club/<int:club_id>', methods=['GET'], )
+@ACL.route('/roles/club/<int:club_id>', methods=['GET'])
 @require_token()
 def acl_club_roles(club_id):
     resource = 'functions_types_org_count'
@@ -264,3 +266,16 @@ def acl_club_roles(club_id):
             return eve_response(funcs, status)
 
     return eve_response([], status)
+
+
+@ACL.route('/clients', methods=['GET'])
+@require_token()
+def acl_clients_get():
+    try:
+        from ext.auth.clients import users
+        clients = [{x['name']: x['resources']} for key, x in users.items()]
+        return eve_response(clients, 200)
+    except:
+        pass
+
+    return eve_abort(500)
