@@ -226,7 +226,7 @@ definition = {
         'activities': ([('activities', 1)], {'background': True}),
         'licenses': ([('licenses', 1)], {'background': True}),
         'competences': ([('competences', 1)], {'background': True}),
-        'names': ([('full_name', 'text')], {'background': True})
+        'names': ([('full_name', 'text')], {'background': True}) # , ('primary_email','text')
     },
     'schema': _schema
 }

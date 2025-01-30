@@ -271,8 +271,10 @@ def upsert_fai(competence):
             app.logger.error(f'[FAI] Error getting licenses compentence {competence["id"]} gave status {fai_status} and response {licenses}')
             return fai_status, None
 
-    app.logger.error(f'[FAI] Error getting person for compentence {competence["id"]} gave status {status} and response {person}')
-    return status, None
+    else:
+        app.logger.error(f'[FAI] Error getting person for compentence {competence["id"]} gave status {status} and response {person}')
+
+    return 500, None
 
 
 @Fai.route('/api-doc', methods=['GET'])
