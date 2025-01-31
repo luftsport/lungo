@@ -207,7 +207,7 @@ def _register_flydrone(person_id):
     else:
         status, result = get_nif_api_client().register_drone_pilot(person_id)
 
-        if status is True:
+        if status in [200, 201]:
             try:
                 type_of_change = 'updated'
                 if fid_flydrone['data']['expiredOperatorRegistrationNumberTime'] != result[
@@ -240,6 +240,7 @@ def _register_flydrone(person_id):
                 app.logger.error(f'[FLYDRONE] error while updating flydrone')
                 app.logger.exception(e)
 
+        return status, result
     return 500, 'Unknown'
 
 
