@@ -846,6 +846,10 @@ def on_payment_after_put(item, orginal=None):
                         flydrone_status, flydrone_result = _register_flydrone(item['person_id'])
                         if flydrone_status not in [200, 201, 304]:
                             app.logger.error(f'[FLYDRONE] Error registering flydrone for {item["person_id"]}, result:')
+                            app.logger.error('Triggered from:')
+                            app.logger.error(item)
+                            app.logger.error('Status and result:')
+                            app.logger.error(flydrone_status)
                             app.logger.error(flydrone_result)
                     elif 'fritt' in item['product_name'].lower():
                         name = 'Fritt Fall'
