@@ -177,7 +177,7 @@ def _register_flydrone(person_id):
         # CREATE Register new!!
         status, result = get_nif_api_client().register_drone_pilot(person_id)
 
-        if status is True:
+        if status in [200, 201]:
             try:
                 create_status, create_resp = create_fid(person_id, 'flydrone', result)
                 if create_status in [200, 201]:
