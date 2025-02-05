@@ -941,7 +941,7 @@ def on_person_before_put(item, original):
     try:
         item = _verify_person(item)
     except Exception as e:
-        app.logger.error('Could not verify person with nif api')
+        app.logger.exception(f'Could not verify person  with id {item["id"]} with nif api')
 
     # if original then use and not rebuild because
     # functions, competences, licenses, memberships and clubs, activities
