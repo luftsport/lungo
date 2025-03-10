@@ -109,3 +109,18 @@ agg_count_payment_products = {
         }
     }
 }
+
+agg_sum_payment_fees = {
+    'url': 'payments/fees/sum',
+    'item_title': 'Sum of Payment Fees',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$group": {"_id": {"year": {"$year": "$paid_date"}}, "payment_fees": {"$sum": "$fee"}}},
+                {"$sort": {"_id.year": -1}}
+            ]
+        }
+    }
+}
