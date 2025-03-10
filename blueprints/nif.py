@@ -453,6 +453,30 @@ def ka_get_person(person_id):
     return eve_response(person, status)
 
 
+@NIF.route('ka/inbox/new', methods=['GET'])
+@require_token()
+def ka_get_inbox_new():
+    ka = _get_KA()
+    status, inbox = ka.get_inbox()
+    return eve_response(inbox, status)
+
+
+@NIF.route('ka/inbox/ended', methods=['GET'])
+@require_token()
+def ka_get_inbox_ended():
+    ka = _get_KA()
+    status, inbox = ka.get_inbox_ended()
+    return eve_response(inbox, status)
+
+
+@NIF.route('ka/inbox/deceased', methods=['GET'])
+@require_token()
+def ka_get_inbox_deceased():
+    ka = _get_KA()
+    status, inbox = ka.get_applications_deceased()
+    return eve_response(inbox, status)
+
+
 @NIF.route('sa/organizations/<int:org_id>', methods=['GET'])
 @require_token()
 def sa_get_organization(org_id):
