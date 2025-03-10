@@ -62,8 +62,8 @@ def _gen_change_msg(entity_id, entity_type, change_type='Modified', org_id=376, 
     return status, response
 
 
-def _get_KA():
-    return KA(KA_USERNAME, KA_PASSWORD)
+def _get_KA(use_cache=True):
+    return KA(KA_USERNAME, KA_PASSWORD, use_cache=use_cache)
 
 
 def _get_SA():
@@ -456,6 +456,14 @@ def ka_get_person(person_id):
 @NIF.route('ka/inbox/new', methods=['GET'])
 @require_token()
 def ka_get_inbox_new():
+    ka = _get_KA()
+    status, inbox = ka.get_inbox()
+    return eve_response(inbox, status)
+
+
+@NIF.route('ka/inbox', methods=['GET'])
+@require_token()
+def ka_get_inbox():
     ka = _get_KA()
     status, inbox = ka.get_inbox()
     return eve_response(inbox, status)
