@@ -59,6 +59,8 @@ def _create_or_update_license(license):
     except Exception as e:
         app.logger.exception(f'[FAI] create or update failed with status code {r.status_code} and response {r.text}')
 
+    app.logger.error(f'[FAI] create or update failed with status code {r.status_code} and response {r.text}')
+    app.logger.error(f'[FAI] create or update failed with license {license}')
     return 500, 'Unknown error'
 
 
