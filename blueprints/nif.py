@@ -2,7 +2,7 @@ from ext.auth.decorators import require_token, require_superadmin
 from nif_tools import KA
 from datetime import datetime, timezone, timedelta, timezone
 from hashlib import sha224
-from flask import Blueprint, current_app as app, request, Response, abort, jsonify
+from flask import Blueprint, current_app as app, request, Response, abort, jsonify, g
 # from eve.methods.post import post_internal
 from ext.scf import KA_USERNAME, KA_PASSWORD, NIF_CLIENT_SECRET, NIF_CLIENT_ID, NIF_TOKEN_FILE
 from ext.app.eve_helper import eve_response, eve_error_response
@@ -255,7 +255,14 @@ def get_paths():
 @require_token()
 def generate_change_message():
     data = request.get_json()
-    status, response = _gen_change_msg(data['entity_id'], data['entity_type'])
+
+    if g.client_id == 11: # TMS
+        data['entity_type'] = 'TmsCompetence'
+
+    if 'change_type' not in data or data['change_type'] not in ['Created', 'Modified', 'Deleted']:
+        data['change_type'] = 'Modified'
+
+    status, response = _gen_change_msg(data['entity_id'], data['entity_type'], data['change_type'])
     return eve_response(response, status)
     # return {}, 201
 

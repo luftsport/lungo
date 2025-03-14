@@ -71,7 +71,7 @@ tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 @debounce(10)
 @_async
-def broadcast(change_data):
+def broadcast(change_data): # @Todo support for change type
     try:
         sio = socketio.Client()
         sio.connect('http://localhost:7000?token={}'.format(LUNGO_SIO_TOKEN))
@@ -961,6 +961,8 @@ def on_person_before_put(item, original):
 
 def on_person_after_put(item, original=None):
     _update_person(item)
+    """
+    @Todo remove, duplicate same in _update_person
     try:
         broadcast({'entity': 'person',
                    'entity_id': item['id'],
@@ -972,7 +974,7 @@ def on_person_after_put(item, original=None):
                    })
     except Exception as e:
         app.logger.exception('Broadcast of item with id {} did not work out!'.format(item['id']))
-
+    """
 
 def _update_person(item):
     """Runs AFTER person replaced"""
