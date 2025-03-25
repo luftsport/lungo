@@ -6,6 +6,7 @@ _schema = {
     'id': {'type': 'integer',
            'required': True,
            'unique': True},
+    'tms_id': {'type': 'integer'},
     'approved_by_org_id': {'type': 'integer'},
     'approved_by_person_id': {'type': 'integer'},
     'course_id': {'type': 'integer'},
