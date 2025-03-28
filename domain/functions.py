@@ -246,7 +246,7 @@ agg_count_members_in_disciplines = {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
-                {"$match": {"type_id": 10000000, "org_type_id": 14}},
+                {"$match": {"type_id": 10000000, "org_type_id": 14, "is_passive": False, "is_deleted": False, "to_date": {"$exists": False}}},
                 {"$group": {"_id": {"org": "$active_in_org_id"}, "count": {"$sum": 1}}},
                 {"$sort": {"count": -1}}
             ]
