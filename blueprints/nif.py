@@ -183,13 +183,19 @@ def _register_flydrone(person_id):
                 if create_status in [200, 201]:
                     person_status, person = _get_lungo_person(person_id)
                     app.logger.info(f'[FLYDRONE] sending email to {person_id}')
+
+                    try:
+                        reg_number = result['expiredOperatorRegistrationNumberTime'].split('-')[0]
+                    except:
+                        reg_number = result['operatorRegistrationNumber']
+                        
                     send_email(
                         recepient=person['primary_email'],
                         subject='Flydrone.no registration',
                         message=_gen_flydrone_email(
                             person['first_name'],
                             result['operatorRegistrationNumber'],
-                            result['expiredOperatorRegistrationNumberTime'],
+                            reg_number,
                             'created')
                     )
                     return create_status, create_resp
