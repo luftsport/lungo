@@ -35,6 +35,8 @@ import geo_admin
 # ADS data from flightradar24
 import ads
 import dev
+# Notifications, also used for email sending
+import notifications
 
 # import test, test_ref
 
@@ -168,6 +170,9 @@ DOMAIN = {
     # ADS Data
     "ads": ads.definition,
     "ads_process": ads.process_definition,
+
+    # Notifications
+    "notifications": notifications.definition,
 
     # Dev
     "dev": dev.definition,

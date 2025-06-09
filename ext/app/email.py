@@ -3,7 +3,7 @@ import smtplib
 import email.message
 import email.utils
 from ext.app.decorators import _async
-from ext.scf import EMAIL, SEND_EMAIL
+from ext.scf import EMAIL_CFG, SEND_EMAIL
 
 
 @_async
@@ -17,7 +17,7 @@ def send_email(recepient, subject, message, priority='2'):
         msg.add_header('Content-Disposition', 'inline')
         msg.set_payload(message)
         msg['X-Priority'] = priority
-        s = smtplib.SMTP(EMAIL['smtp'], EMAIL['smtp_port'])
+        s = smtplib.SMTP(EMAIL_CFG['smtp'], EMAIL_CFG['smtp_port'])
         s.ehlo()
         s.starttls()
         s.ehlo()

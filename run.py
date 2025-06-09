@@ -22,6 +22,7 @@ from blueprints.acl import ACL
 from blueprints.html import Html
 from blueprints.nif import NIF
 from blueprints.tms import Tms
+from blueprints.notifications import Notifications
 
 # Import blueprints
 # from blueprints.authentication import Authenticate
@@ -75,7 +76,7 @@ app.register_blueprint(Fai, url_prefix="%s/fai" % app.globals.get('prefix'))
 app.register_blueprint(ACL, url_prefix="%s/acl" % app.globals.get('prefix'))
 app.register_blueprint(NIF, url_prefix="%s/nif" % app.globals.get('prefix'))
 app.register_blueprint(Tms, url_prefix="%s/tms" % app.globals.get('prefix'))
-
+app.register_blueprint(Notifications, url_prefix="%s/notifications" % app.globals.get('prefix'))
 # Blueprint returning html
 app.register_blueprint(Html, url_prefix="%s/html" % app.globals.get('prefix'))
 
