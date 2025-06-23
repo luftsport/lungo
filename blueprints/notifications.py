@@ -169,8 +169,8 @@ def get_recipients_from_roles(roles):
                     persons.append(item.get('person_id', 0))
 
         return get_recepients(list(set([i for i in persons if i > 0])))
-    except:
-        pass
+    except Exception as e:
+        app.logger.error(f"Error fetching users from functions: {e}")
 
     return persons
 
@@ -181,14 +181,17 @@ def get_users_from_competences(competences):
     try:
         for competence in competences:
             resp = requests.get(
-                '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}" }} }}&projection={{"person_id": 1}}'.format(
-                    API_BASE_URL, competence, datetime.utcnow().isoformat()),
+                '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}" }} }}&max_results={}projection={{"person_id": 1}}'.format(
+                    API_BASE_URL, competence, datetime.utcnow().isoformat(), 10000),
                 headers=API_HEADERS)
 
             if resp.status_code == 200:
-                return list(set([item['person_id'] for item in resp.json().get('_items', [])]))
-    except:
-        pass
+                for item in resp.json().get('_items', []):
+                    persons.append(item.get('person_id', 0))
+
+            return get_recepients(list(set([i for i in persons if i > 0])))
+    except Exception as e:
+        app.logger.error(f"Error fetching users from competences: {e}")
 
     return persons
 
