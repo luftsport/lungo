@@ -14,8 +14,8 @@ Notifications = Blueprint('Notifications', __name__)
 
 def get_person_from_role(role) -> (bool, [int]):
     resp = requests.get(
-        '%s/functions?where={"active_in_org_id": %s, "type_id": %s, "is_deleted": false, "is_passive": false}&projection={"person_id": 1}'
-        % (API_BASE_URL, role.get('org'), role.get('role')),
+        '%s/functions?where={"active_in_org_id": %s, "type_id": %s, "is_deleted": false, "is_passive": false}&projection={"person_id": 1}&max_results={}'
+        % (API_BASE_URL, role.get('org'), role.get('role'), 20000),
         headers=API_HEADERS, verify=app['config'].get('REQUESTS_VERIFY', True))
 
     if resp.status_code == 200:
@@ -113,7 +113,7 @@ def get_users_from_role(role):
         elif (role['org'] and role['activity']) == '*':
             query = f'where={{"type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
-        resp = requests.get('{}/functions?{}'.format(API_BASE_URL, query), headers=API_HEADERS)  # verify=app['config'].get('REQUESTS_VERIFY', True)
+        resp = requests.get('{}/functions?{}&max_results={}'.format(API_BASE_URL, query, 20000), headers=API_HEADERS)  # verify=app['config'].get('REQUESTS_VERIFY', True)
 
         if resp.status_code == 200:
             try:
@@ -132,8 +132,8 @@ def get_recepients(recepients):
     persons = []
 
     try:
-        query = 'where={{"id": {{"$in": {} }}}}&projection={{"full_name": 1, "address.email": 1}}'.format(recepients)
-        resp = requests.get('{}/{}?{}'.format(API_BASE_URL, 'persons', query), headers=API_HEADERS)
+        query = 'where={{"id": {{"$in": {} }}}}&projection={{"full_name": 1, "address.email": 1}}&max_results={}'.format(recepients)
+        resp = requests.get('{}/{}?{}'.format(API_BASE_URL, 'persons', query, 20000), headers=API_HEADERS)
 
         if resp.status_code == 200:
 
@@ -160,8 +160,8 @@ def get_recipients_from_roles(roles):
     try:
         for role in roles:
             resp = requests.get(
-                '{}/functions?where={{"org_id": {}, "type_id": {}, "is_deleted": false, "is_passive": false }}&projection={{"person_id": 1}}'.format(
-                    API_BASE_URL, role.get('org', 0), role.get('role', 0)),
+                '{}/functions?where={{"org_id": {}, "type_id": {}, "is_deleted": false, "is_passive": false }}&projection={{"person_id": 1}}&max_results={}'.format(
+                    API_BASE_URL, role.get('org', 0), role.get('role', 0), 20000),
                 headers=API_HEADERS)
 
             if resp.status_code == 200:
@@ -181,7 +181,7 @@ def get_users_from_competences(competences):
         for competence in competences:
             resp = requests.get(
                 '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}projection={{"person_id": 1}}'.format(
-                    API_BASE_URL, competence, datetime.utcnow().isoformat(), 10000),
+                    API_BASE_URL, competence, datetime.utcnow().isoformat(), 20000),
                 headers=API_HEADERS)
 
             if resp.status_code == 200:
@@ -199,7 +199,7 @@ def get_users_from_competence(competence):
     try:
         resp = requests.get(
             '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}projection={{"person_id": 1}}'.format(
-                API_BASE_URL, competence, datetime.utcnow().isoformat(), 10000),
+                API_BASE_URL, competence, datetime.utcnow().isoformat(), 20000),
             headers=API_HEADERS)
 
         if resp.status_code == 200:
