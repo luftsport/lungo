@@ -79,9 +79,8 @@ class NlfTokenAuth(TokenAuth):
     def get_user_id(self):
         return self.user_id
 
-    def _set_globals(self, id, _id):
-        app.globals.update({'id': id})
-        app.globals.update({'_id': "%s" % _id})
+    def _set_globals(self):
+        pass
 
     def authenticate(self):
         """ Overridden by NOT returning a WWW-Authenticate header
