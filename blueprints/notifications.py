@@ -218,24 +218,23 @@ def email2notification():
         print(data)
         return eve_abort(400, "Invalid request data")
 
-    if ('roles' and 'competences' and 'users') in data['recipients'].keys():
-        recipients = data['recipients']['users']
+    recipients = data['recipients'].get('users', [])
 
-        for role in data['recipients']['roles']:
-            print(role)
-            recipients.extend(get_users_from_role(role))
+    for role in data['recipients'].get('roles', []):
+        print(role)
+        recipients.extend(get_users_from_role(role))
 
-        for competence in data['recipients']['competences']:
-            recipients.extend(get_users_from_competences(competence))
+    for competence in data['recipients'].get('competences', []):
+        recipients.extend(get_users_from_competences(competence))
 
-    elif 'users' in data['recipients']:
-        recipients = data['recipients']['users']
-    else:
-        return eve_abort(400, "Invalid recipients format")
+    if len(recipients) == 0:
+        return eve_abort(400, "Invalid recipients format or no recipients found")
 
     recipients = list(set(recipients))
+
     if 'from' not in data:
         data['from'] = 0  # Default sender is the current user
+
     # Build message:
     subject = data['subject']
     message = data['message']
