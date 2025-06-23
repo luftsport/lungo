@@ -30,6 +30,7 @@ class NlfTokenAuth(TokenAuth):
         """
 
         if 'expiry' in USERS[token] and USERS[token]['expiry'] < datetime.now():
+            app.logger.error(f'[FAILED AUTH] Token {token} has expired')
             abort(451)
 
         if resource is None:
@@ -59,10 +60,11 @@ class NlfTokenAuth(TokenAuth):
                     g.whitelist_secret_contact = USERS[token].get('whitelist_secret_contact', {})
                 except:
                     g.whitelist_secret_contact = {}
+                    app.logger.exception(f'[FAILED AUTH] Token {token} has no whitelist_secret_contact')
 
                 return True
         except:  # Keyerror
-            pass
+            app.logger.exception(f'[FAILED AUTH] Token {token} is not valid for resource {resource} and method {method}')
 
         """
         for app in apps:
