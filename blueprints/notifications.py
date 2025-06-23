@@ -177,10 +177,8 @@ def get_recipients_from_roles(roles):
 
 def get_users_from_competences(competences):
     persons = []
-    print(competences)
     try:
         for competence in competences:
-            print('Competence:', competence)
             resp = requests.get(
                 '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}projection={{"person_id": 1}}'.format(
                     API_BASE_URL, competence, datetime.utcnow().isoformat(), 10000),
@@ -199,7 +197,6 @@ def get_users_from_competences(competences):
 def get_users_from_competence(competence):
     persons = []
     try:
-        print('Competence:', competence)
         resp = requests.get(
             '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}projection={{"person_id": 1}}'.format(
                 API_BASE_URL, competence, datetime.utcnow().isoformat(), 10000),
@@ -237,16 +234,13 @@ def email2notification():
     data = request.get_json()
 
     if not data or 'recipients' not in data or 'subject' not in data or 'message' not in data:
-        print(data)
         return eve_abort(400, "Invalid request data")
 
     recipients = data['recipients'].get('users', [])
 
     for role in data['recipients'].get('roles', []):
-        print(role)
         recipients.extend(get_users_from_role(role))
 
-    print('recipients after roles:', recipients)
     for competence in data['recipients'].get('competences', []):
         recipients.extend(get_users_from_competence(competence))
 
