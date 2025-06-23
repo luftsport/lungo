@@ -177,9 +177,10 @@ def get_recipients_from_roles(roles):
 
 def get_users_from_competences(competences):
     persons = []
-
+    print(competences)
     try:
         for competence in competences:
+            print('Competence:', competence)
             resp = requests.get(
                 '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}projection={{"person_id": 1}}'.format(
                     API_BASE_URL, competence, datetime.utcnow().isoformat(), 10000),
@@ -189,12 +190,30 @@ def get_users_from_competences(competences):
                 for item in resp.json().get('_items', []):
                     persons.append(item.get('person_id', 0))
 
-            return get_recepients(list(set([i for i in persons if i > 0])))
+            return list(set([item['person_id'] for item in resp.json().get('_items', [])]))
     except Exception as e:
         app.logger.error(f"Error fetching users from competences: {e}")
 
     return persons
 
+def get_users_from_competence(competence):
+    persons = []
+    try:
+        print('Competence:', competence)
+        resp = requests.get(
+            '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}projection={{"person_id": 1}}'.format(
+                API_BASE_URL, competence, datetime.utcnow().isoformat(), 10000),
+            headers=API_HEADERS)
+
+        if resp.status_code == 200:
+            for item in resp.json().get('_items', []):
+                persons.append(item.get('person_id', 0))
+
+        return list(set([item['person_id'] for item in resp.json().get('_items', [])]))
+    except Exception as e:
+        app.logger.error(f"Error fetching users from competences: {e}")
+
+    return persons
 
 @Notifications.route('/notify', methods=['POST'])
 @require_token()
@@ -227,8 +246,9 @@ def email2notification():
         print(role)
         recipients.extend(get_users_from_role(role))
 
+    print('recipients after roles:', recipients)
     for competence in data['recipients'].get('competences', []):
-        recipients.extend(get_users_from_competences(competence))
+        recipients.extend(get_users_from_competence(competence))
 
     if len(recipients) == 0:
         return eve_abort(400, "Invalid recipients format or no recipients found")
