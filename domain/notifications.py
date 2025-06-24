@@ -5,11 +5,42 @@ from flask import current_app as app
 RESOURCE_COLLECTION = 'notifications'
 BASE_URL = 'notifications'
 
+_data = {
+
+}
+
 _schema = {'type': {'type': 'string',
                     'required': True,
                     },
            'uuid': {'type': 'string'},
-           'data': {'type': 'dict'},  # what, when, where, who, how
+           'data': {
+               'type': 'dict',
+               'schema': {
+                   'subject': {'type': 'string'},  # Subject of the notification
+                   'subject_preamble': {'type': 'string'},  # Preamble of the subject
+                   'html_content': {'type': 'string'},  # HTML content of the notification
+                   'plain_text_content': {'type': 'string'},  # Plain text content of the notification
+                   'reply_to': {
+                       'type': 'dict',
+                       'schema': {
+                           'name': {'type': 'string'},  # Reply to name
+                           'email': {'type': 'string'}
+                       }},  # Reply to email address
+                   'from': {
+                       'type': 'dict',
+                       'schema': {
+                           'name': {'type': 'string'},  # Reply to name
+                           'email': {'type': 'string'}
+                       }},  # From email address
+               },
+               'files': {
+                   'type': 'list',
+                   'schema': {'type': 'media'}
+               },  # List of files attached to the notification
+               'send_at': {'type': 'datetime'},  # When to send the notification
+               'headers': {'type': 'dict'},
+               'unsubscribe': {'type': 'string'},  # Unsubscribe link or token
+           },
            'recipient': {'type': 'integer'},  # Who's the recepient
            'sender': {'type': 'integer'},  #
            'event_id': {'type': 'string'},
