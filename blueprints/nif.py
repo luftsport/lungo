@@ -177,7 +177,7 @@ def _register_flydrone(person_id):
         # CREATE Register new!!
         status, result = get_nif_api_client().register_drone_pilot(person_id)
 
-        if status in [200, 201]:
+        if status in [200, 201] and result['operatorRegistrationNumber'] is not None:
             try:
                 create_status, create_resp = create_fid(person_id, 'flydrone', result)
                 if create_status in [200, 201]:
@@ -213,7 +213,7 @@ def _register_flydrone(person_id):
     else:
         status, result = get_nif_api_client().register_drone_pilot(person_id)
 
-        if status in [200, 201]:
+        if status in [200, 201] and result['operatorRegistrationNumber'] is not None:
             try:
                 type_of_change = 'updated'
                 if fid_flydrone['data']['expiredOperatorRegistrationNumberTime'] != result[
