@@ -292,8 +292,8 @@ def email2notification():
     # Headers = {}
     # Access file(s)
     files = request.files.getlist('file')  # Get list of files under 'file' field
-    if not files or all(file.filename == '' for file in files):
-        return jsonify({'error': 'No files uploaded'}), 400
+    #if not files or all(file.filename == '' for file in files):
+    #   return jsonify({'error': 'No files uploaded'}), 400
     # Process files for Eve
     processed_files = []
     for file in files:
