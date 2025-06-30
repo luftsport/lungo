@@ -79,7 +79,7 @@ definition = {
 
 # AGGREGATION
 agg_events = {
-    'url': 'notifications/events',
+    'url': f'{BASE_URL}/events',
     'item_title': 'Get notifications by event_from_id and event_from grouped by events',
     'pagination': False,
     'datasource': {
