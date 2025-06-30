@@ -2,7 +2,7 @@ from _base import acl_item_schema
 from bson import SON, ObjectId
 from flask import current_app as app
 
-RESOURCE_COLLECTION = 'notifications_messages'
+RESOURCE_COLLECTION = 'notifications'
 BASE_URL = 'notifications'
 
 _data = {
@@ -75,7 +75,7 @@ _schema = {'type': {'type': 'string',
            # Transport information
            'transport': {'type': 'string'},  # ['email', 'sms', 'socket',...]
            'transport_mode': {'type': 'string'},  # immediate, aggregate_5m, aggregate_1d osv transport_delay 0 10
-           'status': {'type': 'string'},  # created, pending, delivered
+           'status': {'type': 'string', 'required': True, 'default': 'draft'},  # draft created, pending, delivered
            'strategy': {'type': 'string'},  # How to handle the message, e.g. 'immediate', 'aggregate', 'user'
            'send_at': {'type': 'datetime'},  # When to send the notifications
            # Unsubscribe information
@@ -91,6 +91,7 @@ definition = {
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PUT', 'PATCH', 'DELETE'],
     'allow_unknown': True,
+    'versioning': True,
     'mongo_indexes': {
         'housekeeping': ([('type', 1), ('dismissible', 1), ('transport', 1)], {'background': True}),
         'uuid': ([('uuid', 1)], {'background': True}),

@@ -176,7 +176,7 @@ DOMAIN = {
     # Notifications
     "notifications": notifications.definition,
     "notifications_messages": notifications_messages.definition,
-    "notifications_events": notifications_messages.agg_events,
+    "notifications_messages_events": notifications_messages.agg_events,
 
     # Files
     "files": files.definition,
