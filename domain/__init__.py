@@ -37,6 +37,8 @@ import ads
 import dev
 # Notifications, also used for email sending
 import notifications
+import notifications_messages
+import files
 
 # import test, test_ref
 
@@ -173,6 +175,11 @@ DOMAIN = {
 
     # Notifications
     "notifications": notifications.definition,
+    "notifications_messages": notifications_messages.definition,
+    "notifications_events": notifications_messages.agg_events,
+
+    # Files
+    "files": files.definition,
 
     # Dev
     "dev": dev.definition,

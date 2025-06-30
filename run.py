@@ -13,8 +13,15 @@ import os, sys
 
 from eve import Eve
 import json
+
 # Swagger docs
-from eve_swagger import swagger
+try:
+    from eve_swagger import get_swagger_blueprint
+
+    swagger_blueprint = get_swagger_blueprint()
+except Exception as e:
+    from eve_swagger import swagger as swagger_blueprint
+
 from eve_healthcheck import EveHealthCheck
 from blueprints.syncdaemon import Sync
 from blueprints.fai import Fai
@@ -69,7 +76,7 @@ app.url_map.converters['regex'] = RegexConverter
 
 # Register eve-docs blueprint
 # app.register_blueprint(eve_docs,        url_prefix="%s/docs" % app.globals.get('prefix'))
-app.register_blueprint(swagger, url_prefix=app.globals.get('prefix'))
+app.register_blueprint(swagger_blueprint, url_prefix=app.globals.get('prefix'))
 
 app.register_blueprint(Sync, url_prefix="%s/syncdaemon" % app.globals.get('prefix'))
 app.register_blueprint(Fai, url_prefix="%s/fai" % app.globals.get('prefix'))
@@ -80,12 +87,14 @@ app.register_blueprint(Notifications, url_prefix="%s/notifications" % app.global
 # Blueprint returning html
 app.register_blueprint(Html, url_prefix="%s/html" % app.globals.get('prefix'))
 
-from ext.app.hooks import on_function_post, \
-    on_license_post, on_competence_post, \
-    on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put, \
-    on_organizations_post, on_organizations_put, after_get_person, after_get_persons, on_person_before_put, \
-    assign_lookup, \
+from ext.app.hooks import (
+    on_function_post,
+    on_license_post, on_competence_post,
+    on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put,
+    on_organizations_post, on_organizations_put, after_get_person, after_get_persons, on_person_before_put,
+    assign_lookup,
     on_payment_before_post, on_payment_after_put, on_payment_after_post, on_payment_before_put
+)
 
 # Should be able to filter out all merged when doing lookup
 # def filter_merged_to(request, lookup):

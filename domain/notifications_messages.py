@@ -2,8 +2,8 @@ from _base import acl_item_schema
 from bson import SON, ObjectId
 from flask import current_app as app
 
-RESOURCE_COLLECTION = 'notifications'
-BASE_URL = 'notifications'
+RESOURCE_COLLECTION = 'notifications_messages'
+BASE_URL = 'notifications/messages'
 
 _data = {
 
@@ -13,7 +13,7 @@ _schema = {'type': {'type': 'string',
                     'required': True,
                     },
            'uuid': {'type': 'string'},
-           'data': {
+           'data': { # To build the message!
                'type': 'dict',
                'schema': {
                    'subject': {'type': 'string'},  # Subject of the notification
@@ -35,29 +35,37 @@ _schema = {'type': {'type': 'string',
                },
                'files': {
                    'type': 'list',
-                   'schema': {'type': 'media'}
+                   'schema': {
+                       'type': 'ObjectId',
+                       'data_relation': {
+                           'resource': 'files',
+                           'field': '_id',
+                           'embeddable': True,
+                       }
+                   }
                },  # List of files attached to the notification
-               'send_at': {'type': 'datetime'},  # When to send the notification
                'headers': {'type': 'dict'},
                'unsubscribe': {'type': 'string'},  # Unsubscribe link or token
            },
            'recipient': {'type': 'integer'},  # Who's the recepient
-           'sender': {'type': 'integer'},  #
-           'event_id': {'type': 'string'},
+           'sender': {'type': 'integer'},  # g.user_id or g.person_id
+           # Event information
+           'event_id': {'type': 'ObjectId'},
            'event_created': {'type': 'datetime'},
-           'event_from': {'type': 'string'},  # ex motorfly_observations
-           'event_from_id': {'type': 'string'},  # {'type': 'objectid'},  # ex motorfly observations id....
+           'event_from': {'type': 'string'},  # ex notifications
+           'event_from_id': {'type': 'ObjectId'},  # {'type': 'objectid'},
            # 'event_person_id': {'type': 'integer'}, # Sender
            'dismissible': {'type': 'boolean'},  # Can dimiss?
            'dismissed': {'type': 'datetime', 'nullable': True},
            'transport': {'type': 'string'},  # ['email', 'sms', 'socket',...]
            'transport_mode': {'type': 'string'},  # immediate, aggregate_5m, aggregate_1d osv transport_delay 0 10
+           'send_at': {'type': 'datetime'},  # When to send the notification
            'status': {'type': 'string'},  # created, pending, delivered
            'acl': acl_item_schema
            }
 
 definition = {
-    'item_title': 'content',
+    'item_title': 'Messages generated from notifications',
     'url': BASE_URL,
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
