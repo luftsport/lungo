@@ -71,6 +71,7 @@ definition = {
                    },
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET'],
+    'versioning': False,
     'mongo_indexes': {
         'housekeeping': ([('type', 1), ('dismissible', 1), ('dismissed', 1), ('transports', 1)], {'background': True}),
         'uuid': ([('uuid', 1)], {'background': True}),
