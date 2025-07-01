@@ -31,6 +31,8 @@ DEFAULT_HEADERS = {'Return-Path': 'bounce@nlf.no'}
 DEFAULT_PREAMBLE = 'NLF - '  # Evt [NLF] - for email subject prefix
 DEFAULT_UNSUBSCRIBE = 'https://nlf.no/nyhetsbrev/'
 
+# DIsable jinja templating cache
+# app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 def get_person_from_role(role) -> (bool, [int]):
     resp = requests.get(
@@ -335,30 +337,46 @@ def generate_notifications(_id):
             }
 
             failed_recipients = []
+            subject_template = JT(f"{payload['data'].get('subject', '')}")
+            html_content_template = JT(f"{payload['data'].get('html_content', '')}")
+            plain_text_content_template = JT(f"{payload['data'].get('plain_text_content', '')}")
             for recipient in list(set(recipients)):
                 if isinstance(recipient, int):
                     try:
                         # If recipient is a user ID, fetch their email
-                        pld = payload.copy()
-                        pld['recipient'] = recipient
-                        pld['uuid'] = str(uuid4())  # Generate a unique UUID for the notification
-                        pld['acl']['read']['users'] = [recipient]
+
 
                         # Templating the subject and content if needed
-                        print("PERSON", recipient)
+                        person = None
                         person, _, _, person_status = getitem_internal(resource='persons', **{'id': recipient})
+                        if person_status not in [200, 201]:
+                            app.logger.error(f"Failed to fetch person data for recipient {recipient}: {person_status}")
+                            failed_recipients.append(recipient)
+                            continue
 
+                        # Make sure to reset every time
+                        subject = None
+                        html_content = None
+                        plain_text_content = None
                         if person_status == 200 and person:
                             if 'date_of_death' in person and person['date_of_death'] is not None:
                                 app.logger.error(f"Person {recipient} is deceased, skipping notification.")
                                 continue
+                            if 'subject' in payload['data']:
+                                subject = subject_template.render(person)
+                            if 'html_content' in payload['data']:
+                                html_content = html_content_template.render(person)
+                            if 'plain_text_content' in payload['data']:
+                                plain_text_content = plain_text_content_template.render(person)
 
-                            if 'subject' in pld['data']:
-                                pld['data']['subject'] = JT(pld['data']['subject']).render(**person)
-                            if 'html_content' in pld['data']:
-                                pld['data']['html_content'] = JT(pld['data']['html_content']).render(**person)
-                            if 'plain_text_content' in pld['data']:
-                                pld['data']['plain_text_content'] = JT(pld['data']['plain_text_content']).render(**person)
+                        pld = payload.copy()
+                        pld['data']['subject'] = subject
+                        pld['data']['html_content'] = html_content
+                        pld['data']['plain_text_content'] = plain_text_content
+                        # The rest!
+                        pld['recipient'] = recipient
+                        pld['uuid'] = str(uuid4())  # Generate a unique UUID for the notification
+                        pld['acl']['read']['users'] = [recipient]
 
                         # Make sure we always supply plain text content
                         if pld['data'].get('html_content', None) is not None and pld['data'].get('plain_text_content', None) is None:
