@@ -1,5 +1,5 @@
 from _base import acl_item_schema
-from bson import SON, ObjectId
+from bson import SON, objectid
 from flask import current_app as app
 
 RESOURCE_COLLECTION = 'notifications_messages'
@@ -36,7 +36,7 @@ _schema = {'type': {'type': 'string',
                'files': {
                    'type': 'list',
                    'schema': {
-                       'type': 'ObjectId',
+                       'type': 'objectid',
                        'data_relation': {
                            'resource': 'files',
                            'field': '_id',
@@ -50,10 +50,15 @@ _schema = {'type': {'type': 'string',
            'recipient': {'type': 'integer'},  # Who's the recepient
            'sender': {'type': 'integer'},  # g.user_id or g.person_id
            # Event information
-           'event_id': {'type': 'ObjectId'},
+           'event_id': {'type': 'objectid',
+                        'data_relation': {
+                           'resource': 'notifications',
+                           'field': '_id',
+                           'embeddable': True,
+                       }},
            'event_created': {'type': 'datetime'},
            'event_from': {'type': 'string'},  # ex notifications
-           'event_from_id': {'type': 'ObjectId'},  # {'type': 'objectid'},
+           'event_from_id': {'type': 'objectid'},  # {'type': 'objectid'},
            # 'event_person_id': {'type': 'integer'}, # Sender
            'dismissible': {'type': 'boolean'},  # Can dimiss?
            'dismissed': {'type': 'datetime', 'nullable': True},
