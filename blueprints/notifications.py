@@ -260,20 +260,16 @@ def test_notification():
 @Notifications.route('/generate/<string:_id>', methods=['POST', 'GET'])
 @require_token()
 def generate_notifications(_id):
-    print('HEADERS', _id)
     try:
         response, _, _, status = getitem_internal(resource='notifications', **{'_id': _id})
     except Exception as e:
-        print('RESPONS ERR', e)
         return eve_abort(500, "Error fetching notification")
-    print('------------------', response, status)
 
     # Check "If-Match" header for optimistic concurrency control
     if status == 200 and response.get('status', None) == 'draft' and request.headers.get('If-Match', None) == response.get('_etag', 'nope'):
         try:
             r, _, _, pstatus = patch_internal(resource='notifications', payload={'status': 'pending'}, **{'_id': _id})
         except Exception as e:
-            print("Error updating notification status to pending", e)
             return eve_abort(500, "Error updating notification status to pending")
 
         if pstatus in [200, 201]:
