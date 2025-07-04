@@ -47,7 +47,8 @@ _schema = {'type': {'type': 'string',
                'headers': {'type': 'dict'},
                'unsubscribe': {'type': 'string'},  # Unsubscribe link or token
            },
-           'recipient': {'type': 'integer'},  # Who's the recepient
+           'recipient': {'type': 'dict'},  # Who's the recepient
+           # schema {person_id: {'type': 'integer', 'required': True}, email: {'type': 'string', 'required': True}}, first_name: {'type': 'string'}, last_name: {'type': 'string'}}
            'sender': {'type': 'integer'},  # g.user_id or g.person_id
            # Event information
            'event_id': {'type': 'objectid',
