@@ -36,7 +36,7 @@ definition = {
     'url': BASE_URL,
     'datasource': {
         'source': RESOURCE_COLLECTION,
-        # 'projection': {'file': 1}
+        'projection': {'file.file': 0}
     },
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT', 'DELETE'],
