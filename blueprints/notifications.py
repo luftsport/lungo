@@ -336,6 +336,9 @@ def generate_notifications(_id):
             subject_template = JT(f"{payload['data'].get('subject', '')}")
             html_content_template = JT(f"{payload['data'].get('html_content', '')}")
             plain_text_content_template = JT(f"{payload['data'].get('plain_text_content', '')}")
+
+
+
             for recipient in list(set(recipients)):
                 if isinstance(recipient, int):
                     try:
@@ -349,6 +352,12 @@ def generate_notifications(_id):
                             app.logger.error(f"Failed to fetch person data for recipient {recipient}: {person_status}")
                             failed_recipients.append(recipient)
                             continue
+                        # If person is None, we skip this recipient
+
+                        # Get the email address of the person
+                        email = None
+                        if payload['transport'] == 'email':
+                            email = person.get('primary_email', person.get('address', {}).get('email', [])[0] if len(person.get('address', {}).get('email', [])) > 0 else None)
 
                         # Make sure to reset every time
                         subject = None
@@ -370,7 +379,12 @@ def generate_notifications(_id):
                         pld['data']['html_content'] = html_content
                         pld['data']['plain_text_content'] = plain_text_content
                         # The rest!
-                        pld['recipient'] = recipient
+                        pld['recipient'] = {
+                            'person_id': recipient,
+                            'email': email if email else None,
+                            'first_name': person.get('first_name', ''),
+                            'last_name': person.get('last_name', ''),
+                        }  # Recipient's person ID and email
                         pld['uuid'] = str(uuid4())  # Generate a unique UUID for the notification
                         pld['acl']['read']['users'] = [recipient]
 
