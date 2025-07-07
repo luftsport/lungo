@@ -4,7 +4,7 @@ gunicorn.pid
 __pycache__/
 *.py[cod]
 *$py.class
-
+sendgrid*
 # C extensions
 *.so
 .idea/
