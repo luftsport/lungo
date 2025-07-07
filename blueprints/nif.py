@@ -17,7 +17,8 @@ from ext.app.product_checker import ProductChecker
 from ext.app.email import send_email
 from ext.app.fids import get_fid, create_fid, update_fid
 from ext.app.helpers import _fix_naive
-
+from eve.utils import parse_request
+import json
 from functools import wraps
 import inspect
 
@@ -351,6 +352,54 @@ def get_fed_licenses(xorg_id):
     status, licenses = get_nif_api_client().get_fed_licenses(xorg_id)
     return eve_response(licenses, 200 if status is True else 404)
 
+@NIF.route('events', methods=['GET'])
+@require_token()
+def isonen():
+    #data = request.get_json()
+
+    return eve_response('Hellue', 200)
+
+
+@NIF.route('events/<string:event_id>', methods=['GET'])
+@require_token()
+def isonen_get_event(event_id):
+    status, events = get_nif_api_client().get_event(event_id)
+    return eve_response(events, 200 if status in [200, True] else 404)
+
+@NIF.route('events/participants/<string:event_id>', methods=['GET'])
+@require_token()
+def isonen_get_event_participants(event_id):
+    status, events = get_nif_api_client().get_event_participants(event_id)
+    return eve_response(events, 200 if status in [200, True] else 404)
+
+@NIF.route('events/organization/<int:org_id>', methods=['GET'])
+@require_token()
+def isonen_get_for_org(org_id):
+    #data = request.get_json()
+    #start_date = data.get('start_date', None)
+    args = parse_request('persons')
+    start_date = None
+    if args.where is not None:
+        start_date = json.loads(args.where).get('start_date', datetime.now())
+    status, events = get_nif_api_client().get_events_for_org(org_id, start_date if start_date else datetime.now()) #, start_date=args.get('start_date', datetime.now()))
+    return eve_response(events, 200 if status in [200, True] else 404)
+
+@NIF.route('events/organization/schedule/<int:org_id>', methods=['GET'])
+@require_token()
+def isonen_get_schedule_for_org(org_id):
+    #data = request.get_json()
+    #start_date = data.get('start_date', None)
+    args = parse_request('persons')
+    where = json.loads(args.where)
+    start_date = None
+    end_date = None
+    if args.where is not None:
+        start_date = where.get('start_date', datetime.now())
+        end_date = where.get('end_date', datetime.now() + timedelta(days=14))
+    status, events = get_nif_api_client().get_events_for_org_schedule(org_id, start_date, end_date) #, start_date=args.get('start_date', datetime.now()))
+    return eve_response(events, 200 if status in [200, True] else 404)
+
+
 
 @NIF.route('check/<int:person_id>', methods=['POST'])
 @require_token()
@@ -503,3 +552,4 @@ def ka_get_inbox_deceased():
 def sa_get_organization(org_id):
     status, organization = _get_sa_organization(org_id)
     return eve_response(organization, status)
+
