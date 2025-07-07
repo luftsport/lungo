@@ -67,6 +67,7 @@ _schema = {'type': {'type': 'string',
            'transport_mode': {'type': 'string'},  # immediate, aggregate_5m, aggregate_1d osv transport_delay 0 10
            'send_at': {'type': 'datetime'},  # When to send the notification
            'status': {'type': 'string'},  # created, pending, delivered
+           'errors': {'type': 'list'},  # List of errors if any
            'acl': acl_item_schema
            }
 
