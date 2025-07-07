@@ -15,6 +15,7 @@ import base64
 from werkzeug.utils import secure_filename
 from jinja2 import Template as JT
 from bs4 import BeautifulSoup
+from bson import ObjectId
 
 Notifications = Blueprint('Notifications', __name__)
 
@@ -253,6 +254,39 @@ def test_notification():
     print(parse_request('dev').where, parse_request('persons').max_results, parse_request('persons').projection)
     return eve_response(parse_request('notifications').where + str(parse_request('notifications').max_results) + parse_request('notifications').projection)
 
+@Notifications.route('/send/<string:_id>', methods=['POST'])
+@require_token()
+def send_notification_messages(_id):
+    """Send notification messages by ID"""
+    print(_id)
+    try:
+        notification, _, _, status = getitem_internal(resource='notifications', **{'_id': _id})
+    except Exception as e:
+        print('Error', e)
+        return eve_abort(500, "Error fetching notification")
+
+    print("Notification:", status, notification)
+    # Check "If-Match" header for optimistic concurrency control
+    if status == 200 and notification.get('status', None) == 'generated' and request.headers.get('If-Match', None) == notification.get('_etag', 'nope'):
+
+        notifications = app.data.driver.db['notifications']
+        notifications_messages = app.data.driver.db['notifications_messages']
+        # Check if the notification is already processed
+        n_status = notifications.update_one({'_id': ObjectId(_id)}, {'$set': {'status': 'pending'}})
+        if n_status.modified_count == 0:
+            return eve_abort(404, "Notification not found or already processed")
+
+        nm_status = notifications_messages.update_many({'event_id': ObjectId(_id)}, {'$set': {'status': 'ready'}})
+        if nm_status.modified_count == 0:
+            return eve_abort(404, "Notification messages not found or already processed")
+        # Update the status of the notification to 'finished'
+        nu_status = notifications.update_one({'_id': ObjectId(_id)}, {'$set': {'status': 'finished'}})
+        if nu_status.modified_count == 0:
+            return eve_abort(404, "Notification not found or already processed")
+
+        return eve_response({"status": "success", "message": f"{nm_status.modified_count} notification messages sent successfully"}, 201)
+
+    return eve_abort(404, "Notification not found or already processed")
 
 @Notifications.route('/generate/<string:_id>', methods=['POST', 'GET'])
 @require_token()
@@ -376,8 +410,9 @@ def generate_notifications(_id):
                         pld['recipient'] = {
                             'person_id': recipient,
                             'email': email if email else None,
-                            'first_name': person.get('first_name', ''),
-                            'last_name': person.get('last_name', ''),
+                            'name': person.get('full_name', '') if person else person.get('first_name', '') + ' ' + person.get('last_name', ''),  # Use full name if available
+                            #'first_name': person.get('first_name', ''),
+                            #'last_name': person.get('last_name', ''),
                         }  # Recipient's person ID and email
                         pld['uuid'] = str(uuid4())  # Generate a unique UUID for the notification
                         pld['acl']['read']['users'] = [recipient]
