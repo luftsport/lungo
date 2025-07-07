@@ -258,14 +258,11 @@ def test_notification():
 @require_token()
 def send_notification_messages(_id):
     """Send notification messages by ID"""
-    print(_id)
     try:
         notification, _, _, status = getitem_internal(resource='notifications', **{'_id': _id})
     except Exception as e:
-        print('Error', e)
         return eve_abort(500, "Error fetching notification")
 
-    print("Notification:", status, notification)
     # Check "If-Match" header for optimistic concurrency control
     if status == 200 and notification.get('status', None) == 'generated' and request.headers.get('If-Match', None) == notification.get('_etag', 'nope'):
 
