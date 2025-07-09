@@ -290,7 +290,7 @@ def send_notification_messages(_id):
         app.logger.info(f"Notification _id: {_id} successfully sent")
         return eve_response({"status": "success", "message": f"{nm_status.modified_count} notification messages sent successfully"}, 201)
 
-    app.logger.error(f"Error notification _id: {_id} status {status} response: {notification.text}, etag: {request.headers.get('If-Match', 'nope')}, expected etag: {notification.get('_etag', 'nope')}")
+    app.logger.error(f"Error notification _id: {_id} etag: {request.headers.get('If-Match', 'nope')} content type: {request.headers.get('Content-Type', 'unknown')} Authorization: {request.headers.get('Authorization', 'unknown')}")
     return eve_abort(404, "Notification not found or already processed")
 
 @Notifications.route('/generate/<string:_id>', methods=['POST', 'GET'])
