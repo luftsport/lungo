@@ -263,28 +263,34 @@ def send_notification_messages(_id):
     try:
         notification, _, _, status = getitem_internal(resource='notifications', **{'_id': _id})
     except Exception as e:
+        app.logger.exception(f"Error fetching notification _id: {_id} status {status} and error {e}")
         return eve_abort(500, "Error fetching notification")
 
     # Check "If-Match" header for optimistic concurrency control
     if status == 200 and notification.get('status', None) == 'generated' and request.headers.get('If-Match', None) == notification.get('_etag', 'nope'):
-
+        app.logger.info(f"Notification _id: {_id} is ready to be sent, status: {notification.get('status', 'unknown')}")
         notifications = app.data.driver.db['notifications']
         notifications_messages = app.data.driver.db['notifications_messages']
         # Check if the notification is already processed
         n_status = notifications.update_one({'_id': ObjectId(_id)}, {'$set': {'status': 'pending'}})
         if n_status.modified_count == 0:
+            app.logger.error(f"Notification _id: {_id} could not update notifications to status pending pymongo status {n_status}")
             return eve_abort(404, "Notification not found or already processed")
 
         nm_status = notifications_messages.update_many({'event_id': ObjectId(_id)}, {'$set': {'status': 'ready'}})
         if nm_status.modified_count == 0:
+            app.logger.error(f"Notification _id: {_id} could not update notification messages pymongo status {nm_status}")
             return eve_abort(404, "Notification messages not found or already processed")
         # Update the status of the notification to 'finished'
         nu_status = notifications.update_one({'_id': ObjectId(_id)}, {'$set': {'status': 'finished'}})
         if nu_status.modified_count == 0:
+            app.logger.error(f"Notification _id: {_id} could not update notification template pymongo status {nu_status}")
             return eve_abort(404, "Notification not found or already processed")
 
+        app.logger.info(f"Notification _id: {_id} successfully sent")
         return eve_response({"status": "success", "message": f"{nm_status.modified_count} notification messages sent successfully"}, 201)
 
+    app.logger.error(f"Error notification _id: {_id} status {status} response: {notification.text}, etag: {request.headers.get('If-Match', 'nope')}, expected etag: {notification.get('_etag', 'nope')}")
     return eve_abort(404, "Notification not found or already processed")
 
 @Notifications.route('/generate/<string:_id>', methods=['POST', 'GET'])
