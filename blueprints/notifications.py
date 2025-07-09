@@ -1,3 +1,5 @@
+import logging
+
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify, g
 from ext.auth.decorators import require_token
 from ext.app.eve_helper import eve_response, eve_abort
@@ -291,6 +293,7 @@ def generate_notifications(_id):
     try:
         response, _, _, status = getitem_internal(resource='notifications', **{'_id': _id})
     except Exception as e:
+        app.logger.exception("Error fetching notification")
         return eve_abort(500, "Error fetching notification")
 
     # Check "If-Match" header for optimistic concurrency control
@@ -298,11 +301,13 @@ def generate_notifications(_id):
         try:
             r, _, _, pstatus = patch_internal(resource='notifications', payload={'status': 'pending'}, **{'_id': _id})
         except Exception as e:
+            app.logger.exception("Error updating notification status to pending")
             return eve_abort(500, "Error updating notification status to pending")
 
         if pstatus in [200, 201]:
 
             if 'recipients' not in response or 'subject' not in response.get('data', {}) or ('html_content' not in response.get('data', {}) and 'plain_text_content' not in response.get('data', {})):
+                app.logger.error("Invalid request data: missing recipients or subject/content")
                 return eve_abort(400, "Invalid request data")
 
             # Get recipients from the request data
@@ -367,6 +372,7 @@ def generate_notifications(_id):
 
             for recipient in list(set(recipients)):
                 if isinstance(recipient, int):
+                    app.logger.debug(f"Processing recipient ID: {recipient}")
                     try:
                         # If recipient is a user ID, fetch their email
 
@@ -376,12 +382,14 @@ def generate_notifications(_id):
                         if person_status not in [200, 201]:
                             app.logger.error(f"Failed to fetch person data for recipient {recipient}: {person_status}")
                             failed_recipients.append(recipient)
+                            app.logger.error(f"Person data for recipient {recipient} not found or invalid status: {person_status} {person.text if hasattr(person, 'text') else ''}")
                             continue
                         # If person is None, we skip this recipient
 
                         # Get the email address of the person
                         email = None
                         if payload['transport'] == 'email':
+                            app.logger.debug(f"Fetching email for recipient {recipient}")
                             email = person.get('primary_email', person.get('address', {}).get('email', [])[0] if len(person.get('address', {}).get('email', [])) > 0 else None)
 
                         # Make sure to reset every time
@@ -389,16 +397,23 @@ def generate_notifications(_id):
                         html_content = None
                         plain_text_content = None
                         if person_status == 200 and person:
+                            app.logger.debug(f"Processing person data for recipient {recipient}")
                             if 'date_of_death' in person and person['date_of_death'] is not None:
                                 app.logger.error(f"Person {recipient} is deceased, skipping notification.")
                                 continue
                             if 'subject' in payload['data']:
+                                app.logger.debug(f"Rendering subject for recipient {recipient}")
                                 subject = subject_template.render(person)
                             if 'html_content' in payload['data']:
+                                app.logger.debug(f"Rendering HTML content for recipient {recipient}")
                                 html_content = html_content_template.render(person)
                             if 'plain_text_content' in payload['data']:
+                                app.logger.debug(f"Rendering plain text content for recipient {recipient}")
                                 plain_text_content = plain_text_content_template.render(person)
+                            app.logger.debug(f"Finished jinja rendering for recipient {recipient}")
 
+                        # Prepare the payload for the notification message
+                        app.logger.debug(f"Preparing payload for recipient {recipient}")
                         pld = payload.copy()
                         pld['data']['subject'] = subject
                         pld['data']['html_content'] = html_content
@@ -413,17 +428,22 @@ def generate_notifications(_id):
                         }  # Recipient's person ID and email
                         pld['uuid'] = str(uuid4())  # Generate a unique UUID for the notification
                         pld['acl']['read']['users'] = [recipient]
+                        app.logger.debug(f"Payload prepared for recipient {recipient}: {pld}")
 
                         # Make sure we always supply plain text content
                         if pld['data'].get('html_content', None) is not None and pld['data'].get('plain_text_content', None) is None:
                             # If only HTML content is provided, generate plain text from HTML
+                            app.logger.debug(f"Generating plain text content from HTML for recipient {recipient}")
                             soup = BeautifulSoup(pld['data']['html_content'])
                             pld['data']['plain_text_content'] = soup.get_text()
+                            app.logger.debug(f"Generated plain text content for recipient {recipient}: {pld['data']['plain_text_content']}")
 
                         try:
+                            app.logger.debug(f"Posting notification message for recipient {recipient}")
                             msg_response, _, _, msg_status, _ = post_internal(resource='notifications_messages',
                                                                               payl=pld,
                                                                               skip_validation=True)
+                            app.logger.debug(f"Notification message posted for recipient {recipient}: {msg_status}")
                         except Exception as e:
                             app.logger.error(f"Error posting notification message for recipient {recipient}: {e}")
                             # return eve_abort(500, "Error posting notification message")
@@ -441,9 +461,11 @@ def generate_notifications(_id):
 
             # Here you would typically send the email using your email service
             # For now, we just return a success response
+            app.logger.debug(f"All recipients processed, total: {len(recipients)}, failed: {len(failed_recipients)}")
             r, _, _, status = patch_internal(resource='notifications', payload={'status': 'generated'}, **{'_id': _id})
             return jsonify({"status": "success", "id": payload['event_id'], "message": "Notifications created successfully", "recipients": recipients, "failed": failed_recipients}), 201
 
+    app.logger.error(f"Notification not found or already processed: {_id}, status: {status}, response: {response.text}, etag: {request.headers.get('If-Match', 'nope')}, expected etag: {response.get('_etag', 'nope')}")
     return eve_abort(404, "Notification not found or already processed")
 
 
