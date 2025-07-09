@@ -462,8 +462,10 @@ def generate_notifications(_id):
             # Here you would typically send the email using your email service
             # For now, we just return a success response
             app.logger.debug(f"All recipients processed, total: {len(recipients)}, failed: {len(failed_recipients)}")
+
             r, _, _, status = patch_internal(resource='notifications', payload={'status': 'generated'}, **{'_id': _id})
-            return jsonify({"status": "success", "id": payload['event_id'], "message": "Notifications created successfully", "recipients": recipients, "failed": failed_recipients}), 201
+
+            return eve_response({"status": "success", "_id": _id, "_etag": r.get('_etag', None), "message": "Notifications created successfully", "recipients": recipients, "failed": failed_recipients}, 201)
 
     app.logger.error(f"Notification not found or already processed: {_id}, status: {status}, response: {response.text}, etag: {request.headers.get('If-Match', 'nope')}, expected etag: {response.get('_etag', 'nope')}")
     return eve_abort(404, "Notification not found or already processed")
