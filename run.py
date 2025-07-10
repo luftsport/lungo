@@ -60,6 +60,7 @@ SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settin
 # app = Eve(settings=SETTINGS_PATH)
 app = Eve(auth=NlfTokenAuth, settings=SETTINGS_PATH)
 # app = Eve(settings=SETTINGS_PATH)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.debug = True
 """ Define global settings
 These settings are mirrored from Eve, but should not be!
