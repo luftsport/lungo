@@ -205,7 +205,7 @@ def get_users_from_competences(competences):
     try:
         for competence in competences:
             resp = requests.get(
-                '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}projection={{"person_id": 1}}'.format(
+                '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}&projection={{"person_id": 1}}'.format(
                     API_BASE_URL, competence, datetime.utcnow().isoformat(), 20000),
                 headers=API_HEADERS)
 
@@ -224,7 +224,7 @@ def get_users_from_competence(competence):
     persons = []
     try:
         resp = requests.get(
-            '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}projection={{"person_id": 1}}'.format(
+            '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}&projection={{"person_id": 1}}'.format(
                 API_BASE_URL, competence, datetime.utcnow().isoformat(), 20000),
             headers=API_HEADERS)
 
