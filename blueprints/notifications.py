@@ -692,7 +692,11 @@ def generate_notifications(_id):
             plain_text_content_template = JT(f"{payload['data'].get('plain_text_content', '')}")
 
             # Validate and compile filters if provided
-            valid_filters = validate_filters(response['recipients'].get('filters', []))
+            try:
+                valid_filters = validate_filters(response['recipients'].get('filters', None))
+            except Exception as e:
+                app.logger.exception(f"Error validating filters: {e}")
+                valid_filters = None
 
             for recipient in list(set(recipients)):
                 if isinstance(recipient, int):
@@ -719,7 +723,7 @@ def generate_notifications(_id):
                             # Check if filters are valid else ditch the notification message
                             app.logger.debug(f"Applying filter for recipient {recipient}")
                             # Add special fields:
-                            if len(valid_filters) > 0:
+                            if valid_filters:
                                 # Add special fields to the person object for filtering
                                 person['age'] = calculate_age(person.get('birth_date', None))
                                 if person_satisfies_filters(person, valid_filters) is False:
