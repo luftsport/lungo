@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 from jinja2 import Template as JT
 from bs4 import BeautifulSoup
 from bson import ObjectId
-from dateutil import parser
+from dateutil.parser import parse
 
 Notifications = Blueprint('Notifications', __name__)
 
@@ -45,70 +45,188 @@ SIMPLE_OPERATORS = {
     'in': '$in'
 }
 MONGO_OPERATORS = list(SIMPLE_OPERATORS.values())
+LOGICAL_OPERATORS = ['$or', '$and']
 
 
-def validate_filters(filters):
+def validate_filters(filters, depth=0):
     """
-    Validate a list of filter dictionaries, ensuring date fields have valid date/datetime values.
-    :param filters: List of dicts, e.g., [{'type': 'inclusive', 'field': 'birth_date', 'value': '2000-01-01', 'operator': 'eq'}]
-    :return: List of validated filters with parsed date values for 'birth_date'
+    Validate a filter dictionary or list, supporting $or/$and and nested filters.
+    :param filters: Dict with $or/$and or list of filter dicts
+    :param depth: Recursion depth for logging
+    :return: Validated filter structure with parsed values
     """
-    valid_filters = []
+    indent = "  " * depth
+    if isinstance(filters, list):
+        # Treat list as implicit $and
+        filters = {"$and": filters}
+
+    if not isinstance(filters, dict):
+        logging.error(f"{indent}Filters must be a dictionary or list: {filters}")
+        raise ValueError(f"Filters must be a dictionary or list")
+
+    if len(filters) != 1 or list(filters.keys())[0] not in LOGICAL_OPERATORS:
+        logging.error(f"{indent}Filters must have a single $or or $and key: {filters}")
+        raise ValueError(f"Filters must have a single $or or $and key")
+
+    operator = list(filters.keys())[0]
+    filter_list = filters[operator]
+
+    if not isinstance(filter_list, list) or not filter_list:
+        logging.error(f"{indent}{operator} value must be a non-empty list: {filter_list}")
+        raise ValueError(f"{operator} value must be a non-empty list")
+
+    validated_filters = {operator: []}
     required_keys = {'type', 'field', 'value', 'operator'}
 
-    for i, filter_dict in enumerate(filters):
-        # Check required keys
-        if not isinstance(filter_dict, dict):
-            app.logger.error(f"Filter {i} is not a dictionary: {filter_dict}")
-            raise ValueError(f"Filter {i} must be a dictionary")
+    for i, filter_item in enumerate(filter_list):
+        if isinstance(filter_item, dict) and any(key in LOGICAL_OPERATORS for key in filter_item):
+            # Nested $or/$and
+            validated_filters[operator].append(validate_filters(filter_item, depth + 1))
+            logging.info(f"{indent}Validated nested {operator} filter {i} at depth {depth + 1}")
+        else:
+            # Simple filter dictionary
+            if not isinstance(filter_item, dict):
+                logging.error(f"{indent}Filter {i} is not a dictionary: {filter_item}")
+                raise ValueError(f"Filter {i} must be a dictionary")
 
-        if not all(key in filter_dict for key in required_keys):
-            missing = required_keys - set(filter_dict.keys())
-            app.logger.error(f"Filter {i} missing required keys: {missing}")
-            raise ValueError(f"Filter {i} missing required keys: {missing}")
+            if not all(key in filter_item for key in required_keys):
+                missing = required_keys - set(filter_item.keys())
+                logging.error(f"{indent}Filter {i} missing required keys: {missing}")
+                raise ValueError(f"Filter {i} missing required keys: {missing}")
 
-        # Validate type
-        if filter_dict['type'] not in ['inclusive', 'exclusive']:
-            app.logger.error(f"Filter {i} invalid type: {filter_dict['type']}")
-            raise ValueError(f"Filter {i} type must be 'inclusive' or 'exclusive'")
+            if filter_item['type'] not in ['inclusive', 'exclusive']:
+                logging.error(f"{indent}Filter {i} invalid type: {filter_item['type']}")
+                raise ValueError(f"Filter {i} type must be 'inclusive' or 'exclusive'")
 
-        # Validate field
-        if not isinstance(filter_dict['field'], str) or not filter_dict['field']:
-            app.logger.error(f"Filter {i} invalid field: {filter_dict['field']}")
-            raise ValueError(f"Filter {i} field must be a non-empty string")
+            if not isinstance(filter_item['field'], str) or not filter_item['field']:
+                logging.error(f"{indent}Filter {i} invalid field: {filter_item['field']}")
+                raise ValueError(f"Filter {i} field must be a non-empty string")
 
-        # Validate operator
-        operator = filter_dict['operator']
-        if operator not in SIMPLE_OPERATORS and operator not in MONGO_OPERATORS:
-            app.logger.error(f"Filter {i} invalid operator: {operator}")
-            raise ValueError(f"Filter {i} operator must be one of {list(SIMPLE_OPERATORS.keys()) + MONGO_OPERATORS}")
+            op = filter_item['operator']
+            if op not in SIMPLE_OPERATORS and op not in MONGO_OPERATORS:
+                logging.error(f"{indent}Filter {i} invalid operator: {op}")
+                raise ValueError(f"Filter {i} operator must be one of {list(SIMPLE_OPERATORS.keys()) + MONGO_OPERATORS}")
 
-        # Validate value for 'in' operator
-        if operator in ['in', '$in'] and not isinstance(filter_dict['value'], list):
-            app.logger.error(f"Filter {i} value for 'in' operator must be a list: {filter_dict['value']}")
-            raise ValueError(f"Filter {i} value for 'in' operator must be a list")
+            if op in ['in', '$in'] and not isinstance(filter_item['value'], list):
+                logging.error(f"{indent}Filter {i} value for 'in' must be a list: {filter_item['value']}")
+                raise ValueError(f"Filter {i} value for 'in' must be a list")
 
-        # Validate and parse date for birth_date field
-        if filter_dict['field'] == 'birth_date':
-            try:
-                if operator in ['in', '$in']:
-                    # Parse each value in the list as date/datetime
-                    parsed_values = [parser.parse(val) for val in filter_dict['value']]
-                    filter_dict['value'] = parsed_values
-                    app.logger.info(f"Parsed birth_date values for filter {i}: {parsed_values}")
+            # Validate birth_date
+            if filter_item['field'] == 'birth_date':
+                try:
+                    if op in ['in', '$in']:
+                        parsed_values = [parse(val) for val in filter_item['value']]
+                        filter_item['value'] = parsed_values
+                        logging.info(f"{indent}Parsed birth_date values for filter {i}: {parsed_values}")
+                    else:
+                        parsed_value = parse(filter_item['value'])
+                        filter_item['value'] = parsed_value
+                        logging.info(f"{indent}Parsed birth_date value for filter {i}: {parsed_value}")
+                except (ValueError, TypeError) as e:
+                    logging.error(f"{indent}Filter {i} invalid birth_date value: {filter_item['value']} ({str(e)})")
+                    raise ValueError(f"Filter {i} birth_date value must be a valid date/datetime string")
+
+            # Validate age
+            if filter_item['field'] == 'age':
+                if op in ['in', '$in']:
+                    if not all(isinstance(val, int) for val in filter_item['value']):
+                        logging.error(f"{indent}Filter {i} age value for 'in' must be a list of integers: {filter_item['value']}")
+                        raise ValueError(f"Filter {i} age value for 'in' must be a list of integers")
                 else:
-                    # Parse single value as date/datetime
-                    parsed_value = parser.parse(filter_dict['value'])
-                    filter_dict['value'] = parsed_value
-                    app.logger.info(f"Parsed birth_date value for filter {i}: {parsed_value}")
-            except (ValueError, TypeError) as e:
-                app.logger.error(f"Filter {i} invalid birth_date value: {filter_dict['value']} ({str(e)})")
-                raise ValueError(f"Filter {i} birth_date value must be a valid date/datetime string")
+                    if not isinstance(filter_item['value'], int):
+                        logging.error(f"{indent}Filter {i} age value must be an integer: {filter_item['value']}")
+                        raise ValueError(f"Filter {i} age value must be an integer")
 
-        valid_filters.append(filter_dict)
-        app.logger.info(f"Validated filter {i}: {filter_dict}")
+            validated_filters[operator].append(filter_item)
+            logging.info(f"{indent}Validated filter {i}: {filter_item}")
 
-    return valid_filters
+    return validated_filters
+
+
+def person_satisfies_filters(person, filters, depth=0):
+    """
+    Check if a person satisfies the given filters, supporting $or/$and.
+    """
+    indent = "  " * depth
+    if isinstance(filters, list):
+        filters = {"$and": filters}
+
+    operator = list(filters.keys())[0]
+    filter_list = filters[operator]
+
+    if operator == '$and':
+        for i, filter_item in enumerate(filter_list):
+            if any(key in LOGICAL_OPERATORS for key in filter_item):
+                if not person_satisfies_filters(person, filter_item, depth + 1):
+                    logging.info(f"{indent}Person does not satisfy nested $and filter {i}: {filter_item}")
+                    return False
+            else:
+                if not person_satisfies_single_filter(person, filter_item):
+                    logging.info(f"{indent}Person does not satisfy $and filter {i}: {filter_item}")
+                    return False
+        return True
+    elif operator == '$or':
+        for i, filter_item in enumerate(filter_list):
+            if any(key in LOGICAL_OPERATORS for key in filter_item):
+                if person_satisfies_filters(person, filter_item, depth + 1):
+                    logging.info(f"{indent}Person satisfies nested $or filter {i}: {filter_item}")
+                    return True
+            else:
+                if person_satisfies_single_filter(person, filter_item):
+                    logging.info(f"{indent}Person satisfies $or filter {i}: {filter_item}")
+                    return True
+        return False
+    return False
+
+
+def person_satisfies_single_filter(person, filter_dict):
+    """
+    Check if a person satisfies a single filter.
+    """
+    field = filter_dict['field']
+    value = filter_dict['value']
+    operator = SIMPLE_OPERATORS.get(filter_dict['operator'], filter_dict['operator'])
+
+    if field == 'age':
+        if 'birth_date' not in person:
+            logging.warning(f"birth_date not found in person for age filter: {person}")
+            return False
+        try:
+            person_value = calculate_age(person['birth_date'])
+        except ValueError as e:
+            logging.error(f"Error calculating age: {str(e)}")
+            return False
+    else:
+        if field not in person:
+            logging.warning(f"Field {field} not found in person: {person}")
+            return False
+        person_value = person[field]
+
+    if field == 'birth_date' and not isinstance(person_value, datetime):
+        logging.error(f"Person's birth_date is not a datetime: {person_value}")
+        return False
+
+    result = False
+    if operator == '$eq' or operator == '=':
+        result = person_value == value
+    elif operator == '$gt' or operator == '>':
+        result = person_value > value
+    elif operator == '$lt' or operator == '<':
+        result = person_value < value
+    elif operator == '$gte' or operator == '>=':
+        result = person_value >= value
+    elif operator == '$lte' or operator == '<=':
+        result = person_value <= value
+    elif operator == '$ne' or operator == '!=':
+        result = person_value != value
+    elif operator == '$in' or operator == 'in':
+        result = person_value in value
+
+    if filter_dict['type'] == 'inclusive':
+        return result
+    elif filter_dict['type'] == 'exclusive':
+        return not result
+    return False
 
 
 def person_satisfies_filters(person, filters):
@@ -154,10 +272,10 @@ def person_satisfies_filters(person, filters):
 
         # Apply inclusive/exclusive logic
         if filter_dict['type'] == 'inclusive' and not result:
-            app.logger.info(f"Person does not satisfy inclusive filter: {filter_dict}")
+            app.logger.info(f"Person with field {field} and value {person_value} does not satisfy inclusive filter: {filter_dict}")
             return False
         elif filter_dict['type'] == 'exclusive' and result:
-            app.logger.info(f"Person does not satisfy exclusive filter: {filter_dict}")
+            app.logger.info(f"Person with field {field} and value {person_value} does not satisfy inclusive filter: {filter_dict}")
             return False
 
     app.logger.info(f"Person satisfies all filters: {person}")
@@ -440,15 +558,16 @@ def notify():
     - choose given or best suited channel
     - apply status when applicable
     - similar to obsreg's notifications"""
-    pass
+    return eve_abort(404, "Notify endpoint not implemented yet")
 
 
 @Notifications.route('/test', methods=['GET'])
 @require_token()
 def test_notification():
-    from eve.utils import parse_request
-    print(parse_request('dev').where, parse_request('persons').max_results, parse_request('persons').projection)
-    return eve_response(parse_request('notifications').where + str(parse_request('notifications').max_results) + parse_request('notifications').projection)
+    # from eve.utils import parse_request
+    # print(parse_request('dev').where, parse_request('persons').max_results, parse_request('persons').projection)
+    # return eve_response(parse_request('notifications').where + str(parse_request('notifications').max_results) + parse_request('notifications').projection)
+    return eve_abort(404, "Test endpoint not implemented yet")
 
 
 @Notifications.route('/send/<string:_id>', methods=['POST'])
