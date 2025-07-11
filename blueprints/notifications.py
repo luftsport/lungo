@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 from jinja2 import Template as JT
 from bs4 import BeautifulSoup
 from bson import ObjectId
-
+from dateutil import parser
 Notifications = Blueprint('Notifications', __name__)
 
 from ext.scf import (
@@ -30,9 +30,152 @@ from ext.scf import (
     SENDGRID_DEFAULT_REPLY_TO
 )
 
-
 # DIsable jinja templating cache
 # app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+# Valid operators
+SIMPLE_OPERATORS = {
+    '=': '$eq',
+    '>': '$gt',
+    '<': '$lt',
+    '>=': '$gte',
+    '<=': '$lte',
+    '!=': '$ne',
+    'in': '$in'
+}
+MONGO_OPERATORS = list(SIMPLE_OPERATORS.values())
+
+
+def validate_filters(filters):
+    """
+    Validate a list of filter dictionaries, ensuring date fields have valid date/datetime values.
+    :param filters: List of dicts, e.g., [{'type': 'inclusive', 'field': 'birthdate', 'value': '2000-01-01', 'operator': 'eq'}]
+    :return: List of validated filters with parsed date values for 'birthdate'
+    """
+    valid_filters = []
+    required_keys = {'type', 'field', 'value', 'operator'}
+
+    for i, filter_dict in enumerate(filters):
+        # Check required keys
+        if not isinstance(filter_dict, dict):
+            app.logger.error(f"Filter {i} is not a dictionary: {filter_dict}")
+            raise ValueError(f"Filter {i} must be a dictionary")
+
+        if not all(key in filter_dict for key in required_keys):
+            missing = required_keys - set(filter_dict.keys())
+            app.logger.error(f"Filter {i} missing required keys: {missing}")
+            raise ValueError(f"Filter {i} missing required keys: {missing}")
+
+        # Validate type
+        if filter_dict['type'] not in ['inclusive', 'exclusive']:
+            app.logger.error(f"Filter {i} invalid type: {filter_dict['type']}")
+            raise ValueError(f"Filter {i} type must be 'inclusive' or 'exclusive'")
+
+        # Validate field
+        if not isinstance(filter_dict['field'], str) or not filter_dict['field']:
+            app.logger.error(f"Filter {i} invalid field: {filter_dict['field']}")
+            raise ValueError(f"Filter {i} field must be a non-empty string")
+
+        # Validate operator
+        operator = filter_dict['operator']
+        if operator not in SIMPLE_OPERATORS and operator not in MONGO_OPERATORS:
+            app.logger.error(f"Filter {i} invalid operator: {operator}")
+            raise ValueError(f"Filter {i} operator must be one of {list(SIMPLE_OPERATORS.keys()) + MONGO_OPERATORS}")
+
+        # Validate and parse date for birthdate field
+        if filter_dict['field'] in ['birth_date', '_created', '_updated', 'birthdate', 'created_date', 'last_changed_date', 'paid', 'from_date', 'to_date', 'valid_to', 'valid_until']:
+            try:
+                # Parse value as date/datetime
+                parsed_value = parser.parse(filter_dict['value'])
+                filter_dict['value'] = parsed_value  # Store parsed datetime
+                app.logger.info(f"Parsed birthdate value for filter {i}: {parsed_value}")
+            except (ValueError, TypeError) as e:
+                app.logger.error(f"Filter {i} invalid birthdate value: {filter_dict['value']} ({str(e)})")
+                raise ValueError(f"Filter {i} birthdate value must be a valid date/datetime string")
+
+        valid_filters.append(filter_dict)
+        app.logger.info(f"Validated filter {i}: {filter_dict}")
+
+    return valid_filters
+
+
+def person_satisfies_filters(person, filters):
+    """
+    Check if a person satisfies the given filters.
+    :param person: Dictionary with person data, e.g., {'name': 'John', 'birthdate': datetime, 'email': 'john@example.com'}
+    :param filters: List of validated filter dicts
+    :return: True if person satisfies all filters, False otherwise
+    """
+    for filter_dict in filters:
+        field = filter_dict['field']
+        value = filter_dict['value']
+        operator = SIMPLE_OPERATORS.get(filter_dict['operator'], filter_dict['operator'])
+
+        # Ensure field exists in person
+        if field not in person:
+            app.logger.warning(f"Field {field} not found in person: {person}")
+            return False
+
+        person_value = person[field]
+
+        # Handle birthdate comparisons
+        if field == 'birthdate':
+            if not isinstance(person_value, datetime):
+                app.logger.error(f"Person's birthdate is not a datetime: {person_value}")
+                return False
+
+        # Compare values
+        result = False
+        if operator == '$eq' or operator == '=':
+            result = person_value == value
+        elif operator == '$gt' or operator == '>':
+            result = person_value > value
+        elif operator == '$lt' or operator == '<':
+            result = person_value < value
+        elif operator == '$gte' or operator == '>=':
+            result = person_value >= value
+        elif operator == '$lte' or operator == '<=':
+            result = person_value <= value
+        elif operator == '$ne' or operator == '!=':
+            result = person_value != value
+
+        # Apply inclusive/exclusive logic
+        if filter_dict['type'] == 'inclusive' and not result:
+            app.logger.info(f"Person does not satisfy inclusive filter: {filter_dict}")
+            return False
+        elif filter_dict['type'] == 'exclusive' and result:
+            app.logger.info(f"Person does not satisfy exclusive filter: {filter_dict}")
+            return False
+
+    app.logger.info(f"Person satisfies all filters: {person}")
+    return True
+
+
+def build_mongo_query(filters):
+    """
+    Convert filters to a MongoDB query.
+    :param filters: List of validated filter dicts
+    :return: MongoDB query dictionary
+    """
+    query = {}
+    for filter_dict in filters:
+        field = filter_dict['field']
+        value = filter_dict['value']
+        operator = SIMPLE_OPERATORS.get(filter_dict['operator'], filter_dict['operator'])
+
+        # Build query for the field
+        if field not in query:
+            query[field] = {}
+
+        query[field][operator] = value
+
+        # Handle exclusive filters (negate the condition)
+        if filter_dict['type'] == 'exclusive':
+            query[field] = {'$not': query[field]}
+
+    app.logger.info(f"Built MongoDB query: {query}")
+    return query
+
 
 def get_person_from_role(role) -> (bool, [int]):
     resp = requests.get(
@@ -149,6 +292,14 @@ def get_users_from_role(role):
     return []
 
 
+def check_nif_person(person_id):
+    person, _, _, status = getitem_internal(resource='nif_persons', **{'id': person_id})
+    if status == 200 and person is not None:
+        return True
+
+    return False
+
+
 def get_recepient(person_id):
     return get_recepients([person_id])
 
@@ -257,6 +408,7 @@ def test_notification():
     print(parse_request('dev').where, parse_request('persons').max_results, parse_request('persons').projection)
     return eve_response(parse_request('notifications').where + str(parse_request('notifications').max_results) + parse_request('notifications').projection)
 
+
 @Notifications.route('/send/<string:_id>', methods=['POST'])
 @require_token()
 def send_notification_messages(_id):
@@ -293,6 +445,7 @@ def send_notification_messages(_id):
 
     app.logger.error(f"Error notification _id: {_id} etag: {request.headers.get('If-Match', 'nope')} content type: {request.headers.get('Content-Type', 'unknown')} Authorization: {request.headers.get('Authorization', 'unknown')}")
     return eve_abort(404, "Notification not found or already processed")
+
 
 @Notifications.route('/generate/<string:_id>', methods=['POST', 'GET'])
 @require_token()
@@ -377,6 +530,9 @@ def generate_notifications(_id):
             html_content_template = JT(f"{payload['data'].get('html_content', '')}")
             plain_text_content_template = JT(f"{payload['data'].get('plain_text_content', '')}")
 
+            # Validate filters if provided
+            valid_filters = validate_filters(data.get('filters', []))
+
             for recipient in list(set(recipients)):
                 if isinstance(recipient, int):
                     app.logger.debug(f"Processing recipient ID: {recipient}")
@@ -386,24 +542,35 @@ def generate_notifications(_id):
                         # Templating the subject and content if needed
                         person = None
                         person, _, _, person_status = getitem_internal(resource='persons', **{'id': recipient})
-                        if person_status not in [200, 201]:
+                        # If status not correct or person is None, we skip this recipient
+                        if person_status not in [200, 201] or not person:
                             app.logger.error(f"Failed to fetch person data for recipient {recipient}: {person_status}")
                             failed_recipients.append(recipient)
                             app.logger.error(f"Person data for recipient {recipient} not found or invalid status: {person_status} {person.text if hasattr(person, 'text') else ''}")
                             continue
-                        # If person is None, we skip this recipient
-
-                        # Get the email address of the person
-                        email = None
-                        if payload['transport'] == 'email':
-                            app.logger.debug(f"Fetching email for recipient {recipient}")
-                            email = person.get('primary_email', person.get('address', {}).get('email', [])[0] if len(person.get('address', {}).get('email', [])) > 0 else None)
 
                         # Make sure to reset every time
                         subject = None
                         html_content = None
                         plain_text_content = None
                         if person_status == 200 and person:
+
+                            # Check if filters are valid else ditch the notification message
+                            app.logger.debug(f"Applying filter for recipient {recipient}")
+                            if person_satisfies_filters(person, valid_filters) is False:
+                                app.logger.error(f"Person {recipient} does not satisfy the filters, skipping notification.")
+                                continue
+
+                            # Get the email address of the person
+                            email = None
+                            if payload['transport'] == 'email':
+                                app.logger.debug(f"Fetching email for recipient {recipient}")
+                                email = person.get('primary_email', person.get('address', {}).get('email', [])[0] if len(person.get('address', {}).get('email', [])) > 0 else None)
+                            # Check if the person has memberships in NLF
+                            if check_nif_person(person['id']) is False:
+                                app.logger.error(f"Person {recipient} has no memberships as reported by /nif/persons, skipping notification.")
+                                continue
+
                             app.logger.debug(f"Processing person data for recipient {recipient}")
                             if 'date_of_death' in person and person['date_of_death'] is not None:
                                 app.logger.error(f"Person {recipient} is deceased, skipping notification.")
@@ -430,8 +597,8 @@ def generate_notifications(_id):
                             'person_id': recipient,
                             'email': email if email else None,
                             'name': person.get('full_name', '') if person else person.get('first_name', '') + ' ' + person.get('last_name', ''),  # Use full name if available
-                            #'first_name': person.get('first_name', ''),
-                            #'last_name': person.get('last_name', ''),
+                            # 'first_name': person.get('first_name', ''),
+                            # 'last_name': person.get('last_name', ''),
                         }  # Recipient's person ID and email
                         pld['uuid'] = str(uuid4())  # Generate a unique UUID for the notification
                         pld['acl']['read']['users'] = [recipient]
