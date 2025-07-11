@@ -179,10 +179,75 @@ def person_satisfies_filters(person, filters, depth=0):
     return False
 
 
+def person_satisfies_filters(person, filters, depth=0):
+    """
+    Check if a person satisfies the given filters, supporting or/and.
+    """
+    indent = "  " * depth
+    logging.debug(f"{indent}Processing filters at depth {depth}: {filters}")
+
+    # Handle list as implicit and
+    if isinstance(filters, list):
+        filters = {"and": filters}
+
+    if not isinstance(filters, dict) or len(filters) != 1:
+        logging.error(f"{indent}Invalid filter structure at depth {depth}: {filters}")
+        raise ValueError(f"Filters must be a dictionary with a single or or and key")
+
+    operator = list(filters.keys())[0]
+    if operator not in LOGICAL_OPERATORS:
+        logging.error(f"{indent}Invalid logical operator at depth {depth}: {operator}")
+        raise ValueError(f"Logical operator must be or or and")
+
+    filter_list = filters[operator]
+    if not isinstance(filter_list, list) or not filter_list:
+        logging.error(f"{indent}{operator} value must be a non-empty list: {filter_list}")
+        raise ValueError(f"{operator} value must be a non-empty list")
+
+    if operator == 'and':
+        for i, filter_item in enumerate(filter_list):
+            if isinstance(filter_item, dict) and any(key in LOGICAL_OPERATORS for key in filter_item.keys()):
+                logging.debug(f"{indent}Evaluating nested and filter {i} at depth {depth}: {filter_item}")
+                if not person_satisfies_filters(person, filter_item, depth + 1):
+                    logging.info(f"{indent}Person does not satisfy nested and filter {i}: {filter_item}")
+                    return False
+            else:
+                logging.debug(f"{indent}Evaluating single and filter {i} at depth {depth}: {filter_item}")
+                if not person_satisfies_single_filter(person, filter_item):
+                    logging.info(f"{indent}Person does not satisfy and filter {i}: {filter_item}")
+                    return False
+        logging.info(f"{indent}Person satisfies all and filters at depth {depth}")
+        return True
+    elif operator == 'or':
+        for i, filter_item in enumerate(filter_list):
+            if isinstance(filter_item, dict) and any(key in LOGICAL_OPERATORS for key in filter_item.keys()):
+                logging.debug(f"{indent}Evaluating nested or filter {i} at depth {depth}: {filter_item}")
+                if person_satisfies_filters(person, filter_item, depth + 1):
+                    logging.info(f"{indent}Person satisfies nested or filter {i}: {filter_item}")
+                    return True
+            else:
+                logging.debug(f"{indent}Evaluating single or filter {i} at depth {depth}: {filter_item}")
+                if person_satisfies_single_filter(person, filter_item):
+                    logging.info(f"{indent}Person satisfies or filter {i}: {filter_item}")
+                    return True
+        logging.info(f"{indent}Person does not satisfy any or filters at depth {depth}")
+        return False
+    return False
+
+
 def person_satisfies_single_filter(person, filter_dict):
     """
     Check if a person satisfies a single filter.
     """
+    if not isinstance(filter_dict, dict):
+        logging.error(f"Single filter must be a dictionary: {filter_dict}")
+        raise ValueError(f"Single filter must be a dictionary")
+
+    required_keys = {'type', 'field', 'value', 'operator'}
+    if not all(key in filter_dict for key in required_keys):
+        logging.error(f"Single filter missing required keys: {filter_dict}")
+        raise ValueError(f"Single filter missing required keys")
+
     field = filter_dict['field']
     value = filter_dict['value']
     operator = SIMPLE_OPERATORS.get(filter_dict['operator'], filter_dict['operator'])
@@ -227,59 +292,6 @@ def person_satisfies_single_filter(person, filter_dict):
     elif filter_dict['type'] == 'exclusive':
         return not result
     return False
-
-
-def person_satisfies_filters(person, filters):
-    """
-    Check if a person satisfies the given filters.
-    :param person: Dictionary with person data, e.g., {'name': 'John', 'birth_date': datetime, 'email': 'john@example.com'}
-    :param filters: List of validated filter dicts
-    :return: True if person satisfies all filters, False otherwise
-    """
-    for filter_dict in filters:
-        field = filter_dict['field']
-        value = filter_dict['value']
-        operator = SIMPLE_OPERATORS.get(filter_dict['operator'], filter_dict['operator'])
-
-        # Ensure field exists in person
-        if field not in person:
-            app.logger.warning(f"Field {field} not found in person: {person}")
-            return False
-
-        person_value = person[field]
-
-        # Handle birth_date comparisons
-        if field == 'birth_date' and not isinstance(person_value, datetime):
-            app.logger.error(f"Person's birth_date is not a datetime: {person_value}")
-            return False
-
-        # Compare values
-        result = False
-        if operator == '$eq' or operator == '=':
-            result = person_value == value
-        elif operator == '$gt' or operator == '>':
-            result = person_value > value
-        elif operator == '$lt' or operator == '<':
-            result = person_value < value
-        elif operator == '$gte' or operator == '>=':
-            result = person_value >= value
-        elif operator == '$lte' or operator == '<=':
-            result = person_value <= value
-        elif operator == '$ne' or operator == '!=':
-            result = person_value != value
-        elif operator == '$in' or operator == 'in':
-            result = person_value in value
-
-        # Apply inclusive/exclusive logic
-        if filter_dict['type'] == 'inclusive' and not result:
-            app.logger.info(f"Person with field {field} and value {person_value} does not satisfy inclusive filter: {filter_dict}")
-            return False
-        elif filter_dict['type'] == 'exclusive' and result:
-            app.logger.info(f"Person with field {field} and value {person_value} does not satisfy inclusive filter: {filter_dict}")
-            return False
-
-    app.logger.info(f"Person satisfies all filters: {person}")
-    return True
 
 
 def calculate_age(birth_date, reference_date=None):
