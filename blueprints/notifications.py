@@ -19,6 +19,7 @@ from jinja2 import Template as JT
 from bs4 import BeautifulSoup
 from bson import ObjectId
 from dateutil import parser
+
 Notifications = Blueprint('Notifications', __name__)
 
 from ext.scf import (
@@ -49,8 +50,8 @@ MONGO_OPERATORS = list(SIMPLE_OPERATORS.values())
 def validate_filters(filters):
     """
     Validate a list of filter dictionaries, ensuring date fields have valid date/datetime values.
-    :param filters: List of dicts, e.g., [{'type': 'inclusive', 'field': 'birthdate', 'value': '2000-01-01', 'operator': 'eq'}]
-    :return: List of validated filters with parsed date values for 'birthdate'
+    :param filters: List of dicts, e.g., [{'type': 'inclusive', 'field': 'birth_date', 'value': '2000-01-01', 'operator': 'eq'}]
+    :return: List of validated filters with parsed date values for 'birth_date'
     """
     valid_filters = []
     required_keys = {'type', 'field', 'value', 'operator'}
@@ -82,16 +83,27 @@ def validate_filters(filters):
             app.logger.error(f"Filter {i} invalid operator: {operator}")
             raise ValueError(f"Filter {i} operator must be one of {list(SIMPLE_OPERATORS.keys()) + MONGO_OPERATORS}")
 
-        # Validate and parse date for birthdate field
-        if filter_dict['field'] in ['birth_date', '_created', '_updated', 'birthdate', 'created_date', 'last_changed_date', 'paid', 'from_date', 'to_date', 'valid_to', 'valid_until']:
+        # Validate value for 'in' operator
+        if operator in ['in', '$in'] and not isinstance(filter_dict['value'], list):
+            app.logger.error(f"Filter {i} value for 'in' operator must be a list: {filter_dict['value']}")
+            raise ValueError(f"Filter {i} value for 'in' operator must be a list")
+
+        # Validate and parse date for birth_date field
+        if filter_dict['field'] == 'birth_date':
             try:
-                # Parse value as date/datetime
-                parsed_value = parser.parse(filter_dict['value'])
-                filter_dict['value'] = parsed_value  # Store parsed datetime
-                app.logger.info(f"Parsed birthdate value for filter {i}: {parsed_value}")
+                if operator in ['in', '$in']:
+                    # Parse each value in the list as date/datetime
+                    parsed_values = [parser.parse(val) for val in filter_dict['value']]
+                    filter_dict['value'] = parsed_values
+                    app.logger.info(f"Parsed birth_date values for filter {i}: {parsed_values}")
+                else:
+                    # Parse single value as date/datetime
+                    parsed_value = parser.parse(filter_dict['value'])
+                    filter_dict['value'] = parsed_value
+                    app.logger.info(f"Parsed birth_date value for filter {i}: {parsed_value}")
             except (ValueError, TypeError) as e:
-                app.logger.error(f"Filter {i} invalid birthdate value: {filter_dict['value']} ({str(e)})")
-                raise ValueError(f"Filter {i} birthdate value must be a valid date/datetime string")
+                app.logger.error(f"Filter {i} invalid birth_date value: {filter_dict['value']} ({str(e)})")
+                raise ValueError(f"Filter {i} birth_date value must be a valid date/datetime string")
 
         valid_filters.append(filter_dict)
         app.logger.info(f"Validated filter {i}: {filter_dict}")
@@ -102,7 +114,7 @@ def validate_filters(filters):
 def person_satisfies_filters(person, filters):
     """
     Check if a person satisfies the given filters.
-    :param person: Dictionary with person data, e.g., {'name': 'John', 'birthdate': datetime, 'email': 'john@example.com'}
+    :param person: Dictionary with person data, e.g., {'name': 'John', 'birth_date': datetime, 'email': 'john@example.com'}
     :param filters: List of validated filter dicts
     :return: True if person satisfies all filters, False otherwise
     """
@@ -118,11 +130,10 @@ def person_satisfies_filters(person, filters):
 
         person_value = person[field]
 
-        # Handle birthdate comparisons
-        if field == 'birthdate':
-            if not isinstance(person_value, datetime):
-                app.logger.error(f"Person's birthdate is not a datetime: {person_value}")
-                return False
+        # Handle birth_date comparisons
+        if field == 'birth_date' and not isinstance(person_value, datetime):
+            app.logger.error(f"Person's birth_date is not a datetime: {person_value}")
+            return False
 
         # Compare values
         result = False
@@ -138,6 +149,8 @@ def person_satisfies_filters(person, filters):
             result = person_value <= value
         elif operator == '$ne' or operator == '!=':
             result = person_value != value
+        elif operator == '$in' or operator == 'in':
+            result = person_value in value
 
         # Apply inclusive/exclusive logic
         if filter_dict['type'] == 'inclusive' and not result:
@@ -149,6 +162,35 @@ def person_satisfies_filters(person, filters):
 
     app.logger.info(f"Person satisfies all filters: {person}")
     return True
+
+
+def calculate_age(birth_date, reference_date=None):
+    """
+    Calculate age from a birth_date (datetime or string).
+    :param birth_date: datetime object or string (e.g., '2000-01-01')
+    :param reference_date: datetime object for age calculation (default: today, 2025-07-11)
+    :return: Age in years (int)
+    """
+    if reference_date is None:
+        reference_date = datetime.utcnow()  # Current date as per context
+
+    # Parse birth_date if it's a string
+    if isinstance(birth_date, str):
+        try:
+            birth_date = parser.parse(birth_date)
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Invalid birth_date format: {birth_date} ({str(e)})")
+
+    # Ensure birth_date is a datetime
+    if not isinstance(birth_date, datetime):
+        raise ValueError(f"birth_date must be a datetime or valid date string: {birth_date}")
+
+    # Calculate age
+    age = reference_date.year - birth_date.year
+    if (reference_date.month, reference_date.day) < (birth_date.month, birth_date.day):
+        age -= 1  # Subtract 1 if birthday hasn't occurred this year
+
+    return age
 
 
 def build_mongo_query(filters):
@@ -530,8 +572,8 @@ def generate_notifications(_id):
             html_content_template = JT(f"{payload['data'].get('html_content', '')}")
             plain_text_content_template = JT(f"{payload['data'].get('plain_text_content', '')}")
 
-            # Validate filters if provided
-            valid_filters = validate_filters(data.get('filters', []))
+            # Validate and compile filters if provided
+            valid_filters = validate_filters(response['recipients'].get('filters', []))
 
             for recipient in list(set(recipients)):
                 if isinstance(recipient, int):
@@ -557,9 +599,13 @@ def generate_notifications(_id):
 
                             # Check if filters are valid else ditch the notification message
                             app.logger.debug(f"Applying filter for recipient {recipient}")
-                            if person_satisfies_filters(person, valid_filters) is False:
-                                app.logger.error(f"Person {recipient} does not satisfy the filters, skipping notification.")
-                                continue
+                            # Add special fields:
+                            if len(valid_filters) > 0:
+                                # Add special fields to the person object for filtering
+                                person['age'] = calculate_age(person.get('birth_date', None))
+                                if person_satisfies_filters(person, valid_filters) is False:
+                                    app.logger.error(f"Person {recipient} does not satisfy the filters, skipping notification.")
+                                    continue
 
                             # Get the email address of the person
                             email = None
