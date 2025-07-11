@@ -45,28 +45,28 @@ SIMPLE_OPERATORS = {
     'in': '$in'
 }
 MONGO_OPERATORS = list(SIMPLE_OPERATORS.values())
-LOGICAL_OPERATORS = ['$or', '$and']
+LOGICAL_OPERATORS = ['or', 'and']
 
 
 def validate_filters(filters, depth=0):
     """
-    Validate a filter dictionary or list, supporting $or/$and and nested filters.
-    :param filters: Dict with $or/$and or list of filter dicts
+    Validate a filter dictionary or list, supporting or/and and nested filters.
+    :param filters: Dict with or/and or list of filter dicts
     :param depth: Recursion depth for logging
     :return: Validated filter structure with parsed values
     """
     indent = "  " * depth
     if isinstance(filters, list):
-        # Treat list as implicit $and
-        filters = {"$and": filters}
+        # Treat list as implicit and
+        filters = {"and": filters}
 
     if not isinstance(filters, dict):
         logging.error(f"{indent}Filters must be a dictionary or list: {filters}")
         raise ValueError(f"Filters must be a dictionary or list")
 
     if len(filters) != 1 or list(filters.keys())[0] not in LOGICAL_OPERATORS:
-        logging.error(f"{indent}Filters must have a single $or or $and key: {filters}")
-        raise ValueError(f"Filters must have a single $or or $and key")
+        logging.error(f"{indent}Filters must have a single or or and key: {filters}")
+        raise ValueError(f"Filters must have a single or or and key")
 
     operator = list(filters.keys())[0]
     filter_list = filters[operator]
@@ -80,7 +80,7 @@ def validate_filters(filters, depth=0):
 
     for i, filter_item in enumerate(filter_list):
         if isinstance(filter_item, dict) and any(key in LOGICAL_OPERATORS for key in filter_item):
-            # Nested $or/$and
+            # Nested or/and
             validated_filters[operator].append(validate_filters(filter_item, depth + 1))
             logging.info(f"{indent}Validated nested {operator} filter {i} at depth {depth + 1}")
         else:
@@ -145,35 +145,35 @@ def validate_filters(filters, depth=0):
 
 def person_satisfies_filters(person, filters, depth=0):
     """
-    Check if a person satisfies the given filters, supporting $or/$and.
+    Check if a person satisfies the given filters, supporting or/and.
     """
     indent = "  " * depth
     if isinstance(filters, list):
-        filters = {"$and": filters}
+        filters = {"and": filters}
 
     operator = list(filters.keys())[0]
     filter_list = filters[operator]
 
-    if operator == '$and':
+    if operator == 'and':
         for i, filter_item in enumerate(filter_list):
             if any(key in LOGICAL_OPERATORS for key in filter_item):
                 if not person_satisfies_filters(person, filter_item, depth + 1):
-                    logging.info(f"{indent}Person does not satisfy nested $and filter {i}: {filter_item}")
+                    logging.info(f"{indent}Person does not satisfy nested and filter {i}: {filter_item}")
                     return False
             else:
                 if not person_satisfies_single_filter(person, filter_item):
-                    logging.info(f"{indent}Person does not satisfy $and filter {i}: {filter_item}")
+                    logging.info(f"{indent}Person does not satisfy and filter {i}: {filter_item}")
                     return False
         return True
-    elif operator == '$or':
+    elif operator == 'or':
         for i, filter_item in enumerate(filter_list):
             if any(key in LOGICAL_OPERATORS for key in filter_item):
                 if person_satisfies_filters(person, filter_item, depth + 1):
-                    logging.info(f"{indent}Person satisfies nested $or filter {i}: {filter_item}")
+                    logging.info(f"{indent}Person satisfies nested or filter {i}: {filter_item}")
                     return True
             else:
                 if person_satisfies_single_filter(person, filter_item):
-                    logging.info(f"{indent}Person satisfies $or filter {i}: {filter_item}")
+                    logging.info(f"{indent}Person satisfies or filter {i}: {filter_item}")
                     return True
         return False
     return False
