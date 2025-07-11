@@ -799,7 +799,7 @@ def generate_notifications(_id):
 
                     except Exception as e:
                         failed_recipients.append(recipient)
-                        app.logger.error(f"Error processing recipient {recipient}: {e}")
+                        app.logger.exception(f"Error processing recipient {recipient}: {e}")
                         # return eve_abort(500, "Error processing recipient")
 
             # Here you would typically send the email using your email service
