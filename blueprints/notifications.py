@@ -19,7 +19,7 @@ from jinja2 import Template as JT
 from bs4 import BeautifulSoup
 from bson import ObjectId
 from dateutil.parser import parse
-
+from blueprints.nif import get_nif_api_client
 Notifications = Blueprint('Notifications', __name__)
 
 from ext.scf import (
@@ -465,7 +465,7 @@ def get_users_from_role(role):
 
 
 def check_nif_person(person_id):
-    person, _, _, status = getitem_internal(resource='nif_persons', **{'id': person_id})
+    status, person = get_nif_api_client().get_person(person_id)
     if status == 200 and person is not None:
         return True
 
