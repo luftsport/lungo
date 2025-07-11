@@ -466,7 +466,7 @@ def get_users_from_role(role):
 
 def check_nif_person(person_id):
     status, person = get_nif_api_client().get_person(person_id)
-    if status == 200 and person is not None:
+    if status is True and person is not None:
         return True
 
     return False
@@ -747,6 +747,7 @@ def generate_notifications(_id):
                             if payload['transport'] == 'email':
                                 app.logger.debug(f"Fetching email for recipient {recipient}")
                                 email = person.get('primary_email', person.get('address', {}).get('email', [])[0] if len(person.get('address', {}).get('email', [])) > 0 else None)
+
                             # Check if the person has memberships in NLF
                             if check_nif_person(person['id']) is False:
                                 app.logger.error(f"Person {recipient} has no memberships as reported by /nif/persons, skipping notification.")
