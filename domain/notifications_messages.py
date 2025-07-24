@@ -77,7 +77,7 @@ definition = {
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'resource_methods': ['GET', 'POST'],
-    'item_methods': ['GET'],
+    'item_methods': ['GET', 'DELETE'],
     'versioning': False,
     'mongo_indexes': {
         'housekeeping': ([('type', 1), ('dismissible', 1), ('dismissed', 1), ('transports', 1)], {'background': True}),
