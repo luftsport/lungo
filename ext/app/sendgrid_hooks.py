@@ -4,6 +4,8 @@ import base64
 import hashlib
 from flask import request, current_app as app
 from ext.scf import SENDGRID_PUBLIC_KEY
+
+
 # -*- coding: utf-8 -*-
 
 class EventWebhookHeader:
@@ -69,36 +71,35 @@ class EventWebhook:
             return False
 
 
-def verify_sendgrid_signature(resource, items):
-    if resource == 'webhook':
-        # Get headers
-        signature = request.headers.get(EventWebhookHeader.SIGNATURE, None)
-        timestamp = request.headers.get(EventWebhookHeader.TIMESTAMP, None)
+def verify_sendgrid_signature(items):
+    # Get headers
+    signature = request.headers.get(EventWebhookHeader.SIGNATURE, None)
+    timestamp = request.headers.get(EventWebhookHeader.TIMESTAMP, None)
 
-        # Get raw payload
-        payload = request.get_data(as_text=True)
+    # Get raw payload
+    payload = request.get_data(as_text=True)
 
-        # Initialize EventWebhook
-        event_webhook = EventWebhook()
+    # Initialize EventWebhook
+    event_webhook = EventWebhook()
 
-        # Convert public key to ECDSA
-        try:
-            ec_public_key = event_webhook.convert_public_key_to_ecdsa(SENDGRID_PUBLIC_KEY)
-        except Exception as e:
-            app.logger.error(f"Failed to convert public key: {e}")
-            raise ValueError("Invalid public key")
+    # Convert public key to ECDSA
+    try:
+        ec_public_key = event_webhook.convert_public_key_to_ecdsa(SENDGRID_PUBLIC_KEY)
+    except Exception as e:
+        app.logger.error(f"Failed to convert public key: {e}")
+        raise ValueError("Invalid public key")
 
-        # Verify signature
-        is_verified = event_webhook.verify_signature(
-            payload=payload,
-            signature=signature,
-            timestamp=timestamp,
-            public_key=ec_public_key
-        )
+    # Verify signature
+    is_verified = event_webhook.verify_signature(
+        payload=payload,
+        signature=signature,
+        timestamp=timestamp,
+        public_key=ec_public_key
+    )
 
-        if not is_verified:
-            app.logger.error("SendGrid webhook signature verification failed")
-            raise ValueError("Signature verification failed")
+    if not is_verified:
+        app.logger.error("SendGrid webhook signature verification failed")
+        raise ValueError("Signature verification failed")
 
-        # Log success (optional)
-        app.logger.info("SendGrid webhook signature verified successfully")
+    # Log success (optional)
+    app.logger.info("SendGrid webhook signature verified successfully")
