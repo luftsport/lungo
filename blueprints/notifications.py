@@ -48,16 +48,35 @@ MONGO_OPERATORS = list(SIMPLE_OPERATORS.values())
 LOGICAL_OPERATORS = ['or', 'and']
 
 
+def get_nested_field(person, field_path):
+    """
+    Retrieve a nested field value from a person dictionary using dot notation.
+    :param person: Dictionary with person data
+    :param field_path: String with dot notation (e.g., 'address.street_address')
+    :return: Value of the field or None if not found
+    """
+    current = person
+    try:
+        for part in field_path.split('.'):
+            if not isinstance(current, dict):
+                logging.warning(f"Cannot access {field_path}: {part} is not a dictionary in {current}")
+                return None
+            if part not in current:
+                logging.warning(f"Field {part} not found in path {field_path}")
+                return None
+            current = current[part]
+        return current
+    except Exception as e:
+        logging.error(f"Error accessing nested field {field_path}: {str(e)}")
+        return None
+
+
 def validate_filters(filters, depth=0):
     """
     Validate a filter dictionary or list, supporting or/and and nested filters.
-    :param filters: Dict with or/and or list of filter dicts
-    :param depth: Recursion depth for logging
-    :return: Validated filter structure with parsed values
     """
     indent = "  " * depth
     if isinstance(filters, list):
-        # Treat list as implicit and
         filters = {"and": filters}
 
     if not isinstance(filters, dict):
@@ -80,11 +99,9 @@ def validate_filters(filters, depth=0):
 
     for i, filter_item in enumerate(filter_list):
         if isinstance(filter_item, dict) and any(key in LOGICAL_OPERATORS for key in filter_item):
-            # Nested or/and
             validated_filters[operator].append(validate_filters(filter_item, depth + 1))
             logging.info(f"{indent}Validated nested {operator} filter {i} at depth {depth + 1}")
         else:
-            # Simple filter dictionary
             if not isinstance(filter_item, dict):
                 logging.error(f"{indent}Filter {i} is not a dictionary: {filter_item}")
                 raise ValueError(f"Filter {i} must be a dictionary")
@@ -112,7 +129,7 @@ def validate_filters(filters, depth=0):
                 raise ValueError(f"Filter {i} value for 'in' must be a list")
 
             # Validate birth_date
-            if filter_item['field'] == 'birth_date':
+            if filter_item['field'].startswith('birth_date'):
                 try:
                     if op in ['in', '$in']:
                         parsed_values = [parse(val) for val in filter_item['value']]
@@ -127,7 +144,7 @@ def validate_filters(filters, depth=0):
                     raise ValueError(f"Filter {i} birth_date value must be a valid date/datetime string")
 
             # Validate age
-            if filter_item['field'] == 'age':
+            if filter_item['field'].startswith('age'):
                 if op in ['in', '$in']:
                     if not all(isinstance(val, int) for val in filter_item['value']):
                         logging.error(f"{indent}Filter {i} age value for 'in' must be a list of integers: {filter_item['value']}")
@@ -137,6 +154,7 @@ def validate_filters(filters, depth=0):
                         logging.error(f"{indent}Filter {i} age value must be an integer: {filter_item['value']}")
                         raise ValueError(f"Filter {i} age value must be an integer")
 
+            # Allow dot notation for other fields (no specific validation needed)
             validated_filters[operator].append(filter_item)
             logging.info(f"{indent}Validated filter {i}: {filter_item}")
 
@@ -148,45 +166,8 @@ def person_satisfies_filters(person, filters, depth=0):
     Check if a person satisfies the given filters, supporting or/and.
     """
     indent = "  " * depth
-    if isinstance(filters, list):
-        filters = {"and": filters}
-
-    operator = list(filters.keys())[0]
-    filter_list = filters[operator]
-
-    if operator == 'and':
-        for i, filter_item in enumerate(filter_list):
-            if any(key in LOGICAL_OPERATORS for key in filter_item):
-                if not person_satisfies_filters(person, filter_item, depth + 1):
-                    logging.info(f"{indent}Person does not satisfy nested and filter {i}: {filter_item}")
-                    return False
-            else:
-                if not person_satisfies_single_filter(person, filter_item):
-                    logging.info(f"{indent}Person does not satisfy and filter {i}: {filter_item}")
-                    return False
-        return True
-    elif operator == 'or':
-        for i, filter_item in enumerate(filter_list):
-            if any(key in LOGICAL_OPERATORS for key in filter_item):
-                if person_satisfies_filters(person, filter_item, depth + 1):
-                    logging.info(f"{indent}Person satisfies nested or filter {i}: {filter_item}")
-                    return True
-            else:
-                if person_satisfies_single_filter(person, filter_item):
-                    logging.info(f"{indent}Person satisfies or filter {i}: {filter_item}")
-                    return True
-        return False
-    return False
-
-
-def person_satisfies_filters(person, filters, depth=0):
-    """
-    Check if a person satisfies the given filters, supporting or/and.
-    """
-    indent = "  " * depth
     logging.debug(f"{indent}Processing filters at depth {depth}: {filters}")
 
-    # Handle list as implicit and
     if isinstance(filters, list):
         filters = {"and": filters}
 
@@ -237,7 +218,7 @@ def person_satisfies_filters(person, filters, depth=0):
 
 def person_satisfies_single_filter(person, filter_dict):
     """
-    Check if a person satisfies a single filter.
+    Check if a person satisfies a single filter, supporting dot notation for nested fields.
     """
     if not isinstance(filter_dict, dict):
         logging.error(f"Single filter must be a dictionary: {filter_dict}")
@@ -252,7 +233,7 @@ def person_satisfies_single_filter(person, filter_dict):
     value = filter_dict['value']
     operator = SIMPLE_OPERATORS.get(filter_dict['operator'], filter_dict['operator'])
 
-    if field == 'age':
+    if field.startswith('age'):
         if 'birth_date' not in person:
             logging.warning(f"birth_date not found in person for age filter: {person}")
             return False
@@ -262,12 +243,12 @@ def person_satisfies_single_filter(person, filter_dict):
             logging.error(f"Error calculating age: {str(e)}")
             return False
     else:
-        if field not in person:
+        person_value = get_nested_field(person, field)
+        if person_value is None:
             logging.warning(f"Field {field} not found in person: {person}")
             return False
-        person_value = person[field]
 
-    if field == 'birth_date' and not isinstance(person_value, datetime):
+    if field.startswith('birth_date') and not isinstance(person_value, datetime):
         logging.error(f"Person's birth_date is not a datetime: {person_value}")
         return False
 
