@@ -56,6 +56,7 @@ _schema = {'type': {'type': 'string',
            },
            'recipients': {'type': 'dict'},  # Who's the recepient
            'recipients_resolved': {'type': 'list'},  # Who's the recepients
+           'member_email': {'type': 'string'},  # Email address strategy of the member all or primary email
            'sender': {'type': 'integer'},  # evt
            """{
                        'type': 'dict',
