@@ -39,6 +39,7 @@ import dev
 import notifications
 import notifications_messages
 import files
+import sendgrid_webhook
 
 # import test, test_ref
 
@@ -177,7 +178,8 @@ DOMAIN = {
     "notifications": notifications.definition,
     "notifications_messages": notifications_messages.definition,
     "notifications_messages_events": notifications_messages.agg_events,
-
+    # Sendgrid Webhook
+    "sendgrid_webhook": sendgrid_webhook.definition,
     # Files
     "files": files.definition,
 
