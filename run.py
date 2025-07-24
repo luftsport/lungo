@@ -97,6 +97,8 @@ from ext.app.hooks import (
     on_payment_before_post, on_payment_after_put, on_payment_after_post, on_payment_before_put
 )
 
+
+
 # Should be able to filter out all merged when doing lookup
 # def filter_merged_to(request, lookup):
 #    if any(i in lookup for i in ['id', '_id']) is False:
@@ -145,6 +147,10 @@ app.on_replaced_organizations_process += on_organizations_put
 
 # AGGREGATION
 
+# Sendgrid webhook
+from ext.app.sendgrid_hooks import verify_sendgrid_signature
+app.on_insert_sendgrid_webhook += verify_sendgrid_signature
+
 """
 
     START:
@@ -176,7 +182,45 @@ if 1 == 1 or not app.debug:
 # Run only once
 # if app.debug and not os.environ.get("WERKZEUG_RUN_MAIN") == "true":
 # run once goes here
+def save_resources_to_file(output_file='resources.json'):
+    with app.app_context():
+        # Access the DOMAIN configuration
+        domain_config = app.config['DOMAIN']
 
+        # Log the resources for debugging
+        print(f"Found {len(domain_config)} resources: {list(domain_config.keys())}")
+
+        # Convert to JSON-serializable format
+        serializable_domain = {}
+        for resource, config in domain_config.items():
+            try:
+                # Copy the config to avoid modifying the original
+                serializable_config = config.copy()
+
+                # Handle non-serializable fields
+                if 'url' in serializable_config and hasattr(serializable_config['url'], 'pattern'):
+                    serializable_config['url'] = str(serializable_config['url'].pattern)
+
+                # Handle other potentially non-serializable fields (e.g., authentication, datasource)
+                for key, value in serializable_config.items():
+                    if not isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                        serializable_config[key] = str(value)  # Convert to string as fallback
+
+                serializable_domain[resource] = serializable_config
+            except Exception as e:
+                print(f"Error processing resource '{resource}': {e}")
+                continue  # Skip problematic resource but continue with others
+
+        # Write to JSON file
+        try:
+            with open(output_file, 'w') as f:
+                json.dump(serializable_domain, f, indent=4, sort_keys=True)
+            print(f"All resources saved to {output_file}")
+        except Exception as e:
+            print(f"Error saving to file: {e}")
+            print(f"Error saving resources: {e}")
+
+# save_resources_to_file('resources.json')
 
 if __name__ == '__main__':
     app.run(host=app.config['APP_HOST'], port=app.config['APP_PORT'])
