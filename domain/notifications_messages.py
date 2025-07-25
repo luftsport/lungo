@@ -60,6 +60,7 @@ _schema = {'type': {'type': 'string',
            'event_created': {'type': 'datetime'},
            'event_from': {'type': 'string'},  # ex notifications
            'event_from_id': {'type': 'objectid'},  # {'type': 'objectid'},
+           'sg_message_id': {'type': 'string', 'nullable': True},  # Sendgrid message id
            # 'event_person_id': {'type': 'integer'}, # Sender
            'dismissible': {'type': 'boolean'},  # Can dimiss?
            'dismissed': {'type': 'datetime', 'nullable': True},
