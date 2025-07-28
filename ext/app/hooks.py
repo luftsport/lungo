@@ -499,13 +499,15 @@ def on_competence_put(response, original=None):
             }
 
             # Handle Fai sporting codes
+
             try:
                 if FAI_SYNC is True and response['type_id'] in list(COMPETENCE_FAI_MAPPING_IDS.keys()) and ('tms_id' in response or response.get('passed', False) is True) and 'valid_until' in response:
-
+                    app.logger.info('[HOOK] Handling FAI competence in hook for person {} competence {}'.format(person.get('id', 'Unknown'), response.get('id', 'Unknown')))
                     # True, r['idlicencee'], r['idlicence']
                     fai_status, fai_result = upsert_fai(response)
 
                     if fai_status in [200,201,304] and fai_result is not None and fai_result.get('success', False) is True:
+                        app.logger.info('[HOOK] FAI competence upserted for person {} competence {} fai status {} and result {}'.format(person.get('id', 'Unknown'), response.get('id', 'Unknown'), fai_status, fai_result))
                         _competence['_fai'] = {
                             'license_id': fai_result.get('idlicence', None),
                             'person_id': fai_result.get('fai_person_id', None)
