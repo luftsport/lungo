@@ -506,6 +506,8 @@ def on_competence_put(response, original=None):
                     # True, r['idlicencee'], r['idlicence']
                     fai_status, fai_result = upsert_fai(response)
 
+                    app.logger.debug('[HOOK] FAI competence upserted for person {} competence {} fai status {} and result {}'.format(person.get('id', 'Unknown'), response.get('id', 'Unknown'), fai_status, fai_result))
+
                     if fai_status in [200,201,304] and fai_result is not None and fai_result.get('success', False) is True:
                         app.logger.info('[HOOK] FAI competence upserted for person {} competence {} fai status {} and result {}'.format(person.get('id', 'Unknown'), response.get('id', 'Unknown'), fai_status, fai_result))
                         _competence['_fai'] = {
