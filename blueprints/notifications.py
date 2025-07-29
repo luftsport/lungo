@@ -429,7 +429,7 @@ def get_users_from_role(role):
         elif role['org'] is not None and role['org'] != '*' and role['org'] > 0:
             query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
         elif role['org'] == '*' and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
-            orgs_from_activity = get_orgs_in_activivity(role['activity'])
+            orgs_from_activity = get_orgs_in_activivity(role['activity'],[14])
             query = f'where={{"org_id": {{"$in": {orgs_from_activity}}}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
         elif (role['org'] and role['activity']) == '*':
             query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
