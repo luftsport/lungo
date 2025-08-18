@@ -101,14 +101,14 @@ def _get_ka_person_details(person_id):
     return ka.get_person_details(person_id)
 
 
-def _get_ka_person_resontro(person_id):
+def _get_ka_person_reskontro(person_id):
     ka = _get_KA()
-    return ka.get_person_reskontro(person_id)
+    return ka.get_person_reskonto(person_id)
 
 
-def _get_ka_person_resontro_year(person_id, year):
+def _get_ka_person_reskontro_year(person_id, year):
     ka = _get_KA()
-    return ka.get_person_reskontro_year(person_id, year)
+    return ka.get_person_reskonto_year(person_id, year)
 
 
 def _get_sa_organization(org_id):
@@ -524,14 +524,14 @@ def ka_get_person_details(person_id):
 @NIF.route('ka/persons/reskontro/<int:person_id>', methods=['GET'])
 @require_token()
 def ka_get_person_reskontro(person_id):
-    status, details = _get_ka_person_resontro(person_id)
+    status, details = _get_ka_person_reskontro(person_id)
     return eve_response(details, status)
 
 
 @NIF.route('ka/persons/reskontro/<int:person_id>/<int:year>', methods=['GET'])
 @require_token()
 def ka_get_person_reskontro_year(person_id, year):
-    status, details = _get_ka_person_resontro_year(person_id, year)
+    status, details = _get_ka_person_reskontro_year(person_id, year)
     return eve_response(details, status)
 
 
