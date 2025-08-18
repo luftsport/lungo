@@ -1,16 +1,17 @@
 import logging
-
+import re
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify, g
 from ext.auth.decorators import require_token
 from ext.app.eve_helper import eve_response, eve_abort
 from eve.methods.get import get_internal, getitem_internal, _perform_aggregation
 from eve.methods.post import post_internal
 from eve.methods.patch import patch_internal
+from eve.utils import parse_request
+
 from datetime import datetime
 from ext.scf import API_HEADERS, API_BASE_URL
 import requests
 from uuid import uuid4
-import json
 from io import BytesIO
 import json
 import base64
@@ -18,8 +19,9 @@ from werkzeug.utils import secure_filename
 from jinja2 import Template as JT
 from bs4 import BeautifulSoup
 from bson import ObjectId
-from dateutil.parser import parse
+from dateutil import parser
 from blueprints.nif import get_nif_api_client
+
 Notifications = Blueprint('Notifications', __name__)
 
 from ext.scf import (
@@ -132,11 +134,11 @@ def validate_filters(filters, depth=0):
             if filter_item['field'].startswith('birth_date'):
                 try:
                     if op in ['in', '$in']:
-                        parsed_values = [parse(val) for val in filter_item['value']]
+                        parsed_values = [parser.parse(val) for val in filter_item['value']]
                         filter_item['value'] = parsed_values
                         logging.info(f"{indent}Parsed birth_date values for filter {i}: {parsed_values}")
                     else:
-                        parsed_value = parse(filter_item['value'])
+                        parsed_value = parser.parse(filter_item['value'])
                         filter_item['value'] = parsed_value
                         logging.info(f"{indent}Parsed birth_date value for filter {i}: {parsed_value}")
                 except (ValueError, TypeError) as e:
@@ -330,6 +332,17 @@ def build_mongo_query(filters):
     return query
 
 
+def fix_newlines(text):
+    # Replace single \n (not followed or preceded by \r) with \r\n
+    # Also preserves multiple \n (like \n\n or \n\n\n)
+    try:
+        return re.sub(r'(?<!\r)\n(?!\r|\n)', '\r\n', text)
+    except:
+        pass
+
+    return text
+
+
 def get_person_from_role(role) -> (bool, [int]):
     resp = requests.get(
         '%s/functions?where={"active_in_org_id": %s, "type_id": %s, "is_deleted": false, "is_passive": false}&projection={"person_id": 1}&max_results={}'
@@ -392,6 +405,8 @@ def get_person_name(person_id):
 def get_orgs_in_activivity(activity_id, org_type_ids=[6, 14, 19]):
     """
     Aggregation
+
+    NB 2 is forbund (376), 19 is seksjon
     :param activity_id:
     :param org_type_ids:
     :return:
@@ -414,25 +429,91 @@ def get_orgs_in_activivity(activity_id, org_type_ids=[6, 14, 19]):
     return []
 
 
+def get_org_type(org_id):
+    """
+    Get the type_id of an organization
+    :param org_id:
+    :return: int type_id or None
+    """
+    resp, _, _, status = getitem_internal(resource='organizations', **{'id': org_id})
+
+    if status == 200:
+        try:
+            return resp.get('type_id', None)
+        except Exception as e:
+            pass
+
+    return None
+
+def get_org(org_id):
+    """
+    Get an organization
+    :param org_id:
+    :return: dict organization or None
+    """
+    org, _, _, status = getitem_internal(resource='organizations', **{'id': org_id})
+
+    if status == 200:
+        try:
+            return org
+        except Exception as e:
+            pass
+
+    return None
+
+
 def get_users_from_role(role):
     """
     Get person_ids from a role
+
+    @TODO add support for 2 and 19!
+
     :param role:
     :return:
     """
     query = ''
+    org = None
+    if role['org'] and role['org'] != '*' and role['org'] > 0:
+        org = get_org(role['org'])
+        if org.get('type_id') not in [6, 14]:
+            app.logger.error(f"Error for org {org.get('name')} with type_id {org.get('type_id')}, not in [6, 14]")
+            return []
 
     # role = {key: int(value) for key, value in role.items()}
     if ('role' and 'org' and 'activity') in role:
+
+        # Any org, any activity get all those roles wherever in 6 and 14!
         if role['org'] == '*' and role['activity'] == '*':
-            query = f'where={{ "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+            query = f'where={{ "type_id": {role["role"]}, "is_deleted": false, "is_passive": false, "org_type_id": {{"$in": [6, 14]}} }}&projection={{"person_id": 1}}'
+
+        # Specific organization!
         elif role['org'] is not None and role['org'] != '*' and role['org'] > 0:
-            query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+
+            # If type is 14 always add 6
+            if org['org_type_id'] == 14:
+                up_orgs = [x['id'] for x in org.get('_up', []) if x['type'] == 6]
+                query = f'where={{"org_id": {{"$in": {[role["org"]] + up_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+
+
+            # If type is 6 and activity, add type 14 with that activity
+            elif org['org_type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
+                down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities',[])] ]
+                query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+
+            # if type is 6 and all activities, add all type 14
+            elif org['org_type_id'] == 6 and role['activity'] == '*':
+                down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14]
+                query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+
+
+        # Any org!
         elif role['org'] == '*' and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
-            orgs_from_activity = get_orgs_in_activivity(role['activity'],[14])
+            orgs_from_activity = get_orgs_in_activivity(role['activity'], [6, 14])
             query = f'where={{"org_id": {{"$in": {orgs_from_activity}}}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+
+        # Any org and any activity
         elif (role['org'] and role['activity']) == '*':
-            query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+            query = f'where={{"type_id": {role["role"]}, "org_type_id": {{"$in": [6, 14]}}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
         resp = requests.get('{}/functions?{}&max_results={}'.format(API_BASE_URL, query, 20000), headers=API_HEADERS)  # verify=app['config'].get('REQUESTS_VERIFY', True)
 
@@ -600,6 +681,22 @@ def send_notification_messages(_id):
     app.logger.error(f"Error notification _id: {_id} etag: {request.headers.get('If-Match', 'nope')} content type: {request.headers.get('Content-Type', 'unknown')} Authorization: {request.headers.get('Authorization', 'unknown')}")
     return eve_abort(404, "Notification not found or already processed")
 
+@Notifications.route('/role2', methods=['POST', 'GET'])
+@require_token()
+def role2():
+    if request.method == 'POST':
+        role = request.get_json()
+    elif request.method == 'GET':
+        args = parse_request('persons')
+        where = json.loads(args.where)
+        role = where.get('role', None)
+    try:
+        users = get_users_from_role(role)
+        return eve_response(users, status=200)
+    except:
+        pass
+
+    return eve_response({"error": "Failed to fetch users from role"}, status=500)
 
 @Notifications.route('/generate/<string:_id>', methods=['POST', 'GET'])
 @require_token()
@@ -651,7 +748,7 @@ def generate_notifications(_id):
                     'subject': data.get('subject', ''),  # Default subject if not provided
                     'subject_preamble': data.get('subject_preamble', SENDGRID_DEFAULT_PREAMBLE),  # Optional subject preamble
                     'html_content': data.get('html_content', data.get('message', None)),  # HTML message content
-                    'plain_text_content': data.get('plain_text_content', data.get('message', None)),  # TEXT message content
+                    'plain_text_content': fix_newlines(data.get('plain_text_content', data.get('message', None))),  # TEXT message content
                     'reply_to': data.get('reply_to', SENDGRID_DEFAULT_REPLY_TO),  # Default reply-to address
                     'from': data.get('from', SENDGRID_DEFAULT_FROM),  # Default from address
                     'files': data.get('files', []),  # List of files attached to the notification
