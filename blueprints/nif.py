@@ -101,6 +101,16 @@ def _get_ka_person_details(person_id):
     return ka.get_person_details(person_id)
 
 
+def _get_ka_person_resontro(person_id):
+    ka = _get_KA()
+    return ka.get_person_reskontro(person_id)
+
+
+def _get_ka_person_resontro_year(person_id, year):
+    ka = _get_KA()
+    return ka.get_person_reskontro_year(person_id, year)
+
+
 def _get_sa_organization(org_id):
     sa = _get_SA()
     return sa.get_organization(org_id)
@@ -189,7 +199,7 @@ def _register_flydrone(person_id):
                         reg_number = result['expiredOperatorRegistrationNumberTime'].split('-')[0]
                     except:
                         reg_number = result['operatorRegistrationNumber']
-                        
+
                     send_email(
                         recepient=person['primary_email'],
                         subject='Flydrone.no registration',
@@ -263,7 +273,7 @@ def get_paths():
 def generate_change_message():
     data = request.get_json()
 
-    if g.client_id == 11: # TMS
+    if g.client_id == 11:  # TMS
         data['entity_type'] = 'TmsCompetence'
 
     if 'change_type' not in data or data['change_type'] not in ['Created', 'Modified', 'Deleted']:
@@ -352,10 +362,11 @@ def get_fed_licenses(xorg_id):
     status, licenses = get_nif_api_client().get_fed_licenses(xorg_id)
     return eve_response(licenses, 200 if status is True else 404)
 
+
 @NIF.route('events', methods=['GET'])
 @require_token()
 def isonen():
-    #data = request.get_json()
+    # data = request.get_json()
 
     return eve_response('Hellue', 200)
 
@@ -366,29 +377,32 @@ def isonen_get_event(event_id):
     status, events = get_nif_api_client().get_event(event_id)
     return eve_response(events, 200 if status in [200, True] else 404)
 
+
 @NIF.route('events/participants/<string:event_id>', methods=['GET'])
 @require_token()
 def isonen_get_event_participants(event_id):
     status, events = get_nif_api_client().get_event_participants(event_id)
     return eve_response(events, 200 if status in [200, True] else 404)
 
+
 @NIF.route('events/organization/<int:org_id>', methods=['GET'])
 @require_token()
 def isonen_get_for_org(org_id):
-    #data = request.get_json()
-    #start_date = data.get('start_date', None)
+    # data = request.get_json()
+    # start_date = data.get('start_date', None)
     args = parse_request('persons')
     start_date = None
     if args.where is not None:
         start_date = json.loads(args.where).get('start_date', datetime.now())
-    status, events = get_nif_api_client().get_events_for_org(org_id, start_date if start_date else datetime.now()) #, start_date=args.get('start_date', datetime.now()))
+    status, events = get_nif_api_client().get_events_for_org(org_id, start_date if start_date else datetime.now())  # , start_date=args.get('start_date', datetime.now()))
     return eve_response(events, 200 if status in [200, True] else 404)
+
 
 @NIF.route('events/organization/schedule/<int:org_id>', methods=['GET'])
 @require_token()
 def isonen_get_schedule_for_org(org_id):
-    #data = request.get_json()
-    #start_date = data.get('start_date', None)
+    # data = request.get_json()
+    # start_date = data.get('start_date', None)
     args = parse_request('persons')
     where = json.loads(args.where)
     start_date = None
@@ -396,9 +410,8 @@ def isonen_get_schedule_for_org(org_id):
     if args.where is not None:
         start_date = where.get('start_date', datetime.now())
         end_date = where.get('end_date', datetime.now() + timedelta(days=14))
-    status, events = get_nif_api_client().get_events_for_org_schedule(org_id, start_date, end_date) #, start_date=args.get('start_date', datetime.now()))
+    status, events = get_nif_api_client().get_events_for_org_schedule(org_id, start_date, end_date)  # , start_date=args.get('start_date', datetime.now()))
     return eve_response(events, 200 if status in [200, True] else 404)
-
 
 
 @NIF.route('check/<int:person_id>', methods=['POST'])
@@ -508,6 +521,20 @@ def ka_get_person_details(person_id):
     return eve_response(details, status)
 
 
+@NIF.route('ka/persons/reskontro/<int:person_id>', methods=['GET'])
+@require_token()
+def ka_get_person_reskontro(person_id):
+    status, details = _get_ka_person_resontro(person_id)
+    return eve_response(details, status)
+
+
+@NIF.route('ka/persons/reskontro/<int:person_id>/<int:year>', methods=['GET'])
+@require_token()
+def ka_get_person_reskontro_year(person_id, year):
+    status, details = _get_ka_person_resontro_year(person_id, year)
+    return eve_response(details, status)
+
+
 @NIF.route('ka/persons/<int:person_id>', methods=['GET'])
 @require_token()
 def ka_get_person(person_id):
@@ -552,4 +579,3 @@ def ka_get_inbox_deceased():
 def sa_get_organization(org_id):
     status, organization = _get_sa_organization(org_id)
     return eve_response(organization, status)
-
