@@ -693,8 +693,8 @@ def role2():
     try:
         users = get_users_from_role(role)
         return eve_response(users, status=200)
-    except:
-        pass
+    except Exception as e:
+        app.logger.exception(f"Error fetching users from role {role}: {e}")
 
     return eve_response({"error": "Failed to fetch users from role"}, status=500)
 
