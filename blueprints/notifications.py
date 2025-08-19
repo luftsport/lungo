@@ -479,7 +479,8 @@ def get_users_from_role(role):
             app.logger.error(f"Error for org {org.get('name')} with type_id {org.get('type_id')}, not in [6, 14]")
             return []
 
-    # role = {key: int(value) for key, value in role.items()}
+    role = {k: int(v) if v != '*' else v for k, v in role.items()}
+
     if ('role' and 'org' and 'activity') in role:
 
         # Any org, any activity get all those roles wherever in 6 and 14!
@@ -487,7 +488,7 @@ def get_users_from_role(role):
             query = f'where={{ "type_id": {role["role"]}, "is_deleted": false, "is_passive": false, "org_type_id": {{"$in": [6, 14]}} }}&projection={{"person_id": 1}}'
 
         # Specific organization!
-        elif role['org'] is not None and role['org'] != '*' and role['org'].isnumeric() and int(role['org']) > 0:
+        elif role['org'] is not None and role['org'] != '*' and role['org'] > 0:
 
             # If type is 14 always add 6
             if org['type_id'] == 14:
@@ -496,7 +497,7 @@ def get_users_from_role(role):
 
 
             # If type is 6 and activity, add type 14 with that activity
-            elif org['type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and role['activity'].isnumeric() and int(role['activity']) > 0:
+            elif org['type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
                 down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities',[])] ]
                 query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
@@ -507,7 +508,7 @@ def get_users_from_role(role):
 
 
         # Any org!
-        elif role['org'] == '*' and role['activity'] is not None and role['activity'] != '*' and role['activity'].isnumeric() and int(role['activity']) > 0:
+        elif role['org'] == '*' and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
             orgs_from_activity = get_orgs_in_activivity(role['activity'], [6, 14])
             query = f'where={{"org_id": {{"$in": {orgs_from_activity}}}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
