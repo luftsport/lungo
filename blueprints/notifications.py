@@ -694,6 +694,7 @@ def role2():
         args = parse_request('persons')
         where = json.loads(args.where)
         role = where.get('role', None)
+    app.logger.debug(f"Role2 endpoint called with role: {role}")
     try:
         users = get_users_from_role(role)
         return eve_response(users, status=200)
