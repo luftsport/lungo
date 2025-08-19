@@ -180,6 +180,7 @@ search_definition = {
                        "_score": {"$meta": "textScore"},
                        "name": 1,
                        "id": 1,
+                       "type_id": 1,
                        "_updated": 1,
                        "_created": 1,
                        "_version": 1
