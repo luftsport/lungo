@@ -435,7 +435,7 @@ def get_org_type(org_id):
     :param org_id:
     :return: int type_id or None
     """
-    resp, _, _, status = getitem_internal(resource='organizations', **{'id': org_id})
+    resp, _, _, status = getitem_internal(resource='organizations', **{'id': int(org_id)})
 
     if status == 200:
         try:
@@ -451,7 +451,7 @@ def get_org(org_id):
     :param org_id:
     :return: dict organization or None
     """
-    org, _, _, status = getitem_internal(resource='organizations', **{'id': org_id})
+    org, _, _, status = getitem_internal(resource='organizations', **{'id': int(org_id)})
 
     if status == 200:
         try:
