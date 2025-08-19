@@ -515,13 +515,14 @@ def get_users_from_role(role):
         elif (role['org'] and role['activity']) == '*':
             query = f'where={{"type_id": {role["role"]}, "org_type_id": {{"$in": [6, 14]}}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
+        app.logger.debug(f"Query for users from role from functions: {query}")
         resp = requests.get('{}/functions?{}&max_results={}'.format(API_BASE_URL, query, 20000), headers=API_HEADERS)  # verify=app['config'].get('REQUESTS_VERIFY', True)
 
         if resp.status_code == 200:
             try:
                 return list(set([item['person_id'] for item in resp.json().get('_items', [])]))
             except IndexError as e:
-                pass
+                app.logger.error(f"IndexError in get_users_from_role: {e}")
 
     return []
 
