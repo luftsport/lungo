@@ -524,6 +524,9 @@ def get_users_from_role(role):
             except IndexError as e:
                 app.logger.error(f"IndexError in get_users_from_role: {e}")
 
+    else:
+        app.logger.error(f"Invalid role data: {role}")
+
     return []
 
 
