@@ -490,18 +490,18 @@ def get_users_from_role(role):
         elif role['org'] is not None and role['org'] != '*' and role['org'].isnumeric() and int(role['org']) > 0:
 
             # If type is 14 always add 6
-            if org['org_type_id'] == 14:
+            if org['type_id'] == 14:
                 up_orgs = [x['id'] for x in org.get('_up', []) if x['type'] == 6]
                 query = f'where={{"org_id": {{"$in": {[role["org"]] + up_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
 
             # If type is 6 and activity, add type 14 with that activity
-            elif org['org_type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and role['activity'].isnumeric() and int(role['activity']) > 0:
+            elif org['type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and role['activity'].isnumeric() and int(role['activity']) > 0:
                 down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities',[])] ]
                 query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
             # if type is 6 and all activities, add all type 14
-            elif org['org_type_id'] == 6 and role['activity'] == '*':
+            elif org['type_id'] == 6 and role['activity'] == '*':
                 down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14]
                 query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
