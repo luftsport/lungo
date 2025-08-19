@@ -187,7 +187,7 @@ def _register_flydrone(person_id):
     if fid_flydrone is None:
         # CREATE Register new!!
         status, result = get_nif_api_client().register_drone_pilot(person_id)
-
+        app.logger.debug(f'[FLYDRONE] rest api register_drone_pilot said: {status} {result} for {person_id}')
         if status in [200, 201] and result['operatorRegistrationNumber'] is not None:
             try:
                 create_status, create_resp = create_fid(person_id, 'flydrone', result)
