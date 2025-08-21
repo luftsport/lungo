@@ -574,6 +574,22 @@ def ka_get_inbox_deceased():
     return eve_response(inbox, status)
 
 
+@NIF.route('ka/payment/exports', methods=['GET'])
+@require_token()
+def ka_get_payment_export():
+    ka = _get_KA()
+    status, log = ka.get_payment_export_log()
+    return eve_response(log, status)
+
+
+@NIF.route('ka/payment/exports/<int:export_id>', methods=['GET'])
+@require_token()
+def ka_get_payment_export_detail(export_id):
+    ka = _get_KA()
+    status, log = ka.get_payment_export_detail(export_id)
+    return eve_response(log, status)
+
+
 @NIF.route('sa/organizations/<int:org_id>', methods=['GET'])
 @require_token()
 def sa_get_organization(org_id):
