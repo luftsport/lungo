@@ -717,7 +717,10 @@ def regenerate_notifications(_id):
         app.logger.exception("Error fetching notification")
         return eve_abort(500, "Error fetching notification")
 
-    if status == 200 and response.get('status', None) == 'finished':
+    # if status is finished we need to clone the notification and generate messages normally
+
+    if status == 200 and response.get('status', None) == 'generated' and request.headers.get('If-Match', None) == response.get('_etag', 'nope'):
+
         # Delete notification messages associated with this notification
         notifications_messages = app.data.driver.db['notifications_messages']
         delete_result = notifications_messages.delete_many({'event_id': ObjectId(_id)})
