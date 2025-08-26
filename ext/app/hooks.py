@@ -3,6 +3,7 @@ To hook all the different changes to our api!
 """
 from eve.methods.patch import patch_internal
 from eve.methods.get import get_internal, getitem_internal
+from eve.methods.delete import deleteitem_internal, delete_internal
 from datetime import datetime, timezone, timezone
 from dateutil import tz
 from dateutil import parser
@@ -48,7 +49,6 @@ RESOURCE_MERGED_FROM = 'persons_merged_from'
 COMPETENCE_META_TYPES = ['Kompetansedefinisjon']
 COMPETENCE_ATTESTATION_TYPES = [66677325, 66677394, 66679452, 66679458]
 
-
 # If True, will always run the patch on person object and not verify changes exists
 ALWAYS_PATCH = True
 # Merge in fids?
@@ -71,7 +71,7 @@ tz_local = tz.gettz(LOCAL_TIMEZONE)
 
 @debounce(10)
 @_async
-def broadcast(change_data): # @Todo support for change type
+def broadcast(change_data):  # @Todo support for change type
     try:
         sio = socketio.Client()
         sio.connect('http://localhost:7000?token={}'.format(LUNGO_SIO_TOKEN))
@@ -508,7 +508,7 @@ def on_competence_put(response, original=None):
 
                     app.logger.debug('[HOOK] FAI competence upserted for person {} competence {} fai status {} and result {}'.format(person.get('id', 'Unknown'), response.get('id', 'Unknown'), fai_status, fai_result))
 
-                    if fai_status in [200,201,304] and fai_result is not None and fai_result.get('success', False) is True:
+                    if fai_status in [200, 201, 304] and fai_result is not None and fai_result.get('success', False) is True:
                         app.logger.info('[HOOK] FAI competence upserted for person {} competence {} fai status {} and result {}'.format(person.get('id', 'Unknown'), response.get('id', 'Unknown'), fai_status, fai_result))
                         _competence['_fai'] = {
                             'license_id': fai_result.get('idlicence', None),
@@ -983,6 +983,7 @@ def on_person_after_put(item, original=None):
         app.logger.exception('Broadcast of item with id {} did not work out!'.format(item['id']))
     """
 
+
 def _update_person(item):
     """Runs AFTER person replaced"""
     lookup = {'person_id': item['id']}
@@ -1022,3 +1023,19 @@ def _update_person(item):
                        })
     except Exception as e:
         app.logger.exception('Error finishing off person')
+
+
+def on_notification_delete(item):
+    try:
+        notification, _, _, status = getitem_internal('notifications', **{'_id': item['_id']})
+        if status == 200:
+            result, _, _, d_status = delete_internal('notifications_messages', **{'event_id': item['_id']})
+            if d_status != 204:
+                app.logger.error('Error deleting generated messages for notification id {} status {} and result {}'.format(item['_id'], d_status, result))
+    except Exception as e:
+        app.logger.exception('Error deleting notification messages for notification id {}'.format(item['_id']))
+
+
+def on_notifications_delete(items):
+    for item in items:
+        on_notification_delete(item)
