@@ -468,7 +468,6 @@ def get_users_from_role(role):
     Get person_ids from a role
 
     @TODO add support for 2 and 19!
-    @TODO if activity and org type 6 and styremedlem use 6 and 14, if 1000000 then only 14
 
     :param role:
     :return:
