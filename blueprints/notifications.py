@@ -495,13 +495,19 @@ def get_users_from_role(role):
             # If type is 14 always add 6
             if org['type_id'] == 14:
                 up_orgs = [x['id'] for x in org.get('_up', []) if x['type'] == 6]
-                query = f'where={{"org_id": {{"$in": {[role["org"]] + up_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                if role['role'] == 1000000:
+                    query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                else:
+                    query = f'where={{"org_id": {{"$in": {[role["org"]] + up_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
 
             # If type is 6 and activity, add type 14 with that activity
             elif org['type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
                 down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities', [])]]
-                query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                if role['role'] == 1000000:
+                    query = f'where={{"org_id": {{"$in": {down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                else:
+                    query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
             # if type is 6 and all activities, add all type 14
             elif org['type_id'] == 6 and role['activity'] == '*':
@@ -511,7 +517,10 @@ def get_users_from_role(role):
 
         # Any org!
         elif role['org'] == '*' and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
-            orgs_from_activity = get_orgs_in_activivity(role['activity'], [6, 14])
+            if role['role'] == 1000000:
+                orgs_from_activity = get_orgs_in_activivity(role['activity'], [14])
+            else:
+                orgs_from_activity = get_orgs_in_activivity(role['activity'], [6, 14])
             query = f'where={{"org_id": {{"$in": {orgs_from_activity}}}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
         # Any org and any activity
