@@ -94,10 +94,9 @@ from ext.app.hooks import (
     on_person_after_post, on_person_after_put, on_function_put, on_competence_put, on_license_put,
     on_organizations_post, on_organizations_put, after_get_person, after_get_persons, on_person_before_put,
     assign_lookup,
-    on_payment_before_post, on_payment_after_put, on_payment_after_post, on_payment_before_put
+    on_payment_before_post, on_payment_after_put, on_payment_after_post, on_payment_before_put,
+    on_notifications_delete
 )
-
-
 
 # Should be able to filter out all merged when doing lookup
 # def filter_merged_to(request, lookup):
@@ -145,10 +144,14 @@ app.on_replaced_payments_process += on_payment_after_put
 app.on_inserted_organizations_process += on_organizations_post
 app.on_replaced_organizations_process += on_organizations_put
 
+# NOTIFICATIONS
+app.on_delete_notifications += on_notifications_delete
+
 # AGGREGATION
 
 # Sendgrid webhook
 from ext.app.sendgrid_hooks import verify_sendgrid_signature
+
 app.on_insert_sendgrid_webhook += verify_sendgrid_signature
 
 """
@@ -178,6 +181,7 @@ if 1 == 1 or not app.debug:
     file_handler.setLevel(logging.DEBUG)
     app.logger.addHandler(file_handler)
     app.logger.info('Lungo startup on database %s' % app.config['MONGO_DBNAME'])
+
 
 # Run only once
 # if app.debug and not os.environ.get("WERKZEUG_RUN_MAIN") == "true":
@@ -219,6 +223,7 @@ def save_resources_to_file(output_file='resources.json'):
         except Exception as e:
             print(f"Error saving to file: {e}")
             print(f"Error saving resources: {e}")
+
 
 # save_resources_to_file('resources.json')
 
