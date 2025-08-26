@@ -467,6 +467,7 @@ def get_users_from_role(role):
     Get person_ids from a role
 
     @TODO add support for 2 and 19!
+    @TODO if activity and org type 6 and styremedlem use 6 and 14, if 1000000 then only 14
 
     :param role:
     :return:
@@ -826,11 +827,14 @@ def generate_notifications(_id):
                                     app.logger.error(f"Person {recipient} does not satisfy the filters, skipping notification.")
                                     continue
 
-                            # Get the email address of the person
-                            email = None
+                            # Fetch email addresses based on address strategy
+                            email_addresses = []
                             if payload['transport'] == 'email':
                                 app.logger.debug(f"Fetching email for recipient {recipient}")
-                                email = person.get('primary_email', person.get('address', {}).get('email', [])[0] if len(person.get('address', {}).get('email', [])) > 0 else None)
+                                if response.get('member_email', 'primary') == 'all':
+                                    email_addresses = list(set([person.get('primary_email')] + person.get('address', {}).get('email', [])))
+                                else:
+                                    email_addresses = [person.get('primary_email', person.get('address', {}).get('email', [])[0] if len(person.get('address', {}).get('email', [])) > 0 else None)]
 
                             # Check if the person has memberships in NLF
                             if check_nif_person(person['id']) is False:
@@ -859,15 +863,11 @@ def generate_notifications(_id):
                         pld['data']['html_content'] = html_content
                         pld['data']['plain_text_content'] = plain_text_content
                         # The rest!
-                        pld['recipient'] = {
-                            'person_id': recipient,
-                            'email': email if email else None,
-                            'name': person.get('full_name', '') if person else person.get('first_name', '') + ' ' + person.get('last_name', ''),  # Use full name if available
-                            # 'first_name': person.get('first_name', ''),
-                            # 'last_name': person.get('last_name', ''),
-                        }  # Recipient's person ID and email
                         pld['uuid'] = str(uuid4())  # Generate a unique UUID for the notification
                         pld['acl']['read']['users'] = [recipient]
+
+
+
                         app.logger.debug(f"Payload prepared for recipient {recipient}: {pld}")
 
                         # Make sure we always supply plain text content
@@ -880,10 +880,20 @@ def generate_notifications(_id):
 
                         try:
                             app.logger.debug(f"Posting notification message for recipient {recipient}")
-                            msg_response, _, _, msg_status, _ = post_internal(resource='notifications_messages',
-                                                                              payl=pld,
-                                                                              skip_validation=True)
-                            app.logger.debug(f"Notification message posted for recipient {recipient}: {msg_status}")
+                            if len(email_addresses) == 0:
+                                app.logger.error(f"No email addresses found for recipient {recipient}, skipping notification generation.")
+
+                            for email_address in email_addresses:
+                                pld['recipient'] = {
+                                    'person_id': recipient,
+                                    'email': email_address,
+                                    'name': person.get('full_name', '') if person else person.get('first_name', '') + ' ' + person.get('last_name', ''),  # Use full name if available
+                                }
+                                msg_response, _, _, msg_status, _ = post_internal(resource='notifications_messages',
+                                                                                  payl=pld,
+                                                                                  skip_validation=True)
+                                app.logger.debug(f"Notification message posted for recipient {recipient}@{email_address}: {msg_status}")
+
                         except Exception as e:
                             app.logger.error(f"Error posting notification message for recipient {recipient}: {e}")
                             # return eve_abort(500, "Error posting notification message")
