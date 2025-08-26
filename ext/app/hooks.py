@@ -3,7 +3,7 @@ To hook all the different changes to our api!
 """
 from eve.methods.patch import patch_internal
 from eve.methods.get import get_internal, getitem_internal
-from eve.methods.delete import deleteitem_internal, delete_internal
+from eve.methods.delete import deleteitem_internal
 from datetime import datetime, timezone, timezone
 from dateutil import tz
 from dateutil import parser
@@ -1026,12 +1026,23 @@ def _update_person(item):
 
 
 def on_notification_delete(item):
+    """
+    When a notification is deleted we also need to delete all generated messages
+    ToDo: Use app.data['driver'] directly for delete_many()?
+    :param item:
+    :return:
+    """
     try:
         notification, _, _, status = getitem_internal('notifications', **{'_id': item['_id']})
         if status == 200:
-            result, _, _, d_status = delete_internal('notifications_messages', **{'event_id': item['_id']})
-            if d_status != 204:
-                app.logger.error('Error deleting generated messages for notification id {} status {} and result {}'.format(item['_id'], d_status, result))
+            messages, _, _, m_status = get_internal('notifications_messages', **{'event_id': notification['id']})
+            if m_status == 200:
+                for message in messages.get('_items', []):
+                    result, _, _, d_status = deleteitem_internal('notifications_messages', **{'_id': message['_id']})
+                    if d_status != 204:
+                        app.logger.error('Error deleting generated message for notification id {} status {} and result {}'.format(item['_id'], d_status, result))
+            else:
+                app.logger.error('Error getting generated messages for notification id {} status {}'.format(item['_id'], m_status))
     except Exception as e:
         app.logger.exception('Error deleting notification messages for notification id {}'.format(item['_id']))
 
