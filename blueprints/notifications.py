@@ -445,6 +445,7 @@ def get_org_type(org_id):
 
     return None
 
+
 def get_org(org_id):
     """
     Get an organization
@@ -499,7 +500,7 @@ def get_users_from_role(role):
 
             # If type is 6 and activity, add type 14 with that activity
             elif org['type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
-                down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities',[])] ]
+                down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities', [])]]
                 query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
             # if type is 6 and all activities, add all type 14
@@ -687,6 +688,7 @@ def send_notification_messages(_id):
     app.logger.error(f"Error notification _id: {_id} etag: {request.headers.get('If-Match', 'nope')} content type: {request.headers.get('Content-Type', 'unknown')} Authorization: {request.headers.get('Authorization', 'unknown')}")
     return eve_abort(404, "Notification not found or already processed")
 
+
 @Notifications.route('/role2', methods=['POST', 'GET'])
 @require_token()
 def role2():
@@ -704,6 +706,35 @@ def role2():
         app.logger.exception(f"Error fetching users from role {role}: {e}")
 
     return eve_response({"error": "Failed to fetch users from role"}, status=500)
+
+
+@Notifications.route('/regenerate/<string:_id>', methods=['POST', 'GET'])
+@require_token()
+def regenerate_notifications(_id):
+    try:
+        response, _, _, status = getitem_internal(resource='notifications', **{'_id': _id})
+    except Exception as e:
+        app.logger.exception("Error fetching notification")
+        return eve_abort(500, "Error fetching notification")
+
+    if status == 200 and response.get('status', None) == 'finished':
+        # Delete notification messages associated with this notification
+        notifications_messages = app.data.driver.db['notifications_messages']
+        delete_result = notifications_messages.delete_many({'event_id': ObjectId(_id)})
+        app.logger.info(f"Deleted {delete_result.deleted_count} notification messages for notification _id: {_id}")
+
+        # Update notification status back to draft or created
+        notifications = app.data.driver.db['notifications']
+        update_result = notifications.update_one({'_id': ObjectId(_id)}, {'$set': {'status': 'draft'}})
+        if update_result.modified_count == 0:
+            app.logger.error(f"Notification _id: {_id} could not update status back to draft pymongo status {update_result}")
+            return eve_abort(404, "Notification not found or could not be updated")
+        app.logger.info(f"Notification _id: {_id} status reset to draft")
+        # Now regenerate the notifications
+        return generate_notifications(_id)
+
+    app.logger.error(f"Notification _id: {_id} is not in finished status, current status: {response.get('status', 'unknown')}")
+    return eve_abort(404, "Notification not found or not in finished status")
 
 @Notifications.route('/generate/<string:_id>', methods=['POST', 'GET'])
 @require_token()
@@ -865,8 +896,6 @@ def generate_notifications(_id):
                         # The rest!
                         pld['uuid'] = str(uuid4())  # Generate a unique UUID for the notification
                         pld['acl']['read']['users'] = [recipient]
-
-
 
                         app.logger.debug(f"Payload prepared for recipient {recipient}: {pld}")
 
