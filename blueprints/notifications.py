@@ -133,6 +133,12 @@ def filter_existing_persons(resp: List[Dict], max_concurrent: int = 10) -> List[
     app.logger.info(f"Found {len(valid_person_ids)} valid person_ids")
     return valid_person_ids
 
+def _is_int(user_input) -> bool:
+    try:
+        int(user_input)
+        return True
+    except ValueError:
+        return False
 def get_nested_field(person, field_path):
     """
     Retrieve a nested field value from a person dictionary using dot notation.
@@ -556,7 +562,7 @@ def get_users_from_role(role):
     """
     where = {}
     org = None
-    if role['org'] and role['org'] != '*' and role['org'].isnumeric() and int(role['org']) > 0:
+    if role['org'] and role['org'] != '*' and _is_int(role['org']) and int(role['org']) > 0:
         org = get_org(role['org'])
         if org.get('type_id') not in [6, 14]:
             app.logger.error(f"[Notifications] Error for org {org.get('name')} with type_id {org.get('type_id')}, not in [6, 14]")
