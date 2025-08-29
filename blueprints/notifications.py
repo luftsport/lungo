@@ -61,15 +61,15 @@ def get_nested_field(person, field_path):
     try:
         for part in field_path.split('.'):
             if not isinstance(current, dict):
-                logging.warning(f"Cannot access {field_path}: {part} is not a dictionary in {current}")
+                logging.warning(f"[Notifications] Cannot access {field_path}: {part} is not a dictionary in {current}")
                 return None
             if part not in current:
-                logging.warning(f"Field {part} not found in path {field_path}")
+                logging.warning(f"[Notifications] Field {part} not found in path {field_path}")
                 return None
             current = current[part]
         return current
     except Exception as e:
-        logging.error(f"Error accessing nested field {field_path}: {str(e)}")
+        logging.error(f"[Notifications] Error accessing nested field {field_path}: {str(e)}")
         return None
 
 
@@ -82,18 +82,18 @@ def validate_filters(filters, depth=0):
         filters = {"and": filters}
 
     if not isinstance(filters, dict):
-        logging.error(f"{indent}Filters must be a dictionary or list: {filters}")
+        logging.error(f"[Notifications] {indent}Filters must be a dictionary or list: {filters}")
         raise ValueError(f"Filters must be a dictionary or list")
 
     if len(filters) != 1 or list(filters.keys())[0] not in LOGICAL_OPERATORS:
-        logging.error(f"{indent}Filters must have a single or or and key: {filters}")
+        logging.error(f"[Notifications] {indent}Filters must have a single or or and key: {filters}")
         raise ValueError(f"Filters must have a single or or and key")
 
     operator = list(filters.keys())[0]
     filter_list = filters[operator]
 
     if not isinstance(filter_list, list) or not filter_list:
-        logging.error(f"{indent}{operator} value must be a non-empty list: {filter_list}")
+        logging.error(f"[Notifications] {indent}{operator} value must be a non-empty list: {filter_list}")
         raise ValueError(f"{operator} value must be a non-empty list")
 
     validated_filters = {operator: []}
@@ -102,32 +102,32 @@ def validate_filters(filters, depth=0):
     for i, filter_item in enumerate(filter_list):
         if isinstance(filter_item, dict) and any(key in LOGICAL_OPERATORS for key in filter_item):
             validated_filters[operator].append(validate_filters(filter_item, depth + 1))
-            logging.info(f"{indent}Validated nested {operator} filter {i} at depth {depth + 1}")
+            logging.info(f"[Notifications] {indent}Validated nested {operator} filter {i} at depth {depth + 1}")
         else:
             if not isinstance(filter_item, dict):
-                logging.error(f"{indent}Filter {i} is not a dictionary: {filter_item}")
+                logging.error(f"[Notifications] {indent}Filter {i} is not a dictionary: {filter_item}")
                 raise ValueError(f"Filter {i} must be a dictionary")
 
             if not all(key in filter_item for key in required_keys):
                 missing = required_keys - set(filter_item.keys())
-                logging.error(f"{indent}Filter {i} missing required keys: {missing}")
+                logging.error(f"[Notifications] {indent}Filter {i} missing required keys: {missing}")
                 raise ValueError(f"Filter {i} missing required keys: {missing}")
 
             if filter_item['type'] not in ['inclusive', 'exclusive']:
-                logging.error(f"{indent}Filter {i} invalid type: {filter_item['type']}")
+                logging.error(f"[Notifications] {indent}Filter {i} invalid type: {filter_item['type']}")
                 raise ValueError(f"Filter {i} type must be 'inclusive' or 'exclusive'")
 
             if not isinstance(filter_item['field'], str) or not filter_item['field']:
-                logging.error(f"{indent}Filter {i} invalid field: {filter_item['field']}")
+                logging.error(f"[Notifications] {indent}Filter {i} invalid field: {filter_item['field']}")
                 raise ValueError(f"Filter {i} field must be a non-empty string")
 
             op = filter_item['operator']
             if op not in SIMPLE_OPERATORS and op not in MONGO_OPERATORS:
-                logging.error(f"{indent}Filter {i} invalid operator: {op}")
+                logging.error(f"[Notifications] {indent}Filter {i} invalid operator: {op}")
                 raise ValueError(f"Filter {i} operator must be one of {list(SIMPLE_OPERATORS.keys()) + MONGO_OPERATORS}")
 
             if op in ['in', '$in'] and not isinstance(filter_item['value'], list):
-                logging.error(f"{indent}Filter {i} value for 'in' must be a list: {filter_item['value']}")
+                logging.error(f"[Notifications] {indent}Filter {i} value for 'in' must be a list: {filter_item['value']}")
                 raise ValueError(f"Filter {i} value for 'in' must be a list")
 
             # Validate birth_date
@@ -136,29 +136,29 @@ def validate_filters(filters, depth=0):
                     if op in ['in', '$in']:
                         parsed_values = [parser.parse(val) for val in filter_item['value']]
                         filter_item['value'] = parsed_values
-                        logging.info(f"{indent}Parsed birth_date values for filter {i}: {parsed_values}")
+                        logging.info(f"[Notifications] {indent}Parsed birth_date values for filter {i}: {parsed_values}")
                     else:
                         parsed_value = parser.parse(filter_item['value'])
                         filter_item['value'] = parsed_value
-                        logging.info(f"{indent}Parsed birth_date value for filter {i}: {parsed_value}")
+                        logging.info(f"[Notifications] {indent}Parsed birth_date value for filter {i}: {parsed_value}")
                 except (ValueError, TypeError) as e:
-                    logging.error(f"{indent}Filter {i} invalid birth_date value: {filter_item['value']} ({str(e)})")
+                    logging.error(f"[Notifications] {indent}Filter {i} invalid birth_date value: {filter_item['value']} ({str(e)})")
                     raise ValueError(f"Filter {i} birth_date value must be a valid date/datetime string")
 
             # Validate age
             if filter_item['field'].startswith('age'):
                 if op in ['in', '$in']:
                     if not all(isinstance(val, int) for val in filter_item['value']):
-                        logging.error(f"{indent}Filter {i} age value for 'in' must be a list of integers: {filter_item['value']}")
+                        logging.error(f"[Notifications] {indent}Filter {i} age value for 'in' must be a list of integers: {filter_item['value']}")
                         raise ValueError(f"Filter {i} age value for 'in' must be a list of integers")
                 else:
                     if not isinstance(filter_item['value'], int):
-                        logging.error(f"{indent}Filter {i} age value must be an integer: {filter_item['value']}")
+                        logging.error(f"[Notifications] {indent}Filter {i} age value must be an integer: {filter_item['value']}")
                         raise ValueError(f"Filter {i} age value must be an integer")
 
             # Allow dot notation for other fields (no specific validation needed)
             validated_filters[operator].append(filter_item)
-            logging.info(f"{indent}Validated filter {i}: {filter_item}")
+            logging.info(f"[Notifications] {indent}Validated filter {i}: {filter_item}")
 
     return validated_filters
 
@@ -168,52 +168,52 @@ def person_satisfies_filters(person, filters, depth=0):
     Check if a person satisfies the given filters, supporting or/and.
     """
     indent = "  " * depth
-    logging.debug(f"{indent}Processing filters at depth {depth}: {filters}")
+    logging.debug(f"[Notifications] {indent}Processing filters at depth {depth}: {filters}")
 
     if isinstance(filters, list):
         filters = {"and": filters}
 
     if not isinstance(filters, dict) or len(filters) != 1:
-        logging.error(f"{indent}Invalid filter structure at depth {depth}: {filters}")
+        logging.error(f"[Notifications] {indent}Invalid filter structure at depth {depth}: {filters}")
         raise ValueError(f"Filters must be a dictionary with a single or or and key")
 
     operator = list(filters.keys())[0]
     if operator not in LOGICAL_OPERATORS:
-        logging.error(f"{indent}Invalid logical operator at depth {depth}: {operator}")
+        logging.error(f"[Notifications] {indent}Invalid logical operator at depth {depth}: {operator}")
         raise ValueError(f"Logical operator must be or or and")
 
     filter_list = filters[operator]
     if not isinstance(filter_list, list) or not filter_list:
-        logging.error(f"{indent}{operator} value must be a non-empty list: {filter_list}")
+        logging.error(f"[Notifications] {indent}{operator} value must be a non-empty list: {filter_list}")
         raise ValueError(f"{operator} value must be a non-empty list")
 
     if operator == 'and':
         for i, filter_item in enumerate(filter_list):
             if isinstance(filter_item, dict) and any(key in LOGICAL_OPERATORS for key in filter_item.keys()):
-                logging.debug(f"{indent}Evaluating nested and filter {i} at depth {depth}: {filter_item}")
+                logging.debug(f"[Notifications] {indent}Evaluating nested and filter {i} at depth {depth}: {filter_item}")
                 if not person_satisfies_filters(person, filter_item, depth + 1):
-                    logging.info(f"{indent}Person does not satisfy nested and filter {i}: {filter_item}")
+                    logging.info(f"[Notifications] {indent}Person does not satisfy nested and filter {i}: {filter_item}")
                     return False
             else:
-                logging.debug(f"{indent}Evaluating single and filter {i} at depth {depth}: {filter_item}")
+                logging.debug(f"[Notifications] {indent}Evaluating single and filter {i} at depth {depth}: {filter_item}")
                 if not person_satisfies_single_filter(person, filter_item):
-                    logging.info(f"{indent}Person does not satisfy and filter {i}: {filter_item}")
+                    logging.info(f"[Notifications] {indent}Person does not satisfy and filter {i}: {filter_item}")
                     return False
-        logging.info(f"{indent}Person satisfies all and filters at depth {depth}")
+        logging.info(f"[Notifications] {indent}Person satisfies all and filters at depth {depth}")
         return True
     elif operator == 'or':
         for i, filter_item in enumerate(filter_list):
             if isinstance(filter_item, dict) and any(key in LOGICAL_OPERATORS for key in filter_item.keys()):
-                logging.debug(f"{indent}Evaluating nested or filter {i} at depth {depth}: {filter_item}")
+                logging.debug(f"[Notifications] {indent}Evaluating nested or filter {i} at depth {depth}: {filter_item}")
                 if person_satisfies_filters(person, filter_item, depth + 1):
-                    logging.info(f"{indent}Person satisfies nested or filter {i}: {filter_item}")
+                    logging.info(f"[Notifications] {indent}Person satisfies nested or filter {i}: {filter_item}")
                     return True
             else:
-                logging.debug(f"{indent}Evaluating single or filter {i} at depth {depth}: {filter_item}")
+                logging.debug(f"[Notifications] {indent}Evaluating single or filter {i} at depth {depth}: {filter_item}")
                 if person_satisfies_single_filter(person, filter_item):
-                    logging.info(f"{indent}Person satisfies or filter {i}: {filter_item}")
+                    logging.info(f"[Notifications] {indent}Person satisfies or filter {i}: {filter_item}")
                     return True
-        logging.info(f"{indent}Person does not satisfy any or filters at depth {depth}")
+        logging.info(f"[Notifications] {indent}Person does not satisfy any or filters at depth {depth}")
         return False
     return False
 
@@ -223,12 +223,12 @@ def person_satisfies_single_filter(person, filter_dict):
     Check if a person satisfies a single filter, supporting dot notation for nested fields.
     """
     if not isinstance(filter_dict, dict):
-        logging.error(f"Single filter must be a dictionary: {filter_dict}")
+        logging.error(f"[Notifications] Single filter must be a dictionary: {filter_dict}")
         raise ValueError(f"Single filter must be a dictionary")
 
     required_keys = {'type', 'field', 'value', 'operator'}
     if not all(key in filter_dict for key in required_keys):
-        logging.error(f"Single filter missing required keys: {filter_dict}")
+        logging.error(f"[Notifications] Single filter missing required keys: {filter_dict}")
         raise ValueError(f"Single filter missing required keys")
 
     field = filter_dict['field']
@@ -237,21 +237,21 @@ def person_satisfies_single_filter(person, filter_dict):
 
     if field.startswith('age'):
         if 'birth_date' not in person:
-            logging.warning(f"birth_date not found in person for age filter: {person}")
+            logging.warning(f"[Notifications] birth_date not found in person for age filter: {person}")
             return False
         try:
             person_value = calculate_age(person['birth_date'])
         except ValueError as e:
-            logging.error(f"Error calculating age: {str(e)}")
+            logging.error(f"[Notifications] Error calculating age: {str(e)}")
             return False
     else:
         person_value = get_nested_field(person, field)
         if person_value is None:
-            logging.warning(f"Field {field} not found in person: {person}")
+            logging.warning(f"[Notifications] Field {field} not found in person: {person}")
             return False
 
     if field.startswith('birth_date') and not isinstance(person_value, datetime):
-        logging.error(f"Person's birth_date is not a datetime: {person_value}")
+        logging.error(f"[Notifications] Person's birth_date is not a datetime: {person_value}")
         return False
 
     result = False
@@ -328,7 +328,7 @@ def build_mongo_query(filters):
         if filter_dict['type'] == 'exclusive':
             query[field] = {'$not': query[field]}
 
-    app.logger.info(f"Built MongoDB query: {query}")
+    app.logger.info(f"[Notifications] Built MongoDB query: {query}")
     return query
 
 
@@ -468,6 +468,8 @@ def get_users_from_role(role):
     Get person_ids from a role
 
     @TODO add support for 2 and 19!
+    @TODO add support for 5 instead of 6
+    @TODO query updated with where={"type_id": 10000000, "org_type_id": 6, "is_deleted": false, "is_passive": false, "to_date": {"$exists": false} }&max_results=1
 
     :param role:
     :return:
@@ -477,7 +479,7 @@ def get_users_from_role(role):
     if role['org'] and role['org'] != '*' and role['org'].isnumeric() and int(role['org']) > 0:
         org = get_org(role['org'])
         if org.get('type_id') not in [6, 14]:
-            app.logger.error(f"Error for org {org.get('name')} with type_id {org.get('type_id')}, not in [6, 14]")
+            app.logger.error(f"[Notifications] Error for org {org.get('name')} with type_id {org.get('type_id')}, not in [6, 14]")
             return []
 
     role = {k: int(v) if v != '*' else v for k, v in role.items()}
@@ -526,17 +528,17 @@ def get_users_from_role(role):
         elif (role['org'] and role['activity']) == '*':
             query = f'where={{"type_id": {role["role"]}, "org_type_id": {{"$in": [6, 14]}}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
 
-        app.logger.debug(f"Query for users from role from functions: {query}")
+        app.logger.debug(f"[Notifications] Query for users from role from functions: {query}")
         resp = requests.get('{}/functions?{}&max_results={}'.format(API_BASE_URL, query, 20000), headers=API_HEADERS)  # verify=app['config'].get('REQUESTS_VERIFY', True)
 
         if resp.status_code == 200:
             try:
                 return list(set([item['person_id'] for item in resp.json().get('_items', [])]))
             except IndexError as e:
-                app.logger.error(f"IndexError in get_users_from_role: {e}")
+                app.logger.error(f"[Notifications] IndexError in get_users_from_role: {e}")
 
     else:
-        app.logger.error(f"Invalid role data: {role}")
+        app.logger.error(f"[Notifications] Invalid role data: {role}")
 
     return []
 
@@ -595,7 +597,7 @@ def get_recipients_from_roles(roles):
 
         return get_recepients(list(set([i for i in persons if i > 0])))
     except Exception as e:
-        app.logger.error(f"Error fetching users from functions: {e}")
+        app.logger.error(f"[Notifications] Error fetching users from functions: {e}")
 
     return persons
 
@@ -615,7 +617,7 @@ def get_users_from_competences(competences):
 
             return list(set([item['person_id'] for item in resp.json().get('_items', [])]))
     except Exception as e:
-        app.logger.error(f"Error fetching users from competences: {e}")
+        app.logger.error(f"[Notifications] Error fetching users from competences: {e}")
 
     return persons
 
@@ -634,7 +636,7 @@ def get_users_from_competence(competence):
 
         return list(set([item['person_id'] for item in resp.json().get('_items', [])]))
     except Exception as e:
-        app.logger.error(f"Error fetching users from competences: {e}")
+        app.logger.error(f"[Notifications] Error fetching users from competences: {e}")
 
     return persons
 
@@ -666,34 +668,34 @@ def send_notification_messages(_id):
     try:
         notification, _, _, status = getitem_internal(resource='notifications', **{'_id': _id})
     except Exception as e:
-        app.logger.exception(f"Error fetching notification _id: {_id} status {status} and error {e}")
+        app.logger.exception(f"[Notifications] Error fetching notification _id: {_id} status {status} and error {e}")
         return eve_abort(500, "Error fetching notification")
 
     # Check "If-Match" header for optimistic concurrency control
     if status == 200 and notification.get('status', None) == 'generated' and request.headers.get('If-Match', None) == notification.get('_etag', 'nope'):
-        app.logger.info(f"Notification _id: {_id} is ready to be sent, status: {notification.get('status', 'unknown')}")
+        app.logger.info(f"[Notifications] Notification _id: {_id} is ready to be sent, status: {notification.get('status', 'unknown')}")
         notifications = app.data.driver.db['notifications']
         notifications_messages = app.data.driver.db['notifications_messages']
         # Check if the notification is already processed
         n_status = notifications.update_one({'_id': ObjectId(_id)}, {'$set': {'status': 'pending'}})
         if n_status.modified_count == 0:
-            app.logger.error(f"Notification _id: {_id} could not update notifications to status pending pymongo status {n_status}")
+            app.logger.error(f"[Notifications] Notification _id: {_id} could not update notifications to status pending pymongo status {n_status}")
             return eve_abort(404, "Notification not found or already processed")
 
         nm_status = notifications_messages.update_many({'event_id': ObjectId(_id)}, {'$set': {'status': 'ready'}})
         if nm_status.modified_count == 0:
-            app.logger.error(f"Notification _id: {_id} could not update notification messages pymongo status {nm_status}")
+            app.logger.error(f"[Notifications] Notification _id: {_id} could not update notification messages pymongo status {nm_status}")
             return eve_abort(404, "Notification messages not found or already processed")
         # Update the status of the notification to 'finished'
         nu_status = notifications.update_one({'_id': ObjectId(_id)}, {'$set': {'status': 'finished'}})
         if nu_status.modified_count == 0:
-            app.logger.error(f"Notification _id: {_id} could not update notification template pymongo status {nu_status}")
+            app.logger.error(f"[Notifications] Notification _id: {_id} could not update notification template pymongo status {nu_status}")
             return eve_abort(404, "Notification not found or already processed")
 
-        app.logger.info(f"Notification _id: {_id} successfully sent")
-        return eve_response({"status": "success", "message": f"{nm_status.modified_count} notification messages sent successfully"}, 201)
+        app.logger.info(f"[Notifications] Notification _id: {_id} successfully sent")
+        return eve_response({"status": "success", "message": f"[Notifications] {nm_status.modified_count} notification messages sent successfully"}, 201)
 
-    app.logger.error(f"Error notification _id: {_id} etag: {request.headers.get('If-Match', 'nope')} content type: {request.headers.get('Content-Type', 'unknown')} Authorization: {request.headers.get('Authorization', 'unknown')}")
+    app.logger.error(f"[Notifications] Error notification _id: {_id} etag: {request.headers.get('If-Match', 'nope')} content type: {request.headers.get('Content-Type', 'unknown')} Authorization: {request.headers.get('Authorization', 'unknown')}")
     return eve_abort(404, "Notification not found or already processed")
 
 
@@ -706,12 +708,12 @@ def role2():
         args = parse_request('persons')
         where = json.loads(args.where)
         role = where.get('role', None)
-    app.logger.debug(f"Role2 endpoint called with role: {role}")
+    app.logger.debug(f"[Notifications] Role2 endpoint called with role: {role}")
     try:
         users = get_users_from_role(role)
         return eve_response(users, status=200)
     except Exception as e:
-        app.logger.exception(f"Error fetching users from role {role}: {e}")
+        app.logger.exception(f"[Notifications] Error fetching users from role {role}: {e}")
 
     return eve_response({"error": "Failed to fetch users from role"}, status=500)
 
@@ -732,19 +734,19 @@ def regenerate_notifications(_id):
         # Delete notification messages associated with this notification
         notifications_messages = app.data.driver.db['notifications_messages']
         delete_result = notifications_messages.delete_many({'event_id': ObjectId(_id)})
-        app.logger.info(f"Deleted {delete_result.deleted_count} notification messages for notification _id: {_id}")
+        app.logger.info(f"[Notifications] Deleted {delete_result.deleted_count} notification messages for notification _id: {_id}")
 
         # Update notification status back to draft or created
         notifications = app.data.driver.db['notifications']
         update_result = notifications.update_one({'_id': ObjectId(_id)}, {'$set': {'status': 'draft'}})
         if update_result.modified_count == 0:
-            app.logger.error(f"Notification _id: {_id} could not update status back to draft pymongo status {update_result}")
+            app.logger.error(f"[Notifications] Notification _id: {_id} could not update status back to draft pymongo status {update_result}")
             return eve_abort(404, "Notification not found or could not be updated")
-        app.logger.info(f"Notification _id: {_id} status reset to draft")
+        app.logger.info(f"[Notifications] Notification _id: {_id} status reset to draft")
         # Now regenerate the notifications
         return generate_notifications(_id)
 
-    app.logger.error(f"Notification _id: {_id} is not in finished status, current status: {response.get('status', 'unknown')}")
+    app.logger.error(f"[Notifications] Notification _id: {_id} is not in finished status, current status: {response.get('status', 'unknown')}")
     return eve_abort(404, "Notification not found or not in finished status")
 
 @Notifications.route('/generate/<string:_id>', methods=['POST', 'GET'])
@@ -834,12 +836,12 @@ def generate_notifications(_id):
             try:
                 valid_filters = validate_filters(response['recipients'].get('filters', None))
             except Exception as e:
-                app.logger.exception(f"Error validating filters: {e}")
+                app.logger.exception(f"[Notifications] Error validating filters: {e}")
                 valid_filters = None
 
             for recipient in list(set(recipients)):
                 if isinstance(recipient, int):
-                    app.logger.debug(f"Processing recipient ID: {recipient}")
+                    app.logger.debug(f"[Notifications] Processing recipient ID: {recipient}")
                     try:
                         # If recipient is a user ID, fetch their email
 
@@ -848,9 +850,9 @@ def generate_notifications(_id):
                         person, _, _, person_status = getitem_internal(resource='persons', **{'id': recipient})
                         # If status not correct or person is None, we skip this recipient
                         if person_status not in [200, 201] or not person:
-                            app.logger.error(f"Failed to fetch person data for recipient {recipient}: {person_status}")
+                            app.logger.error(f"[Notifications] Failed to fetch person data for recipient {recipient}: {person_status}")
                             failed_recipients.append(recipient)
-                            app.logger.error(f"Person data for recipient {recipient} not found or invalid status: {person_status} {person.text if hasattr(person, 'text') else ''}")
+                            app.logger.error(f"[Notifications] Person data for recipient {recipient} not found or invalid status: {person_status} {person.text if hasattr(person, 'text') else ''}")
                             continue
 
                         # Make sure to reset every time
@@ -860,19 +862,19 @@ def generate_notifications(_id):
                         if person_status == 200 and person:
 
                             # Check if filters are valid else ditch the notification message
-                            app.logger.debug(f"Applying filter for recipient {recipient}")
+                            app.logger.debug(f"[Notifications] Applying filter for recipient {recipient}")
                             # Add special fields:
                             if valid_filters:
                                 # Add special fields to the person object for filtering
                                 person['age'] = calculate_age(person.get('birth_date', None))
                                 if person_satisfies_filters(person, valid_filters) is False:
-                                    app.logger.error(f"Person {recipient} does not satisfy the filters, skipping notification.")
+                                    app.logger.error(f"[Notifications] Person {recipient} does not satisfy the filters, skipping notification.")
                                     continue
 
                             # Fetch email addresses based on address strategy
                             email_addresses = []
                             if payload['transport'] == 'email':
-                                app.logger.debug(f"Fetching email for recipient {recipient}")
+                                app.logger.debug(f"[Notifications] Fetching email for recipient {recipient}")
                                 if response.get('member_email', 'primary') == 'all':
                                     email_addresses = list(set([person.get('primary_email')] + person.get('address', {}).get('email', [])))
                                 else:
@@ -880,26 +882,26 @@ def generate_notifications(_id):
 
                             # Check if the person has memberships in NLF
                             if check_nif_person(person['id']) is False:
-                                app.logger.error(f"Person {recipient} has no memberships as reported by /nif/persons, skipping notification.")
+                                app.logger.error(f"[Notifications] Person {recipient} has no memberships as reported by /nif/persons, skipping notification.")
                                 continue
 
-                            app.logger.debug(f"Processing person data for recipient {recipient}")
+                            app.logger.debug(f"[Notifications] Processing person data for recipient {recipient}")
                             if 'date_of_death' in person and person['date_of_death'] is not None:
-                                app.logger.error(f"Person {recipient} is deceased, skipping notification.")
+                                app.logger.error(f"[Notifications] Person {recipient} is deceased, skipping notification.")
                                 continue
                             if 'subject' in payload['data']:
-                                app.logger.debug(f"Rendering subject for recipient {recipient}")
+                                app.logger.debug(f"[Notifications] Rendering subject for recipient {recipient}")
                                 subject = subject_template.render(person)
                             if 'html_content' in payload['data']:
-                                app.logger.debug(f"Rendering HTML content for recipient {recipient}")
+                                app.logger.debug(f"[Notifications] Rendering HTML content for recipient {recipient}")
                                 html_content = html_content_template.render(person)
                             if 'plain_text_content' in payload['data']:
-                                app.logger.debug(f"Rendering plain text content for recipient {recipient}")
+                                app.logger.debug(f"[Notifications] Rendering plain text content for recipient {recipient}")
                                 plain_text_content = plain_text_content_template.render(person)
-                            app.logger.debug(f"Finished jinja rendering for recipient {recipient}")
+                            app.logger.debug(f"[Notifications] Finished jinja rendering for recipient {recipient}")
 
                         # Prepare the payload for the notification message
-                        app.logger.debug(f"Preparing payload for recipient {recipient}")
+                        app.logger.debug(f"[Notifications] Preparing payload for recipient {recipient}")
                         pld = payload.copy()
                         pld['data']['subject'] = subject
                         pld['data']['html_content'] = html_content
@@ -908,20 +910,20 @@ def generate_notifications(_id):
                         pld['uuid'] = str(uuid4())  # Generate a unique UUID for the notification
                         pld['acl']['read']['users'] = [recipient]
 
-                        app.logger.debug(f"Payload prepared for recipient {recipient}: {pld}")
+                        app.logger.debug(f"[Notifications] Payload prepared for recipient {recipient}: {pld}")
 
                         # Make sure we always supply plain text content
                         if pld['data'].get('html_content', None) is not None and pld['data'].get('plain_text_content', None) is None:
                             # If only HTML content is provided, generate plain text from HTML
-                            app.logger.debug(f"Generating plain text content from HTML for recipient {recipient}")
+                            app.logger.debug(f"[Notifications] Generating plain text content from HTML for recipient {recipient}")
                             soup = BeautifulSoup(pld['data']['html_content'])
                             pld['data']['plain_text_content'] = soup.get_text()
-                            app.logger.debug(f"Generated plain text content for recipient {recipient}: {pld['data']['plain_text_content']}")
+                            app.logger.debug(f"[Notifications] Generated plain text content for recipient {recipient}: {pld['data']['plain_text_content']}")
 
                         try:
-                            app.logger.debug(f"Posting notification message for recipient {recipient}")
+                            app.logger.debug(f"[Notifications] Posting notification message for recipient {recipient}")
                             if len(email_addresses) == 0:
-                                app.logger.error(f"No email addresses found for recipient {recipient}, skipping notification generation.")
+                                app.logger.error(f"[Notifications] No email addresses found for recipient {recipient}, skipping notification generation.")
 
                             for email_address in email_addresses:
                                 pld['recipient'] = {
@@ -932,32 +934,32 @@ def generate_notifications(_id):
                                 msg_response, _, _, msg_status, _ = post_internal(resource='notifications_messages',
                                                                                   payl=pld,
                                                                                   skip_validation=True)
-                                app.logger.debug(f"Notification message posted for recipient {recipient}@{email_address}: {msg_status}")
+                                app.logger.debug(f"[Notifications] Notification message posted for recipient {recipient}@{email_address}: {msg_status}")
 
                         except Exception as e:
-                            app.logger.error(f"Error posting notification message for recipient {recipient}: {e}")
+                            app.logger.error(f"[Notifications] Error posting notification message for recipient {recipient}: {e}")
                             # return eve_abort(500, "Error posting notification message")
                         pld = None
                         # resp = requests.post('{}/notifications/smtp'.format(API_BASE_URL), data=json.dumps(payload, cls=EveJSONEncoder), headers=API_HEADERS)
                         if msg_status not in [200, 201]:
                             failed_recipients.append(recipient)
-                            app.logger.error(f"Failed to create notification for recipient {recipient}: {msg_response}")
+                            app.logger.error(f"[Notifications] Failed to create notification for recipient {recipient}: {msg_response}")
                             # return eve_abort(404, "Error happened")
 
                     except Exception as e:
                         failed_recipients.append(recipient)
-                        app.logger.exception(f"Error processing recipient {recipient}: {e}")
+                        app.logger.exception(f"[Notifications] Error processing recipient {recipient}: {e}")
                         # return eve_abort(500, "Error processing recipient")
 
             # Here you would typically send the email using your email service
             # For now, we just return a success response
-            app.logger.debug(f"All recipients processed, total: {len(recipients)}, failed: {len(failed_recipients)}")
+            app.logger.debug(f"[Notifications] All recipients processed, total: {len(recipients)}, failed: {len(failed_recipients)}")
 
             r, _, _, status = patch_internal(resource='notifications', payload={'status': 'generated'}, **{'_id': _id})
 
             return eve_response({"status": "success", "_id": _id, "_etag": r.get('_etag', None), "message": "Notifications created successfully", "recipients": recipients, "failed": failed_recipients}, 201)
 
-    app.logger.error(f"Notification not found or already processed: {_id}, status: {status}, response: {response.text}, etag: {request.headers.get('If-Match', 'nope')}, expected etag: {response.get('_etag', 'nope')}")
+    app.logger.error(f"[Notifications] Notification not found or already processed: {_id}, status: {status}, response: {response.text}, etag: {request.headers.get('If-Match', 'nope')}, expected etag: {response.get('_etag', 'nope')}")
     return eve_abort(404, "Notification not found or already processed")
 
 
@@ -975,7 +977,7 @@ def email2notification():
     try:
         data = json.loads(request.form['data'])  # Deserialize JSON string to dict
     except json.JSONDecodeError as e:
-        app.logger.exception(f"Invalid JSON data in request {e}")
+        app.logger.exception(f"[Notifications] Invalid JSON data in request {e}")
         return jsonify({'error': 'Invalid JSON data'}), 400
 
     if not data or 'recipients' not in data or 'subject' not in data or ('html_content' not in data and 'plain_text_content' not in data):
@@ -1083,7 +1085,7 @@ def email2notification():
             pld = None
             # resp = requests.post('{}/notifications/smtp'.format(API_BASE_URL), data=json.dumps(payload, cls=EveJSONEncoder), headers=API_HEADERS)
             if status not in [200, 201]:
-                app.logger.error(f"Failed to create notification for recipient {recipient}: {response}")
+                app.logger.error(f"[Notifications] Failed to create notification for recipient {recipient}: {response}")
                 return eve_abort(404, "Error happened")
 
     # Here you would typically send the email using your email service
