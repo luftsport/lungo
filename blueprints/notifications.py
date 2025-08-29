@@ -1064,7 +1064,7 @@ def generate_notifications(_id):
 
             return eve_response({"status": "success", "_id": _id, "_etag": r.get('_etag', None), "message": "Notifications created successfully", "recipients": recipients, "failed": failed_recipients}, 201)
 
-    app.logger.error(f"[Notifications] Notification not found or already processed: {_id}, status: {status}, response: {response.text}, etag: {request.headers.get('If-Match', 'nope')}, expected etag: {response.get('_etag', 'nope')}")
+    app.logger.error(f"[Notifications] Notification not found or already processed: {_id}, status: {status}, response: {response}, etag: {request.headers.get('If-Match', 'nope')}, expected etag: {response.get('_etag', 'nope')}")
     return eve_abort(404, "Notification not found or already processed")
 
 
