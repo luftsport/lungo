@@ -21,6 +21,9 @@ from bs4 import BeautifulSoup
 from bson import ObjectId
 from dateutil import parser
 from blueprints.nif import get_nif_api_client
+import queue
+import threading
+from typing import List, Dict
 
 Notifications = Blueprint('Notifications', __name__)
 
@@ -49,6 +52,86 @@ SIMPLE_OPERATORS = {
 MONGO_OPERATORS = list(SIMPLE_OPERATORS.values())
 LOGICAL_OPERATORS = ['or', 'and']
 
+
+class Worker(threading.Thread):
+    """
+    Worker thread that processes person_ids from the queue.
+    """
+
+    def __init__(self, work_queue: queue.Queue, results: List[str], lock: threading.Lock):
+        super().__init__()
+        self.work_queue = work_queue
+        self.results = results
+        self.lock = lock  # Lock for thread-safe append to results
+
+    def run(self):
+        while True:
+            try:
+                # Get a person_id from the queue (non-blocking with timeout)
+                person_id = self.work_queue.get(block=True, timeout=1)
+                try:
+                    # Check if person exists
+                    exists = check_nif_person(person_id)
+                    if exists:
+                        # Append to results with lock for thread safety
+                        with self.lock:
+                            self.results.append(person_id)
+                finally:
+                    # Always mark task as done
+                    self.work_queue.task_done()
+            except queue.Empty:
+                # Exit if queue is empty
+                break
+            except Exception as e:
+                app.logger.error(f"Worker error for person_id {person_id}: {e}")
+                self.work_queue.task_done()
+
+
+def filter_existing_persons(resp: List[Dict], max_concurrent: int = 10) -> List[str]:
+    """
+    Filter person_ids that exist in the remote API using a thread pool and work queue.
+
+    Args:
+        resp: List of dictionaries containing person_id.
+        max_concurrent: Maximum number of concurrent worker threads.
+
+    Returns:
+        List of person_ids that exist in the remote API.
+    """
+    # Extract unique person_ids
+    person_ids = list(set(item['person_id'] for item in resp))
+    app.logger.info(f"Processing {len(person_ids)} unique person_ids")
+
+    # Initialize thread-safe results list and lock
+    valid_person_ids = []
+    lock = threading.Lock()
+
+    # Create a queue
+    work_queue = queue.Queue()
+
+    # Fill the queue with person_ids
+    for person_id in person_ids:
+        work_queue.put(person_id)
+
+    # Create thread pool
+    threads = [
+        Worker(work_queue, valid_person_ids, lock)
+        for _ in range(min(max_concurrent, len(person_ids)))
+    ]
+
+    # Start all threads
+    for thread in threads:
+        thread.start()
+
+    # Wait for the queue to be fully processed
+    work_queue.join()
+
+    # Wait for all threads to complete
+    for thread in threads:
+        thread.join()
+
+    app.logger.info(f"Found {len(valid_person_ids)} valid person_ids")
+    return valid_person_ids
 
 def get_nested_field(person, field_path):
     """
@@ -344,19 +427,16 @@ def fix_newlines(text):
 
 
 def get_person_from_role(role) -> (bool, [int]):
-    resp = requests.get(
-        '%s/functions?where={"active_in_org_id": %s, "type_id": %s, "is_deleted": false, "is_passive": false}&projection={"person_id": 1}&max_results={}'
-        % (API_BASE_URL, role.get('org'), role.get('role'), 20000),
-        headers=API_HEADERS, verify=app['config'].get('REQUESTS_VERIFY', True))
 
-    if resp.status_code == 200:
+    where = {"active_in_org_id": role.get('org'), "type_id": role.get('role'), "is_deleted": False, "is_passive": False}
+    r, _, _, status, _ = get_internal('functions', **where)
+
+    if status == 200:
         try:
-            r = resp.json()
-            if '_items' in r:
-                if len(r['_items']) == 1:
-                    return True, [r['_items'][0]['person_id']]
-                elif len(r['_items']) > 1:
-                    return True, [i['person_id'] for i in r['_items']]
+            if len(r) == 1:
+                return True, [r[0]['person_id']]
+            elif len(r) > 1:
+                return True, [i['person_id'] for i in r]
         except Exception as e:
             pass
 
@@ -474,7 +554,7 @@ def get_users_from_role(role):
     :param role:
     :return:
     """
-    query = ''
+    where = {}
     org = None
     if role['org'] and role['org'] != '*' and role['org'].isnumeric() and int(role['org']) > 0:
         org = get_org(role['org'])
@@ -488,8 +568,8 @@ def get_users_from_role(role):
 
         # Any org, any activity get all those roles wherever in 6 and 14!
         if role['org'] == '*' and role['activity'] == '*':
-            query = f'where={{ "type_id": {role["role"]}, "is_deleted": false, "is_passive": false, "org_type_id": {{"$in": [6, 14]}} }}&projection={{"person_id": 1}}'
-
+            # query = f'where={{ "type_id": {role["role"]}, "is_deleted": false, "is_passive": false, "org_type_id": {{"$in": [6, 14]}} }}&projection={{"person_id": 1}}'
+            where = {"type_id": role["role"], "is_deleted": False, "is_passive": False, "org_type_id": {"$in": [6, 14]}}
         # Specific organization!
         elif role['org'] is not None and role['org'] != '*' and role['org'] > 0:
 
@@ -497,24 +577,27 @@ def get_users_from_role(role):
             if org['type_id'] == 14:
                 up_orgs = [x['id'] for x in org.get('_up', []) if x['type'] == 6]
                 if role['role'] == 1000000:
-                    query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                    #query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                    where = {"org_id": role["org"], "type_id": role["role"], "is_deleted": False, "is_passive": False}
                 else:
-                    query = f'where={{"org_id": {{"$in": {[role["org"]] + up_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
-
+                    #query = f'where={{"org_id": {{"$in": {[role["org"]] + up_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                    where = {"org_id": {"$in": [role["org"]] + up_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
 
             # If type is 6 and activity, add type 14 with that activity
             elif org['type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
                 down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities', [])]]
                 if role['role'] == 1000000:
-                    query = f'where={{"org_id": {{"$in": {down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                    # query = f'where={{"org_id": {{"$in": {down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                    where = {"org_id": {"$in": down_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
                 else:
-                    query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                    # query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                    where = {"org_id": {"$in": [role["org"]] + down_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
 
             # if type is 6 and all activities, add all type 14
             elif org['type_id'] == 6 and role['activity'] == '*':
                 down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14]
-                query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
-
+                # query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                where = {"org_id": {"$in": [role["org"]] + down_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
 
         # Any org!
         elif role['org'] == '*' and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
@@ -522,26 +605,37 @@ def get_users_from_role(role):
                 orgs_from_activity = get_orgs_in_activivity(role['activity'], [14])
             else:
                 orgs_from_activity = get_orgs_in_activivity(role['activity'], [6, 14])
-            query = f'where={{"org_id": {{"$in": {orgs_from_activity}}}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+            # query = f'where={{"org_id": {{"$in": {orgs_from_activity}}}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+            where = {"org_id": {"$in": orgs_from_activity}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
 
         # Any org and any activity
         elif (role['org'] and role['activity']) == '*':
-            query = f'where={{"type_id": {role["role"]}, "org_type_id": {{"$in": [6, 14]}}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+            # query = f'where={{"type_id": {role["role"]}, "org_type_id": {{"$in": [6, 14]}}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+            where = {"type_id": role["role"], "org_type_id": {"$in": [6, 14]}, "is_deleted": False, "is_passive": False}
 
-        app.logger.debug(f"[Notifications] Query for users from role from functions: {query}")
-        resp = requests.get('{}/functions?{}&max_results={}'.format(API_BASE_URL, query, 20000), headers=API_HEADERS)  # verify=app['config'].get('REQUESTS_VERIFY', True)
+        app.logger.debug(f"[Notifications] Query for users from role from functions: {where}")
+        #resp = requests.get('{}/functions?{}&max_results={}'.format(API_BASE_URL, query, 20000), headers=API_HEADERS)  # verify=app['config'].get('REQUESTS_VERIFY', True)
 
-        if resp.status_code == 200:
+        col = app.data.driver.db['functions']
+        resp = list(col.find(where, {"person_id": 1}))
+        app.logger.info(f'[Notifications] got {len(resp)} persons from functions for role {role}')
+        if len(resp)>0:
             try:
-                return list(set([item['person_id'] for item in resp.json().get('_items', [])]))
+                return filter_existing_persons(resp, max_concurrent=500) #list(set([item['person_id'] for item in resp if check_nif_person(item['person_id']) is True]))
             except IndexError as e:
                 app.logger.error(f"[Notifications] IndexError in get_users_from_role: {e}")
 
     else:
         app.logger.error(f"[Notifications] Invalid role data: {role}")
 
-    return []
+    return ['agg']
 
+def check_person(person_id):
+    raise Exception("Deprecated, use check_nif_person")
+    status, person = get_nif_api_client().get_person(person_id)
+    if person is not None and status == 200:
+        return True
+    return False
 
 def check_nif_person(person_id):
     status, person = get_nif_api_client().get_person(person_id)
@@ -971,9 +1065,9 @@ def email2notification():
     - choose given or best suited channel
     - apply status when applicable
     - similar to obsreg's notifications"""
-    print('HEADERS', request.headers)
-    print('ARGS', request.args)
-    print('FORM', request.form)
+    # print('HEADERS', request.headers)
+    # print('ARGS', request.args)
+    # print('FORM', request.form)
     try:
         data = json.loads(request.form['data'])  # Deserialize JSON string to dict
     except json.JSONDecodeError as e:
