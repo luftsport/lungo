@@ -875,8 +875,13 @@ def generate_notifications(_id):
             # Get recipients from the request data
             recipients = response['recipients'].get('users', [])
 
-            for role in response['recipients'].get('roles', []):
-                recipients.extend(get_users_from_role(role))
+            # Manual snaikoil
+            if response['recipients'].get('roles', []) ==  [{ "org": "*", "activity": "*", "role": 10000000 }]:
+                with open('/www/lungo/members_all.json') as fp:
+                    recipients.extend(json.load(fp))
+            else:
+                for role in response['recipients'].get('roles', []):
+                    recipients.extend(get_users_from_role(role))
 
             for competence in response['recipients'].get('competences', []):
                 recipients.extend(get_users_from_competence(competence))
@@ -981,7 +986,7 @@ def generate_notifications(_id):
                                     email_addresses = [person.get('primary_email', person.get('address', {}).get('email', [])[0] if len(person.get('address', {}).get('email', [])) > 0 else None)]
 
                             # Check if the person has memberships in NLF
-                            if check_nif_person(person['id']) is False:
+                            if response['recipients'].get('roles', []) !=  [{ "org": "*", "activity": "*", "role": 10000000 }] and check_nif_person(person['id']) is False:
                                 app.logger.error(f"[Notifications] Person {recipient} has no memberships as reported by /nif/persons, skipping notification.")
                                 continue
 
