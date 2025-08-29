@@ -1035,7 +1035,7 @@ def on_notification_delete(item):
     try:
         notification, _, _, status = getitem_internal('notifications', **{'_id': item['_id']})
         if status == 200:
-            messages, _, _, m_status = get_internal('notifications_messages', **{'event_id': notification['id']})
+            messages, _, _, m_status, _ = get_internal('notifications_messages', **{'event_id': notification['id']})
             if m_status == 200:
                 for message in messages.get('_items', []):
                     result, _, _, d_status = deleteitem_internal('notifications_messages', **{'_id': message['_id']})
