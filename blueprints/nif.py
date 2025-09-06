@@ -414,6 +414,32 @@ def isonen_get_schedule_for_org(org_id):
     return eve_response(events, 200 if status in [200, True] else 404)
 
 
+""" 
+Courseevents
+"""
+
+
+@NIF.route('courseevents/', methods=['GET'])
+@require_token()
+def search_for_courses():
+    data = parse_request('persons')
+    where = None
+    try:
+        where = json.loads(data.where)
+    except Exception as e:
+        app.logger.exception(f'Could not parse where {data} because {e}')
+
+    status, events = get_nif_api_client().search_courseevents(where if where is not None else {"hostOrgId": 376})
+    return eve_response(events, 200 if status in [200, True] else 404)
+
+
+@NIF.route('courseevents/<int:course_event_id>', methods=['GET'])
+@require_token()
+def get_course(course_event_id):
+    status, event = get_nif_api_client().get_course_event(course_event_id)
+    return eve_response(event, 200 if status in [200, True] else 404)
+
+
 @NIF.route('check/<int:person_id>', methods=['POST'])
 @require_token()
 def check_and_fix(person_id):

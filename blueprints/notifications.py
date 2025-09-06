@@ -859,7 +859,7 @@ def generate_notifications(_id):
         return eve_abort(500, "Error fetching notification")
 
     # Check "If-Match" header for optimistic concurrency control
-    if status == 200 and response.get('status', None) == ('draft' or 'created') and request.headers.get('If-Match', None) == response.get('_etag', 'nope'):
+    if status == 200 and response.get('status', None) in ['draft', 'created'] and request.headers.get('If-Match', None) == response.get('_etag', 'nope'):
         try:
             r, _, _, pstatus = patch_internal(resource='notifications', payload={'status': 'pending'}, **{'_id': _id})
         except Exception as e:
