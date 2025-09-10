@@ -39,6 +39,8 @@ from ext.scf import (
 # DIsable jinja templating cache
 # app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+NIF_ROLE_MEMBER =  10000000
+
 # Valid operators
 SIMPLE_OPERATORS = {
     '=': '$eq',
@@ -555,7 +557,7 @@ def get_users_from_role(role):
 
     @TODO add support for 2 and 19!
     @TODO add support for 5 instead of 6
-    @TODO query updated with where={"type_id": 10000000, "org_type_id": 6, "is_deleted": false, "is_passive": false, "to_date": {"$exists": false} }&max_results=1
+    @TODO query updated with where={"type_id": NIF_ROLE_MEMBER, "org_type_id": 6, "is_deleted": false, "is_passive": false, "to_date": {"$exists": false} }&max_results=1
 
     :param role:
     :return:
@@ -582,7 +584,7 @@ def get_users_from_role(role):
             # If type is 14 always add 6
             if org['type_id'] == 14:
                 up_orgs = [x['id'] for x in org.get('_up', []) if x['type'] == 6]
-                if role['role'] == 1000000:
+                if role['role'] ==  NIF_ROLE_MEMBER:
                     #query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
                     where = {"org_id": role["org"], "type_id": role["role"], "is_deleted": False, "is_passive": False}
                 else:
@@ -592,7 +594,7 @@ def get_users_from_role(role):
             # If type is 6 and activity, add type 14 with that activity
             elif org['type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
                 down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities', [])]]
-                if role['role'] == 1000000:
+                if role['role'] ==  NIF_ROLE_MEMBER:
                     # query = f'where={{"org_id": {{"$in": {down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
                     where = {"org_id": {"$in": down_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
                 else:
@@ -607,7 +609,7 @@ def get_users_from_role(role):
 
         # Any org!
         elif role['org'] == '*' and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
-            if role['role'] == 1000000:
+            if role['role'] ==  NIF_ROLE_MEMBER:
                 orgs_from_activity = get_orgs_in_activivity(role['activity'], [14])
             else:
                 orgs_from_activity = get_orgs_in_activivity(role['activity'], [6, 14])
@@ -876,7 +878,7 @@ def generate_notifications(_id):
             recipients = response['recipients'].get('users', [])
 
             # Manual snaikoil
-            if response['recipients'].get('roles', []) ==  [{ "org": "*", "activity": "*", "role": 10000000 }]:
+            if response['recipients'].get('roles', []) ==  [{ "org": "*", "activity": "*", "role": NIF_ROLE_MEMBER }]:
                 with open('/www/lungo/members_all.json') as fp:
                     recipients.extend(json.load(fp))
             else:
@@ -986,7 +988,7 @@ def generate_notifications(_id):
                                     email_addresses = [person.get('primary_email', person.get('address', {}).get('email', [])[0] if len(person.get('address', {}).get('email', [])) > 0 else None)]
 
                             # Check if the person has memberships in NLF
-                            if response['recipients'].get('roles', []) !=  [{ "org": "*", "activity": "*", "role": 10000000 }] and check_nif_person(person['id']) is False:
+                            if response['recipients'].get('roles', []) !=  [{ "org": "*", "activity": "*", "role": NIF_ROLE_MEMBER }] and check_nif_person(person['id']) is False:
                                 app.logger.error(f"[Notifications] Person {recipient} has no memberships as reported by /nif/persons, skipping notification.")
                                 continue
 
