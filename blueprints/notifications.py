@@ -39,7 +39,7 @@ from ext.scf import (
 # DIsable jinja templating cache
 # app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-NIF_ROLE_MEMBER =  10000000
+NIF_ROLE_MEMBER = 10000000
 
 # Valid operators
 SIMPLE_OPERATORS = {
@@ -135,12 +135,15 @@ def filter_existing_persons(resp: List[Dict], max_concurrent: int = 10) -> List[
     app.logger.info(f"Found {len(valid_person_ids)} valid person_ids")
     return valid_person_ids
 
+
 def _is_int(user_input) -> bool:
     try:
         int(user_input)
         return True
     except ValueError:
         return False
+
+
 def get_nested_field(person, field_path):
     """
     Retrieve a nested field value from a person dictionary using dot notation.
@@ -435,7 +438,6 @@ def fix_newlines(text):
 
 
 def get_person_from_role(role) -> (bool, [int]):
-
     where = {"active_in_org_id": role.get('org'), "type_id": role.get('role'), "is_deleted": False, "is_passive": False}
     r, _, _, status, _ = get_internal('functions', **where)
 
@@ -551,6 +553,40 @@ def get_org(org_id):
     return None
 
 
+def verify_int_or_wildcard(param, wildcard_allowed=True, gt=0):
+    # Check if param is the wildcard
+    if param == "*" and wildcard_allowed is True:
+        return True
+
+    # Convert param to int if possible
+    try:
+        # If param is a string, check if it's all digits
+        if isinstance(param, str):
+            if not param.isdigit():
+                return False
+            param = int(param)
+        # If param is already an int, use it directly
+        elif isinstance(param, int):
+            pass
+        else:
+            return False
+
+        # Perform numeric comparison
+        if gt:
+            if param > gt:
+                return True
+            return False
+
+        # Then (redudant) check if it's an int
+        if isinstance(param, int):
+            return True
+
+    except ValueError as e:
+        pass
+
+    return False
+
+
 def get_users_from_role(role):
     """
     Get person_ids from a role
@@ -558,13 +594,13 @@ def get_users_from_role(role):
     @TODO add support for 2 and 19!
     @TODO add support for 5 instead of 6
     @TODO query updated with where={"type_id": NIF_ROLE_MEMBER, "org_type_id": 6, "is_deleted": false, "is_passive": false, "to_date": {"$exists": false} }&max_results=1
-
+    @TODO use persons for 10000000, where={"memberships.activity": 236, "_merged_to": {"$exists": false}}
     :param role:
     :return:
     """
     where = {}
     org = None
-    if role['org'] and role['org'] != '*' and _is_int(role['org']) and int(role['org']) > 0:
+    if role['org'] and role['org'] != '*' and verify_int_or_wildcard(role['org'], False, 0):
         org = get_org(role['org'])
         if org.get('type_id') not in [6, 14]:
             app.logger.error(f"[Notifications] Error for org {org.get('name')} with type_id {org.get('type_id')}, not in [6, 14]")
@@ -579,22 +615,22 @@ def get_users_from_role(role):
             # query = f'where={{ "type_id": {role["role"]}, "is_deleted": false, "is_passive": false, "org_type_id": {{"$in": [6, 14]}} }}&projection={{"person_id": 1}}'
             where = {"type_id": role["role"], "is_deleted": False, "is_passive": False, "org_type_id": {"$in": [6, 14]}}
         # Specific organization!
-        elif role['org'] is not None and role['org'] != '*' and role['org'] > 0:
+        elif role['org'] is not None and role['org'] != '*' and verify_int_or_wildcard(role['org'], False, 0):
 
             # If type is 14 always add 6
             if org['type_id'] == 14:
                 up_orgs = [x['id'] for x in org.get('_up', []) if x['type'] == 6]
-                if role['role'] ==  NIF_ROLE_MEMBER:
-                    #query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                if role['role'] == NIF_ROLE_MEMBER:
+                    # query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
                     where = {"org_id": role["org"], "type_id": role["role"], "is_deleted": False, "is_passive": False}
                 else:
-                    #query = f'where={{"org_id": {{"$in": {[role["org"]] + up_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
+                    # query = f'where={{"org_id": {{"$in": {[role["org"]] + up_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
                     where = {"org_id": {"$in": [role["org"]] + up_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
 
             # If type is 6 and activity, add type 14 with that activity
-            elif org['type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
+            elif org['type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and verify_int_or_wildcard(role['activity'], False, 0):
                 down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities', [])]]
-                if role['role'] ==  NIF_ROLE_MEMBER:
+                if role['role'] == NIF_ROLE_MEMBER:
                     # query = f'where={{"org_id": {{"$in": {down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
                     where = {"org_id": {"$in": down_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
                 else:
@@ -608,8 +644,8 @@ def get_users_from_role(role):
                 where = {"org_id": {"$in": [role["org"]] + down_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
 
         # Any org!
-        elif role['org'] == '*' and role['activity'] is not None and role['activity'] != '*' and role['activity'] > 0:
-            if role['role'] ==  NIF_ROLE_MEMBER:
+        elif role['org'] == '*' and role['activity'] is not None and role['activity'] != '*' and verify_int_or_wildcard(role['activity'], False, 0):
+            if role['role'] == NIF_ROLE_MEMBER:
                 orgs_from_activity = get_orgs_in_activivity(role['activity'], [14])
             else:
                 orgs_from_activity = get_orgs_in_activivity(role['activity'], [6, 14])
@@ -622,14 +658,14 @@ def get_users_from_role(role):
             where = {"type_id": role["role"], "org_type_id": {"$in": [6, 14]}, "is_deleted": False, "is_passive": False}
 
         app.logger.debug(f"[Notifications] Query for users from role from functions: {where}")
-        #resp = requests.get('{}/functions?{}&max_results={}'.format(API_BASE_URL, query, 20000), headers=API_HEADERS)  # verify=app['config'].get('REQUESTS_VERIFY', True)
+        # resp = requests.get('{}/functions?{}&max_results={}'.format(API_BASE_URL, query, 20000), headers=API_HEADERS)  # verify=app['config'].get('REQUESTS_VERIFY', True)
 
         col = app.data.driver.db['functions']
         resp = list(col.find(where, {"person_id": 1}))
         app.logger.info(f'[Notifications] got {len(resp)} persons from functions for role {role}')
-        if len(resp)>0:
+        if len(resp) > 0:
             try:
-                return filter_existing_persons(resp, max_concurrent=500) #list(set([item['person_id'] for item in resp if check_nif_person(item['person_id']) is True]))
+                return filter_existing_persons(resp, max_concurrent=500)  # list(set([item['person_id'] for item in resp if check_nif_person(item['person_id']) is True]))
             except IndexError as e:
                 app.logger.error(f"[Notifications] IndexError in get_users_from_role: {e}")
 
@@ -638,12 +674,14 @@ def get_users_from_role(role):
 
     return ['agg']
 
+
 def check_person(person_id):
     raise Exception("Deprecated, use check_nif_person")
     status, person = get_nif_api_client().get_person(person_id)
     if person is not None and status == 200:
         return True
     return False
+
 
 def check_nif_person(person_id):
     status, person = get_nif_api_client().get_person(person_id)
@@ -653,94 +691,33 @@ def check_nif_person(person_id):
     return False
 
 
-def get_recepient(person_id):
-    return get_recepients([person_id])
-
-
-def get_recepients(recepients):
-    persons = []
-
-    try:
-        query = 'where={{"id": {{"$in": {} }}}}&projection={{"full_name": 1, "address.email": 1}}&max_results={}'.format(recepients)
-        resp = requests.get('{}/{}?{}'.format(API_BASE_URL, 'persons', query, 20000), headers=API_HEADERS)
-
-        if resp.status_code == 200:
-
-            for person in resp.json()['_items']:
-                if not '_merged_to' in person:
-                    try:
-                        persons.append({
-                            'full_name': person.get('full_name', ''),
-                            'email': person.get('address', {}).get('email', [])[0]})
-                    except Exception as e:
-                        pass
-
-        return list({v['email']: v for v in persons if len(v['email']) > 4}.values())
-
-    except:
-        pass
-
-    return persons
-
-
-def get_recipients_from_roles(roles):
-    persons = []
-
-    try:
-        for role in roles:
-            resp = requests.get(
-                '{}/functions?where={{"org_id": {}, "type_id": {}, "is_deleted": false, "is_passive": false }}&projection={{"person_id": 1}}&max_results={}'.format(
-                    API_BASE_URL, role.get('org', 0), role.get('role', 0), 20000),
-                headers=API_HEADERS)
-
-            if resp.status_code == 200:
-                for item in resp.json().get('_items', []):
-                    persons.append(item.get('person_id', 0))
-
-        return get_recepients(list(set([i for i in persons if i > 0])))
-    except Exception as e:
-        app.logger.error(f"[Notifications] Error fetching users from functions: {e}")
-
-    return persons
-
-
 def get_users_from_competences(competences):
     persons = []
     try:
         for competence in competences:
-            resp = requests.get(
-                '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}&projection={{"person_id": 1}}'.format(
-                    API_BASE_URL, competence, datetime.utcnow().isoformat(), 20000),
-                headers=API_HEADERS)
-
-            if resp.status_code == 200:
-                for item in resp.json().get('_items', []):
-                    persons.append(item.get('person_id', 0))
-
-            return list(set([item['person_id'] for item in resp.json().get('_items', [])]))
+            persons += get_users_from_competence(competence)
     except Exception as e:
-        app.logger.error(f"[Notifications] Error fetching users from competences: {e}")
+        app.logger.exception(f"[Notifications] Exception in get_users_from_competences: {e}")
 
-    return persons
+    return list(set(persons))
 
 
 def get_users_from_competence(competence):
-    persons = []
     try:
-        resp = requests.get(
-            '{}/competences?where={{"type_id": {}, "passed": true, "valid_until": {{"$gte": "{}Z" }} }}&max_results={}&projection={{"person_id": 1}}'.format(
-                API_BASE_URL, competence, datetime.utcnow().isoformat(), 20000),
-            headers=API_HEADERS)
+        where = {"type_id": competence, "passed": True, "valid_until": {"$gte": datetime.utcnow()}}
+        col = app.data.driver.db['competences']
+        resp = list(col.find(where, {"person_id": 1}))
+        app.logger.info(f'[Notifications] got {len(resp)} persons from competences for competence {competence}')
+        if len(resp) > 0:
+            try:
+                return filter_existing_persons(resp, max_concurrent=500)  # list(set([item['person_id'] for item in resp if check_nif_person(item['person_id']) is True]))
+            except IndexError as e:
+                app.logger.error(f"[Notifications] IndexError in get_users_from_role: {e}")
 
-        if resp.status_code == 200:
-            for item in resp.json().get('_items', []):
-                persons.append(item.get('person_id', 0))
-
-        return list(set([item['person_id'] for item in resp.json().get('_items', [])]))
     except Exception as e:
-        app.logger.error(f"[Notifications] Error fetching users from competences: {e}")
+        app.logger.exception(f"[Notifications] Exception in get_users_from_competence: {e}")
 
-    return persons
+    return []
 
 
 @Notifications.route('/notify', methods=['POST'])
@@ -801,6 +778,25 @@ def send_notification_messages(_id):
     return eve_abort(404, "Notification not found or already processed")
 
 
+@Notifications.route('/competence2', methods=['POST', 'GET'])
+@require_token()
+def competence2():
+    if request.method == 'POST':
+        competence = request.get_json()
+    elif request.method == 'GET':
+        args = parse_request('persons')
+        where = json.loads(args.where)
+        competence = where.get('competence', None)
+    app.logger.debug(f"[Notifications] Competence2 endpoint called with competence: {competence}")
+    try:
+        users = get_users_from_competence(competence)
+        return eve_response(users, status=200)
+    except Exception as e:
+        app.logger.exception(f"[Notifications] Error fetching users from competence: {competence}: {e}")
+
+    return eve_response({"error": "Failed to fetch users from competence"}, status=500)
+
+
 @Notifications.route('/role2', methods=['POST', 'GET'])
 @require_token()
 def role2():
@@ -851,6 +847,7 @@ def regenerate_notifications(_id):
     app.logger.error(f"[Notifications] Notification _id: {_id} is not in finished status, current status: {response.get('status', 'unknown')}")
     return eve_abort(404, "Notification not found or not in finished status")
 
+
 @Notifications.route('/generate/<string:_id>', methods=['POST', 'GET'])
 @require_token()
 def generate_notifications(_id):
@@ -878,7 +875,7 @@ def generate_notifications(_id):
             recipients = response['recipients'].get('users', [])
 
             # Manual snaikoil
-            if response['recipients'].get('roles', []) ==  [{ "org": "*", "activity": "*", "role": NIF_ROLE_MEMBER }]:
+            if response['recipients'].get('roles', []) == [{"org": "*", "activity": "*", "role": NIF_ROLE_MEMBER}]:
                 with open('/www/lungo/members_all.json') as fp:
                     recipients.extend(json.load(fp))
             else:
@@ -988,7 +985,7 @@ def generate_notifications(_id):
                                     email_addresses = [person.get('primary_email', person.get('address', {}).get('email', [])[0] if len(person.get('address', {}).get('email', [])) > 0 else None)]
 
                             # Check if the person has memberships in NLF
-                            if response['recipients'].get('roles', []) !=  [{ "org": "*", "activity": "*", "role": NIF_ROLE_MEMBER }] and check_nif_person(person['id']) is False:
+                            if response['recipients'].get('roles', []) != [{"org": "*", "activity": "*", "role": NIF_ROLE_MEMBER}] and check_nif_person(person['id']) is False:
                                 app.logger.error(f"[Notifications] Person {recipient} has no memberships as reported by /nif/persons, skipping notification.")
                                 continue
 
