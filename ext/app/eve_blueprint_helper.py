@@ -175,10 +175,8 @@ def parse_request(resource: str = None, document_id: str = None) -> Dict[str, An
     """Parse Flask request args/body in Eve style with ETag and hook support."""
     args = request.args
     parsed = {}
-    print('In?', resource in app.config['DOMAIN'])
-    print('REsource', resource)
+
     if resource and 'DOMAIN' in app.config and resource not in app.config['DOMAIN']:
-        print('#################', app.config['DOMAIN'])
         raise EveBlueprintError(404, f"Resource '{resource}' not found")
 
     if 'where' in args:
@@ -331,7 +329,6 @@ def format_response(items: Union[List[Dict], Dict], total: Optional[int] = None,
 def handle_get(resource: str, document_id: Optional[str] = None,
                where: Dict = None, sort: List[str] = None, page: int = 1, max_results: int = 0) -> Response:
     """Handle GET requests for collections or single items."""
-    print('#########################')
     try:
         driver = get_data_driver(resource)
         where = where or {}
