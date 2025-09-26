@@ -6,8 +6,10 @@ from ext.app.eve_helper import eve_response, eve_abort
 from eve.methods.get import get_internal, getitem_internal, _perform_aggregation
 from eve.methods.post import post_internal
 from eve.methods.patch import patch_internal
-from eve.utils import parse_request
 
+# from eve.utils import parse_request
+from ext.app.eve_blueprint_helper import parse_request, format_response, SwaggerBlueprint
+from flask import current_app as app
 from datetime import datetime
 from ext.scf import API_HEADERS, API_BASE_URL
 import requests
@@ -25,7 +27,8 @@ import queue
 import threading
 from typing import List, Dict
 
-Notifications = Blueprint('Notifications', __name__)
+Notifications = SwaggerBlueprint('Notifications', __name__, url_prefix='notifications')
+
 
 from ext.scf import (
     SENDGRID_DEFAULT_FROM,
@@ -784,13 +787,13 @@ def competence2():
     if request.method == 'POST':
         competence = request.get_json()
     elif request.method == 'GET':
-        args = parse_request('persons')
-        where = json.loads(args.where)
+        args = parse_request()
+        where = args.get('where', {})
         competence = where.get('competence', None)
     app.logger.debug(f"[Notifications] Competence2 endpoint called with competence: {competence}")
     try:
         users = get_users_from_competence(competence)
-        return eve_response(users, status=200)
+        return format_response(users, resource='competences', total=len(users), status_code=200)
     except Exception as e:
         app.logger.exception(f"[Notifications] Error fetching users from competence: {competence}: {e}")
 
@@ -803,9 +806,8 @@ def role2():
     if request.method == 'POST':
         role = request.get_json()
     elif request.method == 'GET':
-        args = parse_request('persons')
-        where = json.loads(args.where)
-        role = where.get('role', None)
+        args = parse_request()
+        role = args.get('where', {}).get('role', None)
     app.logger.debug(f"[Notifications] Role2 endpoint called with role: {role}")
     try:
         users = get_users_from_role(role)
@@ -1030,15 +1032,20 @@ def generate_notifications(_id):
                                 app.logger.error(f"[Notifications] No email addresses found for recipient {recipient}, skipping notification generation.")
 
                             for email_address in email_addresses:
-                                pld['recipient'] = {
-                                    'person_id': recipient,
-                                    'email': email_address,
-                                    'name': person.get('full_name', '') if person else person.get('first_name', '') + ' ' + person.get('last_name', ''),  # Use full name if available
-                                }
-                                msg_response, _, _, msg_status, _ = post_internal(resource='notifications_messages',
-                                                                                  payl=pld,
-                                                                                  skip_validation=True)
-                                app.logger.debug(f"[Notifications] Notification message posted for recipient {recipient}@{email_address}: {msg_status}")
+                                if email_address is not None:
+                                    _pld = pld.copy()
+                                    _pld['recipient'] = {
+                                        'person_id': recipient,
+                                        'email': email_address,
+                                        'name': person.get('full_name', '') if person else person.get('first_name', '') + ' ' + person.get('last_name', ''),  # Use full name if available
+                                    }
+                                    msg_response, _, _, msg_status, _ = post_internal(resource='notifications_messages',
+                                                                                      payl=_pld,
+                                                                                      skip_validation=True)
+                                    del _pld
+                                    app.logger.debug(f"[Notifications] Notification message posted for recipient {recipient} with {email_address}: {msg_status}")
+                                else:
+                                    app.logger.error(f"[Notifications] Invalid email address for recipient {recipient}, skipping this email: {email_address}")
 
                         except Exception as e:
                             app.logger.error(f"[Notifications] Error posting notification message for recipient {recipient}: {e}")
