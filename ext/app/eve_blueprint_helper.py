@@ -281,7 +281,8 @@ def format_response(items: Union[List[Dict], Dict], total: Optional[int] = None,
         is_collection_response = is_collection or isinstance(items, list)
         items = [items] if not isinstance(items, list) else items
         if is_collection_response and total is None:
-            raise EveBlueprintError(500, "'total' must be provided for collection responses")
+            # raise EveBlueprintError(500, "'total' must be provided for collection responses")
+            total = len(items)
         if is_collection_response and (not isinstance(total, int) or total < 0):
             raise EveBlueprintError(500, "'total' must be a non-negative integer")
 
@@ -301,7 +302,7 @@ def format_response(items: Union[List[Dict], Dict], total: Optional[int] = None,
             response_data = {
                 "_items": items if len(items) <= max_results or max_results is None else items[max_results * (page - 1):max_results * page],
                 "_meta": {
-                    "page": page,
+                    "page": 1 if max_results == total else page,
                     "max_results": max_results,
                     "total": total
                     # "max_pages": (total + max_results - 1) // max_results if total is not None and max_results > 0 else 1
