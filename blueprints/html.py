@@ -1,4 +1,5 @@
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
+from ext.app.eve_blueprint_helper import SwaggerBlueprint # parse_request, format_response,
 from ext.auth.decorators import require_token
 from ext.app.eve_helper import eve_response, eve_abort
 from eve.methods.get import get_internal, getitem_internal, _perform_aggregation
@@ -15,7 +16,7 @@ ACTIVITIES = {
     'ballong': 235
 }
 
-Html = Blueprint('Html blueprint for returning html', __name__)
+Html = SwaggerBlueprint('Html blueprint for returning html', __name__, url_prefix='html')
 
 
 def _html_page(content):

@@ -28,12 +28,13 @@ Pyro4.errors.CommunicationError
 """
 
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
+from ext.app.eve_blueprint_helper import SwaggerBlueprint # parse_request, format_response,
 import psutil
 import Pyro4
 from ext.auth.decorators import require_token
 from ext.app.eve_helper import eve_response
 
-Sync = Blueprint('Manage syncdaemon process', __name__)
+Syncdaemon = SwaggerBlueprint('Manage syncdaemon process', __name__, url_prefix='syncdaemon')
 
 RPC_SERVICE_NAME = 'integration.service'
 RPC_SERVICE_PORT = 5555
@@ -52,7 +53,7 @@ def get_process():
         return eve_response({'status': False}, 200)
 
 
-@Sync.route("/process/info", methods=['GET'])
+@Syncdaemon.route("/process/info", methods=['GET'])
 @require_token()
 def process_info():
     p = get_process()
@@ -68,7 +69,7 @@ def process_info():
     return eve_response(d, 200)
 
 
-@Sync.route("/process/kill/<int:pid>", methods=['POST'])
+@Syncdaemon.route("/process/kill/<int:pid>", methods=['POST'])
 @require_token()
 def process_kill(pid):
     p = get_process()
@@ -85,7 +86,7 @@ Daemon
 """
 
 
-@Sync.route("/shutdown", methods=['POST'])
+@Syncdaemon.route("/shutdown", methods=['POST'])
 @require_token()
 def shutdown():
     try:
@@ -95,7 +96,7 @@ def shutdown():
         return eve_response({'status': False}, 200)
 
 
-@Sync.route("/status", methods=['GET'])
+@Syncdaemon.route("/status", methods=['GET'])
 @require_token()
 def status():
     try:
@@ -110,7 +111,7 @@ workers
 """
 
 
-@Sync.route("/workers/status", methods=['GET'])
+@Syncdaemon.route("/workers/status", methods=['GET'])
 @require_token()
 def workers_status():
     """Returns dict of all workers"""
@@ -121,7 +122,7 @@ def workers_status():
         return eve_response(data={'_error': {'message': str(e)}}, status=200)
 
 
-@Sync.route("/workers/failed/clubs", methods=['GET'])
+@Syncdaemon.route("/workers/failed/clubs", methods=['GET'])
 @require_token()
 def workers_failed_clubs():
     try:
@@ -132,7 +133,7 @@ def workers_failed_clubs():
     return eve_response(s, 200)
 
 
-@Sync.route("/workers/logs", methods=['GET'])
+@Syncdaemon.route("/workers/logs", methods=['GET'])
 @require_token()
 def workers_logs():
     try:
@@ -143,7 +144,7 @@ def workers_logs():
     return eve_response(s, 200)
 
 
-@Sync.route("/workers/reboot", methods=['POST'])
+@Syncdaemon.route("/workers/reboot", methods=['POST'])
 @require_token()
 def workers_reboot():
     try:
@@ -153,7 +154,7 @@ def workers_reboot():
         return eve_response({'status': False}, 200)
 
 
-@Sync.route("/workers/shutdown", methods=['POST'])
+@Syncdaemon.route("/workers/shutdown", methods=['POST'])
 @require_token()
 def workers_shutdown():
     try:
@@ -163,7 +164,7 @@ def workers_shutdown():
         return eve_response({'status': False}, 200)
 
 
-@Sync.route("/workers/start", methods=['POST'])
+@Syncdaemon.route("/workers/start", methods=['POST'])
 @require_token()
 def workers_start():
     try:
@@ -182,7 +183,7 @@ get_worker_log
 """
 
 
-@Sync.route("/worker/status/<int:index>", methods=['GET'])
+@Syncdaemon.route("/worker/status/<int:index>", methods=['GET'])
 @require_token()
 def worker_status(index):
     try:
@@ -192,7 +193,7 @@ def worker_status(index):
         return eve_response({}, 200)
 
 
-@Sync.route("/worker/log/<int:index>", methods=['GET'])
+@Syncdaemon.route("/worker/log/<int:index>", methods=['GET'])
 @require_token()
 def worker_log(index):
     try:
@@ -202,7 +203,7 @@ def worker_log(index):
         return eve_response({}, 200)
 
 
-@Sync.route("/worker/reboot/<int:index>", methods=['POST'])
+@Syncdaemon.route("/worker/reboot/<int:index>", methods=['POST'])
 @require_token()
 def worker_restart(index):
     try:

@@ -1,9 +1,9 @@
 import json
-
 import requests
 from urllib.parse import urlencode
 import base64
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
+from ext.app.eve_blueprint_helper import SwaggerBlueprint # parse_request, format_response,
 from ext.auth.decorators import require_token
 from ext.app.fids import fid_exists, create_fid, update_fid
 from ext.scf import FAI_USERNAME, FAI_PASSWD, FAI_URL, COMPETENCE_FAI_MAPPING_IDS, FAI_ID_MAPPINGS_INV, COMPETENCE_FAI_MAPPING
@@ -15,7 +15,7 @@ from datetime import datetime
 from dateutil import parser
 from operator import itemgetter
 
-Fai = Blueprint('FAI resources', __name__)
+Fai = SwaggerBlueprint('FAI resources', __name__, url_prefix='fai')
 
 
 def make_params():

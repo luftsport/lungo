@@ -3,6 +3,7 @@ from nif_tools import KA
 from datetime import datetime, timezone, timedelta, timezone
 from hashlib import sha224
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify, g
+from ext.app.eve_blueprint_helper import SwaggerBlueprint # parse_request, format_response,
 # from eve.methods.post import post_internal
 from ext.scf import KA_USERNAME, KA_PASSWORD, NIF_CLIENT_SECRET, NIF_CLIENT_ID, NIF_TOKEN_FILE
 from ext.app.eve_helper import eve_response, eve_error_response
@@ -22,7 +23,7 @@ import json
 from functools import wraps
 import inspect
 
-NIF = Blueprint('NIF tools', __name__)
+NIF = SwaggerBlueprint('NIF tools', __name__, url_prefix='nif')
 
 API = None
 

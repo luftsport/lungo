@@ -1,4 +1,5 @@
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
+from ext.app.eve_blueprint_helper import SwaggerBlueprint # parse_request, format_response,
 from ext.auth.decorators import require_token
 from ext.auth.clients import users
 from ext.app.eve_helper import eve_response, eve_abort
@@ -6,7 +7,7 @@ from eve.methods.get import get_internal, getitem_internal, _perform_aggregation
 from datetime import datetime
 import re
 
-ACL = Blueprint('Acl helpers for the lazy programmer', __name__)
+ACL = SwaggerBlueprint('Acl helpers for the lazy programmer', __name__, url_prefix='acl')
 
 NLF_ORG = {27: 'nlf',
            237: 'mikro',

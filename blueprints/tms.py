@@ -2,12 +2,13 @@ import json
 import requests
 from ext.scf import TMS_URL, TMS_LICENSE_PATH, TMS_USERNAME, TMS_PASSWORD
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
+from ext.app.eve_blueprint_helper import SwaggerBlueprint # parse_request, format_response,
 from ext.auth.decorators import require_token
 from ext.app.eve_helper import eve_response, eve_abort
 from datetime import datetime
 from dateutil import parser
 
-Tms = Blueprint('TMS resources', __name__)
+Tms = SwaggerBlueprint('TMS resources', __name__, url_prefix='tms')
 
 class TMSAPI:
 
