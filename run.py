@@ -14,16 +14,15 @@ import os, sys
 from eve import Eve
 import json
 
-# Swagger docs
-try:
-    from eve_swagger import get_swagger_blueprint
 
+try:
+    from eve_swagger import get_swagger_blueprint, add_documentation as add_swagger_documentation
     swagger_blueprint = get_swagger_blueprint()
 except Exception as e:
-    from eve_swagger import swagger as swagger_blueprint
+    from eve_swagger import swagger as swagger_blueprint, add_documentation as add_swagger_documentation
 
 from eve_healthcheck import EveHealthCheck
-from blueprints.syncdaemon import Sync
+from blueprints.syncdaemon import Syncdaemon
 from blueprints.fai import Fai
 from blueprints.acl import ACL
 from blueprints.html import Html
@@ -77,16 +76,29 @@ app.url_map.converters['regex'] = RegexConverter
 
 # Register eve-docs blueprint
 # app.register_blueprint(eve_docs,        url_prefix="%s/docs" % app.globals.get('prefix'))
+
+app.register_blueprint(Syncdaemon, url_prefix="%s/syncdaemon" % app.globals.get('prefix'))
+app.register_blueprint(Fai, url_prefix=f"{app.globals.get('prefix')}/{Fai.url_prefix}")
+app.register_blueprint(ACL, url_prefix=f"{app.globals.get('prefix')}/{ACL.url_prefix}")
+app.register_blueprint(NIF, url_prefix=f"{app.globals.get('prefix')}/{NIF.url_prefix}")
+app.register_blueprint(Tms, url_prefix=f"{app.globals.get('prefix')}/{Tms.url_prefix}")
+app.register_blueprint(Notifications, url_prefix=f"{app.globals.get('prefix')}/{Notifications.url_prefix}")
+# Blueprint returning html
+app.register_blueprint(Html, url_prefix=f"{app.globals.get('prefix')}/{Html.url_prefix}")
+
 app.register_blueprint(swagger_blueprint, url_prefix=app.globals.get('prefix'))
 
-app.register_blueprint(Sync, url_prefix="%s/syncdaemon" % app.globals.get('prefix'))
-app.register_blueprint(Fai, url_prefix="%s/fai" % app.globals.get('prefix'))
-app.register_blueprint(ACL, url_prefix="%s/acl" % app.globals.get('prefix'))
-app.register_blueprint(NIF, url_prefix="%s/nif" % app.globals.get('prefix'))
-app.register_blueprint(Tms, url_prefix="%s/tms" % app.globals.get('prefix'))
-app.register_blueprint(Notifications, url_prefix="%s/notifications" % app.globals.get('prefix'))
-# Blueprint returning html
-app.register_blueprint(Html, url_prefix="%s/html" % app.globals.get('prefix'))
+from ext.app.eve_blueprint_helper import get_swagger_blueprint_spec
+
+# Integrate with eve-swagger (compatible with v1.1.3)
+# Integrate with eve-swagger (v1.1.3)
+with app.app_context():
+    for blueprint in [Notifications, NIF, Tms, Fai, ACL, Syncdaemon, Html]:  # , Authenticate
+        swagger_spec = get_swagger_blueprint_spec(blueprint, resource=blueprint.name.lower())
+        for path, operations in swagger_spec.items():
+            app.logger.info(f'[Blueprint] adding path {path} to swagger doc')
+            add_swagger_documentation(swagger_blueprint, {'paths': {path: operations}})
+
 
 from ext.app.hooks import (
     on_function_post,
