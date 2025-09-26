@@ -2,13 +2,14 @@ import logging
 import re
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify, g
 from ext.auth.decorators import require_token
-from ext.app.eve_helper import eve_response, eve_abort
 from eve.methods.get import get_internal, getitem_internal, _perform_aggregation
 from eve.methods.post import post_internal
 from eve.methods.patch import patch_internal
 
 # from eve.utils import parse_request
 from ext.app.eve_blueprint_helper import parse_request, format_response, SwaggerBlueprint
+from ext.app.eve_helper import eve_response, eve_abort
+
 from flask import current_app as app
 from datetime import datetime
 from ext.scf import API_HEADERS, API_BASE_URL
@@ -793,11 +794,11 @@ def competence2():
     app.logger.debug(f"[Notifications] Competence2 endpoint called with competence: {competence}")
     try:
         users = get_users_from_competence(competence)
-        return format_response(users, resource='competences', total=len(users), status_code=200)
+        return format_response(users, resource='competences', status_code=200)
     except Exception as e:
         app.logger.exception(f"[Notifications] Error fetching users from competence: {competence}: {e}")
 
-    return eve_response({"error": "Failed to fetch users from competence"}, status=500)
+    return format_response({"error": "Failed to fetch users from competence"}, status_code=500)
 
 
 @Notifications.route('/role2', methods=['POST', 'GET'])
@@ -811,11 +812,11 @@ def role2():
     app.logger.debug(f"[Notifications] Role2 endpoint called with role: {role}")
     try:
         users = get_users_from_role(role)
-        return eve_response(users, status=200)
+        return format_response(users, status_code=200)
     except Exception as e:
         app.logger.exception(f"[Notifications] Error fetching users from role {role}: {e}")
 
-    return eve_response({"error": "Failed to fetch users from role"}, status=500)
+    return format_response({"error": "Failed to fetch users from role"}, status_code=500)
 
 
 @Notifications.route('/regenerate/<string:_id>', methods=['POST', 'GET'])
