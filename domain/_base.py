@@ -18,18 +18,27 @@ acl_role_schema = {
 
 acl_type_schema = {
     'type': 'dict',
-    'schema': {'users': {'type': 'list'},
-               'roles': {'type': 'list'}}
+    'schema': {
+        'users': {
+            'type': 'list',
+            'schema': {'type': 'integer'}  # Already fixed
+        },
+        'roles': {
+            'type': 'list',
+            'schema': acl_role_schema  # Reference acl_role_schema directly
+        }
+    }
 }
 
 acl_item_schema = {
     'type': 'dict',
     'readonly': True,
-    'schema': {'read': {'type': 'dict', 'schema': acl_type_schema},
-               'write': {'type': 'dict', 'schema': acl_type_schema},
-               'execute': {'type': 'dict', 'schema': acl_type_schema},
-               'delete': {'type': 'dict', 'schema': acl_type_schema},
-               }
+    'schema': {
+        'read': acl_type_schema,
+        'write': acl_type_schema,
+        'execute': acl_type_schema,
+        'delete': acl_type_schema
+    }
 }
 
 labels_schema = {
