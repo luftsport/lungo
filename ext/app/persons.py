@@ -9,7 +9,12 @@ def deregister_person(person: dict) -> bool:
     :param person_id: ID of the person to deregister
     :return: None
     """
-    print(f"Deregistering person {person['_id']}")
+    app.logger.info(f"Deregistering person {person['_id']}")
+
+    end_competences(person)
+    end_functions(person)
+
+    # Hard deregister
     new_person = {}
     if 'functions' in person:
         new_person['functions'] = []
@@ -36,8 +41,7 @@ def deregister_person(person: dict) -> bool:
                                             True,
                                             **lookup)
         if status in [200, 201, 204]:
-            if end_competences(person) and end_functions(person):
-                return True
+            return True
 
     app.logger.error(f"Failed to deregister person {person['_id']}: {resp}")
     return False
