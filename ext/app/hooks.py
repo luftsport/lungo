@@ -11,9 +11,11 @@ from flask import Response, request as flask_request, abort, current_app as app,
 import json
 
 from dateutil.parser import parse as date_parse
+from ext.app.eve_blueprint_helper import format_response
 
 from ext.auth.clients import LUNGO_SIO_TOKEN
 from ext.app.decorators import _async, debounce
+from ext.app.persons import deregister_person
 import time
 import socketio
 from blueprints.fai import upsert_fai
@@ -172,6 +174,18 @@ def after_get_person(response):
         )
 
     return _after_get_person(response)
+
+
+def before_delete_person(item):
+    """
+    Deregister a person by removing all functions, licenses, competences, activities, clubs and memberships
+    :param item:
+    :return:
+    """
+    if deregister_person(item):
+        abort(format_response({}, status_code=204))
+
+    abort(format_response({'error': 'Could not deregister person'}, status_code=500))
 
 
 def after_get_persons(response):
@@ -983,9 +997,40 @@ def on_person_after_put(item, original=None):
         app.logger.exception('Broadcast of item with id {} did not work out!'.format(item['id']))
     """
 
+def _verify_and_update_person_data(item):
+
+    if '_merged_to' in item:
+        return
+
+    try:
+        nif_person, _, _, status, _ = getitem_internal(f'nif/persons/{item["id"]}')
+        if status == 200:
+            verify_item = []
+            app.logger.info(f'Verifying person data with id {item["id"]} with nif api')
+            app.logger.info(f'API person data: {item}')
+            app.logger.info(f'Nif person data: {nif_person}')
+            verify_item['primary_email'] = nif_person.get('primary_email', item.get('primary_email', None))
+            verify_item['primary_phone'] = nif_person.get('primary_phone', item.get('primary_phone', None))
+            if 'phone_mobile' not in item.get('address', {}).keys() or item.get('address', {}).get('phone_mobile', None) is None:
+                verify_item['address']['phone_mobile'] = nif_person.get('phone_mobile', None)
+
+            if item.get('address', {}).get('country_id', None) in [None,0]:
+                verify_item['address']['country_id'] = _get_country_id_from_name(nif_person.get('countryName', 'Norge'))
+
+            resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                                verify_item,
+                                                False, True, **{'_id': item['_id']})
+            if status != 200:
+                app.logger.exception(f'Could not patch person data with id {item["id"]} with nif api data {verify_item}')
+    except Exception as e:
+        app.logger.exception(f'Could not verify person data with id {item["id"]} with nif api')
 
 def _update_person(item):
-    """Runs AFTER person replaced"""
+    """Runs AFTER person created or replaced"""
+
+    # One shot!
+    _verify_and_update_person_data(item)
+
     lookup = {'person_id': item['id']}
 
     competences, _, _, c_status, _ = get_internal(RESOURCE_COMPETENCES_PROCESS, **lookup)
