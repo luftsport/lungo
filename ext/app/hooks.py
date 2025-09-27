@@ -19,7 +19,7 @@ from ext.app.persons import deregister_person
 import time
 import socketio
 from blueprints.fai import upsert_fai
-from blueprints.nif import _register_flydrone, get_nif_api_client, _get_nif_person
+from blueprints.nif import _register_flydrone, get_nif_api_client
 # import dateutil.parser
 from ext.app.fids import get_fids
 
