@@ -1050,7 +1050,7 @@ def _update_person(item):
         on_license_post(licenses.get('_items', []))
 
     functions, _, _, f_status, _ = get_internal(RESOURCE_FUNCTIONS_PROCESS, **lookup)
-    app.logger.debug('Functions\n{}'.format(functions))
+    # app.logger.debug('Functions\n{}'.format(functions))
     if f_status == 200:
         on_function_post(functions.get('_items', []))
 
