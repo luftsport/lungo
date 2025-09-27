@@ -1028,39 +1028,45 @@ def _verify_and_update_person_data(item):
                                                 False, True, **{'_id': item['_id']})
             if status != 200:
                 app.logger.exception(f'Could not patch person data with id {item["id"]} with nif api data {verify_item}')
+
         else:
             deregister_person(item)
+            return False
     except Exception as e:
         app.logger.exception(f'Could not verify person data with id {item["id"]} with nif api')
+
+    # Always if not deregistered return True
+    return True
 
 def _update_person(item):
     """Runs AFTER person created or replaced"""
 
     # One shot!
-    _verify_and_update_person_data(item)
+    if _verify_and_update_person_data(item) is True:
+        # Person not deregistered
 
-    lookup = {'person_id': item['id']}
+        lookup = {'person_id': item['id']}
 
-    competences, _, _, c_status, _ = get_internal(RESOURCE_COMPETENCES_PROCESS, **lookup)
-    if c_status == 200:
-        on_competence_post(competences.get('_items', []))
+        competences, _, _, c_status, _ = get_internal(RESOURCE_COMPETENCES_PROCESS, **lookup)
+        if c_status == 200:
+            on_competence_post(competences.get('_items', []))
 
-    licenses, _, _, l_status, _ = get_internal(RESOURCE_LICENSES_PROCESS, **lookup)
-    if l_status == 200:
-        on_license_post(licenses.get('_items', []))
+        licenses, _, _, l_status, _ = get_internal(RESOURCE_LICENSES_PROCESS, **lookup)
+        if l_status == 200:
+            on_license_post(licenses.get('_items', []))
 
-    functions, _, _, f_status, _ = get_internal(RESOURCE_FUNCTIONS_PROCESS, **lookup)
-    # app.logger.debug('Functions\n{}'.format(functions))
-    if f_status == 200:
-        on_function_post(functions.get('_items', []))
+        functions, _, _, f_status, _ = get_internal(RESOURCE_FUNCTIONS_PROCESS, **lookup)
+        # app.logger.debug('Functions\n{}'.format(functions))
+        if f_status == 200:
+            on_function_post(functions.get('_items', []))
 
-    """ In functions for now!
-    payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **lookup)
-    app.logger.debug('Payments\n{}'.format(functions))
-    if f_status == 200:
-        on_payment_after_post(payments.get('_items', []))
-    """
-
+        """ In functions for now!
+        payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **lookup)
+        app.logger.debug('Payments\n{}'.format(functions))
+        if f_status == 200:
+            on_payment_after_post(payments.get('_items', []))
+        """
+    # Always broadcast!
     try:
         # Need to get person return response, last_modified, etag, 200
         person, _, _, p_status = getitem_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['id']})
