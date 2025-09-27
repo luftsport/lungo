@@ -111,7 +111,7 @@ def _verify_person(person):
         except Exception as e:
             pass
 
-    return person
+    return status, person
 
 
 def _after_get_person(item):
@@ -960,7 +960,8 @@ def on_person_after_post(items):
 def on_person_before_put(item, original):
     # Verify with new nif api
     try:
-        item = _verify_person(item)
+        status, item = _verify_person(item)
+
     except Exception as e:
         app.logger.exception(f'Could not verify person  with id {item["id"]} with nif api')
 
@@ -1027,6 +1028,8 @@ def _verify_and_update_person_data(item):
                                                 False, True, **{'_id': item['_id']})
             if status != 200:
                 app.logger.exception(f'Could not patch person data with id {item["id"]} with nif api data {verify_item}')
+        else:
+            deregister_person(item)
     except Exception as e:
         app.logger.exception(f'Could not verify person data with id {item["id"]} with nif api')
 
