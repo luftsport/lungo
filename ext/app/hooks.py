@@ -1010,8 +1010,8 @@ def _verify_and_update_person_data(item):
             app.logger.info(f'Verifying person data with id {item["id"]} with nif api')
             app.logger.info(f'API person data: {item}')
             app.logger.info(f'Nif person data: {nif_person}')
-            verify_item['primary_email'] = nif_person.get('primary_email', item.get('primary_email', None))
-            verify_item['primary_phone'] = nif_person.get('primary_phone', item.get('primary_phone', None))
+            verify_item['primary_email'] = nif_person.get('primaryEmail', item.get('primary_email', None))
+            verify_item['primary_phone'] = nif_person.get('primaryPhoneMobile', item.get('primary_phone', None))
             if 'phone_mobile' not in item.get('address', {}).keys() or item.get('address', {}).get('phone_mobile', None) is None:
                 if 'address' not in verify_item:
                     verify_item['address'] = {}
