@@ -1015,7 +1015,7 @@ def _verify_and_update_person_data(item):
             if 'phone_mobile' not in item.get('address', {}).keys() or item.get('address', {}).get('phone_mobile', None) is None:
                 if 'address' not in verify_item:
                     verify_item['address'] = {}
-                verify_item['address']['phone_mobile'] = nif_person.get('phone_mobile', None)
+                verify_item['address']['phone_mobile'] = nif_person.get('primaryPhoneMobile', None)
 
             if item.get('address', {}).get('country_id', None) in [None,0]:
                 if 'address' not in verify_item:
