@@ -1006,7 +1006,7 @@ def _verify_and_update_person_data(item):
         # resp, _, _, status, _ = getitem_internal('nif_persons', lookup=**{'_id': item["id"]})
         status_code, nif_person = get_nif_api_client().get_person(item['id'])
         if status_code in [True, 200] and nif_person is not None:
-            verify_item = []
+            verify_item = {}
             app.logger.info(f'Verifying person data with id {item["id"]} with nif api')
             app.logger.info(f'API person data: {item}')
             app.logger.info(f'Nif person data: {nif_person}')
