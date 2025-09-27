@@ -19,7 +19,7 @@ from ext.app.persons import deregister_person
 import time
 import socketio
 from blueprints.fai import upsert_fai
-from blueprints.nif import _register_flydrone, get_nif_api_client
+from blueprints.nif import _register_flydrone, get_nif_api_client, _get_nif_person
 # import dateutil.parser
 from ext.app.fids import get_fids
 
@@ -1003,8 +1003,9 @@ def _verify_and_update_person_data(item):
         return
 
     try:
-        nif_person, _, _, status, _ = getitem_internal(f'nif/persons/{item["id"]}')
-        if status == 200:
+        # resp, _, _, status, _ = getitem_internal('nif_persons', lookup=**{'_id': item["id"]})
+        status_code, nif_person = get_nif_api_client().get_person(item['id'])
+        if status_code in [True, 200] and nif_person is not None:
             verify_item = []
             app.logger.info(f'Verifying person data with id {item["id"]} with nif api')
             app.logger.info(f'API person data: {item}')
