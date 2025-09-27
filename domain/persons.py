@@ -21,6 +21,7 @@ _schema = {
     'date_of_death': {'type': 'datetime'},
     'nationality_id': {'type': 'integer'},
     'primary_email': {'type': 'string'},
+    'primary_phone': {'type': 'string'},
     'clubs': {'type': 'list',
               'schema': {
                   'type': 'integer',
@@ -260,8 +261,8 @@ process_definition = {
     'pagination': False,
     'extra_response_fields': ['id'],
     'versioning': True,
-    'resource_methods': ['GET', 'POST', 'DELETE'],
-    'item_methods': ['GET', 'PATCH', 'PUT'],
+    'resource_methods': ['GET', 'POST'],
+    'item_methods': ['GET', 'PATCH', 'PUT', 'DELETE'],
     'schema': _schema_process
 }
 
