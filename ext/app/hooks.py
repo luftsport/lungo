@@ -789,7 +789,7 @@ def on_payment_before_put(item, orginal=None):
         item['org_id'] = _get_pmt_group_from_club(item['org_id'])
 
 
-def on_payment_after_put(item, orginal=None):
+def on_payment_after_put(item, orginal=None, process=[23, 20, 22]):
     """Every time some payments comes through, fix person"""
 
     # Only this year?
@@ -819,7 +819,7 @@ def on_payment_after_put(item, orginal=None):
 
             # Build and insert payments types
             #
-            if type_id == 21:  # Club Membership
+            if type_id == 21 and type_id in process:  # Club Membership
                 # club -> fix memberships!
                 org_id = item.get('org_id')  # _get_pmt_group_from_club(item.get('org_id'))
                 changes = False
@@ -849,7 +849,7 @@ def on_payment_after_put(item, orginal=None):
                     if status != 200:
                         app.logger.exception('Error memberships, org {} for payment id {}'.format(item['org_id'], item['id']))
 
-            elif type_id == 23:  # Magazines
+            elif type_id == 23 and type_id in process:  # Magazines
 
                 magazines = person.get('magazines', [])
 
@@ -919,24 +919,26 @@ def on_payment_after_put(item, orginal=None):
                 if refund is True:
                     fed = [x for x in fed if x.get('id', item['id']) != item['id']]
                 else:
-                    if type_id == 22:
+                    if type_id == 22 and type_id in process:
                         product_type = 'Seksjonskontigent'
                         activity = _get_pmt_activity(item['product_name'])
-                    else:
+                    elif type_id == 20 and type_id in process:
                         product_type = 'Forbundskontigent'
                         activity = 27
-
-                    year = _get_pmt_year(item['product_name'])
-                    fed.append({
-                        'id': item['id'],
-                        'name': product_type,
-                        'activity': activity,
-                        'year': _get_pmt_year(item['product_name']),
-                        'exception': _get_pmt_type(item['product_name']),
-                        'type': _get_pmt_person_age_membership(person, year),
-                        'paid': item['paid_date'],
-                        'amount': item['amount'],
-                    })
+                    try:
+                        year = _get_pmt_year(item['product_name'])
+                        fed.append({
+                            'id': item['id'],
+                            'name': product_type,
+                            'activity': activity,
+                            'year': _get_pmt_year(item['product_name']),
+                            'exception': _get_pmt_type(item['product_name']),
+                            'type': _get_pmt_person_age_membership(person, year),
+                            'paid': item['paid_date'],
+                            'amount': item['amount'],
+                        })
+                    except Exception as e:
+                        app.logger.exception('Error adding federation item to person for payment id {}'.format(item['id']))
 
                 # Remove old ones
                 fed = [x for x in fed if x['year'] >= datetime.now().year and 'id' in x]
@@ -1060,12 +1062,12 @@ def _update_person(item):
         if f_status == 200:
             on_function_post(functions.get('_items', []))
 
-        """ In functions for now!
+        # NB membership in functions for now
         payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **lookup)
         app.logger.debug('Payments\n{}'.format(functions))
         if f_status == 200:
             on_payment_after_post(payments.get('_items', []))
-        """
+
     # Always broadcast!
     try:
         # Need to get person return response, last_modified, etag, 200
