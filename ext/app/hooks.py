@@ -1013,13 +1013,18 @@ def _verify_and_update_person_data(item):
             app.logger.info(f'Verifying person data with id {item["id"]} with nif api')
             app.logger.info(f'API person data: {item}')
             app.logger.info(f'Nif person data: {nif_person}')
-            verify_item['primary_email'] = nif_person.get('primaryEmail', item.get('primary_email', None))
-            verify_item['primary_phone'] = nif_person.get('primaryPhoneMobile', item.get('primary_phone', None))
+            # Primary email
+            if nif_person.get('primaryEmail', item.get('primary_email', None)) is not None:
+                verify_item['primary_email'] = nif_person.get('primaryEmail', item.get('primary_email', None))
+            # Primary phone
+            if nif_person.get('primaryPhoneMobile', None) is not None:
+                verify_item['primary_phone'] = nif_person.get('primaryPhoneMobile', item.get('primary_phone', None))
+            # Set address.phone if not set
             if 'phone_mobile' not in item.get('address', {}).keys() or item.get('address', {}).get('phone_mobile', None) is None:
                 if 'address' not in verify_item:
                     verify_item['address'] = {}
                 verify_item['address']['phone_mobile'] = nif_person.get('primaryPhoneMobile', None)
-
+            # Set country id if not set
             if item.get('address', {}).get('country_id', None) in [None,0]:
                 if 'address' not in verify_item:
                     verify_item['address'] = {}
