@@ -105,7 +105,7 @@ def _verify_person(person):
                 person['address']['country_id'] = _get_country_id_from_name(nif_person['country'])
             if person['nationality_id'] in [0, None]:
                 person['nationality_id'] = nif_person['countryId']
-            return person
+            return status, person
         except KeyError as e:
             pass
         except Exception as e:
