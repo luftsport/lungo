@@ -789,7 +789,7 @@ def on_payment_before_put(item, orginal=None):
         item['org_id'] = _get_pmt_group_from_club(item['org_id'])
 
 
-def on_payment_after_put(item, orginal=None, process=[23, 20, 22]):
+def on_payment_after_put(item, orginal=None, process=[20, 21, 22, 23]):
     """Every time some payments comes through, fix person"""
 
     # Only this year?
@@ -1011,8 +1011,8 @@ def _verify_and_update_person_data(item):
         if status_code in [True, 200] and nif_person is not None:
             verify_item = {}
             app.logger.info(f'Verifying person data with id {item["id"]} with nif api')
-            app.logger.info(f'API person data: {item}')
-            app.logger.info(f'Nif person data: {nif_person}')
+            # app.logger.info(f'API person data: {item}')
+            # app.logger.info(f'Nif person data: {nif_person}')
             # Primary email
             if nif_person.get('primaryEmail', item.get('primary_email', None)) is not None:
                 verify_item['primary_email'] = nif_person.get('primaryEmail', item.get('primary_email', None))
@@ -1069,15 +1069,15 @@ def _update_person(item):
 
         # NB membership in functions for now
         payments, _, _, p_status, _ = get_internal(RESOURCE_PAYMENTS_PROCESS, **lookup)
-        app.logger.debug('Payments\n{}'.format(functions))
-        if f_status == 200:
+        app.logger.debug('Payments:\n{}'.format(payments))
+        if p_status == 200:
             on_payment_after_post(payments.get('_items', []))
 
     # Always broadcast!
     try:
         # Need to get person return response, last_modified, etag, 200
-        person, _, _, p_status = getitem_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['id']})
-        if p_status == 200:
+        person, _, _, person_status = getitem_internal(RESOURCE_PERSONS_PROCESS, **{'id': item['id']})
+        if person_status == 200:
             # Broadcast all
             broadcast({'entity': 'person',
                        'entity_id': item['id'],
