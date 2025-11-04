@@ -60,8 +60,11 @@ NLF_ORG_STRUCTURE = {
     'fallskjerm': {'activity': 109, 'org_id': 90972},
     'sportsfly': {'activity': 237, 'org_id': 203030},
     'motorfly': {'activity': 238, 'org_id': 203025},
+    'flysimulator': {'activity': 2446, 'org_id': 203025},
     'seilfly': {'activity': 111, 'org_id': 90968},
+    'virtual gliding': {'activity': 2445, 'org_id': 90968},
     'modellfly': {'activity': 236, 'org_id': 203027},
+    'e-droneracing': {'activity': 2444, 'org_id': 203027},
     'ballong': {'activity': 235, 'org_id': 203026},
     'hps': {'activity': 110, 'org_id': 90969},
 }
@@ -652,6 +655,8 @@ def _get_pmt_type(text):
 def _get_pmt_activity(text):
     if 'modellfly' in text.lower():
         return NLF_ORG_STRUCTURE['modellfly']['activity']
+    if 'drone' in text.lower():
+        return NLF_ORG_STRUCTURE['e-droneracing']['activity']
     elif 'mikrofly' in text.lower():
         return NLF_ORG_STRUCTURE['sportsfly']['activity']
     elif 'sportsfly' in text.lower():
@@ -660,10 +665,14 @@ def _get_pmt_activity(text):
         return NLF_ORG_STRUCTURE['fallskjerm']['activity']
     elif 'motorfly' in text.lower():
         return NLF_ORG_STRUCTURE['motorfly']['activity']
+    elif 'simulator' in text.lower():
+        return NLF_ORG_STRUCTURE['flysimulator']['activity']
     elif 'ballong' in text.lower():
         return NLF_ORG_STRUCTURE['ballong']['activity']
     elif 'seilfly' in text.lower():
         return NLF_ORG_STRUCTURE['seilfly']['activity']
+    elif 'gliding' in text.lower():
+        return NLF_ORG_STRUCTURE['virtual gliding']['activity']
     elif 'speedglider' in text.lower():
         return NLF_ORG_STRUCTURE['hps']['activity']
 
