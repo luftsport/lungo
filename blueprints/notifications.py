@@ -30,7 +30,6 @@ from typing import List, Dict
 
 Notifications = SwaggerBlueprint('Notifications', __name__, url_prefix='notifications')
 
-
 from ext.scf import (
     SENDGRID_DEFAULT_FROM,
     SENDGRID_DEFAULT_REPLY_TO,
@@ -557,6 +556,55 @@ def get_org(org_id):
     return None
 
 
+def get_org_up(current_org, target_org_type_id):
+    if current_org.get('type_id', 0) == target_org_type_id:
+        return current_org
+
+    for up in current_org.get('_up', []):
+        if up.get('type') == target_org_type_id:
+            return get_org(up.get('id'))
+
+        elif up.get('type') == 6 and current_org.get('type_id', 0) == 14:
+            return get_org_up(get_org(up.get('id')), target_org_type_id)
+
+    return None
+
+
+def get_org_down(current_org, target_org_type_id, target_activity_id=None):
+    if current_org.get('type_id', 0) == target_org_type_id:
+        return current_org
+    activities = []
+    for down in current_org.get('_down', []):
+        if down.get('type') == target_org_type_id:
+            _org = get_org(down.get('id'))
+            if target_org_type_id == 14 and target_activity_id is None:
+                activities.append(_org)
+            elif target_activity_id is None or target_activity_id in [activity['id'] for activity in _org.get('activities', [])]:
+                return _org
+
+        elif down.get('type') == 6 and current_org.get('type_id', 0) != 14:
+            return get_org_down(get_org(down.get('id')), target_org_type_id, target_activity_id)
+
+    return activities if len(activities) > 0 else None
+
+
+def get_club(current_org):
+    if current_org.get('type_id', 0) == 5:
+        return current_org
+    elif current_org.get('type_id', 0) in [6, 14]:
+        return get_org_up(current_org, 5)
+
+    return get_org_down(current_org, 5)
+
+
+def get_activities(current_org, activity_id):
+    if current_org.get('type_id', 0) == 14 and activity_id in [x['id'] for x in current_org['activities']]:  # main_activity.id?
+        return [current_org]
+    else:
+        activities = get_org_down(current_org, 14, activity_id)
+        return activities if isinstance(activities, list) else [activities]
+
+
 def verify_int_or_wildcard(param, wildcard_allowed=True, gt=0):
     # Check if param is the wildcard
     if param == "*" and wildcard_allowed is True:
@@ -606,8 +654,8 @@ def get_users_from_role(role):
     org = None
     if role['org'] and role['org'] != '*' and verify_int_or_wildcard(role['org'], False, 0):
         org = get_org(role['org'])
-        if org.get('type_id') not in [6, 14]:
-            app.logger.error(f"[Notifications] Error for org {org.get('name')} with type_id {org.get('type_id')}, not in [6, 14]")
+        if org.get('type_id') not in [5, 6, 14]:
+            app.logger.error(f"[Notifications] Error for org {org.get('name')} with type_id {org.get('type_id')}, not in [5, 6, 14]")
             return []
 
     role = {k: int(v) if v != '*' else v for k, v in role.items()}
@@ -617,13 +665,13 @@ def get_users_from_role(role):
         # Any org, any activity get all those roles wherever in 6 and 14!
         if role['org'] == '*' and role['activity'] == '*':
             # query = f'where={{ "type_id": {role["role"]}, "is_deleted": false, "is_passive": false, "org_type_id": {{"$in": [6, 14]}} }}&projection={{"person_id": 1}}'
-            where = {"type_id": role["role"], "is_deleted": False, "is_passive": False, "org_type_id": {"$in": [6, 14]}}
+            where = {"type_id": role["role"], "is_deleted": False, "is_passive": False, "org_type_id": {"$in": [5, 14]}}
         # Specific organization!
         elif role['org'] is not None and role['org'] != '*' and verify_int_or_wildcard(role['org'], False, 0):
 
             # If type is 14 always add 6
             if org['type_id'] == 14:
-                up_orgs = [x['id'] for x in org.get('_up', []) if x['type'] == 6]
+                up_orgs = [get_club(org['id'])] #[x['id'] for x in get_org(get_org_up(org, 6).get('_up', []) if x['type'] == 6]
                 if role['role'] == NIF_ROLE_MEMBER:
                     # query = f'where={{"org_id": {role["org"]}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
                     where = {"org_id": role["org"], "type_id": role["role"], "is_deleted": False, "is_passive": False}
@@ -632,8 +680,8 @@ def get_users_from_role(role):
                     where = {"org_id": {"$in": [role["org"]] + up_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
 
             # If type is 6 and activity, add type 14 with that activity
-            elif org['type_id'] == 6 and role['activity'] is not None and role['activity'] != '*' and verify_int_or_wildcard(role['activity'], False, 0):
-                down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities', [])]]
+            elif org['type_id'] in [5, 6] and role['activity'] is not None and role['activity'] != '*' and verify_int_or_wildcard(role['activity'], False, 0):
+                down_orgs = get_activities(org, None) #[x['id'] for x in org.get('_down', []) if x['type'] == 14 and role['activity'] in [activity['id'] for activity in get_org(x['id']).get('activities', [])]]
                 if role['role'] == NIF_ROLE_MEMBER:
                     # query = f'where={{"org_id": {{"$in": {down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
                     where = {"org_id": {"$in": down_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
@@ -642,8 +690,8 @@ def get_users_from_role(role):
                     where = {"org_id": {"$in": [role["org"]] + down_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
 
             # if type is 6 and all activities, add all type 14
-            elif org['type_id'] == 6 and role['activity'] == '*':
-                down_orgs = [x['id'] for x in org.get('_down', []) if x['type'] == 14]
+            elif org['type_id'] in [5, 6] and role['activity'] == '*':
+                down_orgs = get_activities(org, None) # [x['id'] for x in org.get('_down', []) if x['type'] == 14]
                 # query = f'where={{"org_id": {{"$in": {[role["org"]] + down_orgs} }}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
                 where = {"org_id": {"$in": [role["org"]] + down_orgs}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
 
@@ -652,14 +700,14 @@ def get_users_from_role(role):
             if role['role'] == NIF_ROLE_MEMBER:
                 orgs_from_activity = get_orgs_in_activivity(role['activity'], [14])
             else:
-                orgs_from_activity = get_orgs_in_activivity(role['activity'], [6, 14])
+                orgs_from_activity = get_orgs_in_activivity(role['activity'], [5, 14])
             # query = f'where={{"org_id": {{"$in": {orgs_from_activity}}}, "type_id": {role["role"]}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
             where = {"org_id": {"$in": orgs_from_activity}, "type_id": role["role"], "is_deleted": False, "is_passive": False}
 
         # Any org and any activity
         elif (role['org'] and role['activity']) == '*':
             # query = f'where={{"type_id": {role["role"]}, "org_type_id": {{"$in": [6, 14]}}, "is_deleted": false, "is_passive": false}}&projection={{"person_id": 1}}'
-            where = {"type_id": role["role"], "org_type_id": {"$in": [6, 14]}, "is_deleted": False, "is_passive": False}
+            where = {"type_id": role["role"], "org_type_id": {"$in": [5, 14]}, "is_deleted": False, "is_passive": False}
 
         app.logger.debug(f"[Notifications] Query for users from role from functions: {where}")
         # resp = requests.get('{}/functions?{}&max_results={}'.format(API_BASE_URL, query, 20000), headers=API_HEADERS)  # verify=app['config'].get('REQUESTS_VERIFY', True)
@@ -1073,6 +1121,19 @@ def generate_notifications(_id):
 
     app.logger.error(f"[Notifications] Notification not found or already processed: {_id}, status: {status}, response: {response}, etag: {request.headers.get('If-Match', 'nope')}, expected etag: {response.get('_etag', 'nope')}")
     return eve_abort(404, "Notification not found or already processed")
+
+
+@Notifications.route('/club/<int:org_id>', methods=['GET'])
+@require_token()
+def gclub(org_id):
+    return eve_response(get_club(get_org(org_id)), 200)
+
+
+@Notifications.route('/activity/<int:org_id>', methods=['GET'])
+@require_token()
+def gactivity(org_id):
+    activity_id = request.args.get('activity_id', None)
+    return eve_response(get_activities(get_org(org_id), activity_id), 200)
 
 
 @Notifications.route('/wqe', methods=['POST'])
