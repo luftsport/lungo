@@ -52,6 +52,11 @@ def get_process():
     except:
         return eve_response({'status': False}, 200)
 
+@Syncdaemon.route('/api-doc', methods=['GET'])
+@require_token()
+def get_paths():
+    resp = [str(p) for p in app.url_map.iter_rules() if str(p).startswith('/api/v1/syncdaemon')]
+    return eve_response(resp)
 
 @Syncdaemon.route("/process/info", methods=['GET'])
 @require_token()
