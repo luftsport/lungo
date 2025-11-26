@@ -872,15 +872,20 @@ def on_payment_after_put(item, orginal=None, process=[20, 21, 22, 23]):
                     # CHeck magazines
                     if 'flydrone' in item['product_name'].lower():
                         name = item['product_name']
-                        flydrone_status, flydrone_result = _register_flydrone(item['person_id'])
-                        app.logger.debug(f'[FLYDRONE] Registering flydrone for {item["person_id"]}, status {flydrone_status} result: {flydrone_result}')
-                        if flydrone_status not in [200, 201, 304]:
-                            app.logger.error(f'[FLYDRONE] Error registering flydrone for {item["person_id"]}, result:')
-                            app.logger.error('Triggered from:')
-                            app.logger.error(item)
-                            app.logger.error('Status and result:')
-                            app.logger.error(flydrone_status)
-                            app.logger.error(flydrone_result)
+
+                        if (datetime.now().month in range(1,11)) or (datetime.now().month in [11,12] and year == datetime.now().year + 1):
+                            flydrone_status, flydrone_result = _register_flydrone(item['person_id'])
+                            app.logger.debug(f'[FLYDRONE] Registering flydrone for {item["person_id"]}, status {flydrone_status} result: {flydrone_result}')
+                            if flydrone_status not in [200, 201, 304]:
+                                app.logger.error(f'[FLYDRONE] Error registering flydrone for {item["person_id"]}, result:')
+                                app.logger.error('Triggered from:')
+                                app.logger.error(item)
+                                app.logger.error('Status and result:')
+                                app.logger.error(flydrone_status)
+                                app.logger.error(flydrone_result)
+                        else:
+                            app.logger.debug(f'[FLYDRONE] Skipping registering flydrone for {item["person_id"]} due to date')
+
                     elif 'fritt' in item['product_name'].lower():
                         name = 'Fritt Fall'
                     elif 'flynytt' in item['product_name'].lower():
