@@ -1,8 +1,8 @@
 import json
 import requests
-from ext.scf import TMS_URL, TMS_LICENSE_PATH, TMS_USERNAME, TMS_PASSWORD
+from ext.scf import TMS_URL, TMS_LICENSE_PATH, TMS_LICENSE_TYPE_PATH, TMS_USERNAME, TMS_PASSWORD
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
-from ext.app.eve_blueprint_helper import SwaggerBlueprint # parse_request, format_response,
+from ext.app.eve_blueprint_helper import SwaggerBlueprint  # parse_request, format_response,
 from ext.auth.decorators import require_token
 from ext.app.eve_helper import eve_response, eve_abort
 from datetime import datetime
@@ -10,11 +10,13 @@ from dateutil import parser
 
 Tms = SwaggerBlueprint('TMS resources', __name__, url_prefix='tms')
 
+
 class TMSAPI:
 
-    def __init__(self, username=TMS_USERNAME, password=TMS_PASSWORD):
+    def __init__(self, username, password):
         self.base_url = TMS_URL
         self.license_path = TMS_LICENSE_PATH
+        self.license_type_path = TMS_LICENSE_TYPE_PATH
         self.username = username
         self.password = password
 
@@ -35,12 +37,18 @@ class TMSAPI:
         status, response = self._get(url, params=params)
         return status, response
 
+    def get_license_type(self, tms_type_id):
+        url = f'{self.base_url}{self.license_type_path}/{tms_type_id}'
+        status, response = self._get(url)
+        return status, response
+
 
 @Tms.route('/api-doc', methods=['GET'])
 @require_token()
 def get_paths():
     resp = [str(p) for p in app.url_map.iter_rules() if str(p).startswith('/api/v1/tms')]
     return eve_response(resp)
+
 
 @Tms.route("/licenses", methods=['GET'])
 @require_token()
@@ -50,10 +58,20 @@ def get_licenses():
         return eve_response(result)
     return eve_abort(status, result)
 
+
 @Tms.route("/licenses/<int:license_id>", methods=['GET'])
 @require_token()
 def get_license(license_id):
     status, result = TMSAPI().get_license(license_id)
+    if status == 200:
+        return eve_response(result)
+    return eve_abort(status, result)
+
+
+@Tms.route("/licenses/types/<int:tms_type_id>", methods=['GET'])
+@require_token()
+def get_license_type(tms_type_id):
+    status, result = TMSAPI().get_license_type(tms_type_id=tms_type_id)
     if status == 200:
         return eve_response(result)
     return eve_abort(status, result)
