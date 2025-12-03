@@ -3,7 +3,7 @@ from nif_tools import KA
 from datetime import datetime, timezone, timedelta, timezone
 from hashlib import sha224
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify, g
-from ext.app.eve_blueprint_helper import SwaggerBlueprint # parse_request, format_response,
+from ext.app.eve_blueprint_helper import SwaggerBlueprint  # parse_request, format_response,
 # from eve.methods.post import post_internal
 from ext.scf import KA_USERNAME, KA_PASSWORD, NIF_CLIENT_SECRET, NIF_CLIENT_ID, NIF_TOKEN_FILE
 from ext.app.eve_helper import eve_response, eve_error_response
@@ -290,6 +290,17 @@ def generate_change_message():
 def get_person(person_id):
     status, person = get_nif_api_client().get_person(person_id)
     return eve_response(person, 200 if status is True else 404)
+
+@NIF.route('/sa/persons/validate/ssn/<int:person_id>', methods=['GET'])
+@require_token()
+def verify_person_validated_ssn(person_id):
+    validated = False
+    sa = _get_SA()
+    try:
+        validated = sa.verify_person_is_ssn_validated(person_id)
+    except:
+        pass
+    return eve_response({'validated': validated, 'person_id': person_id})
 
 
 @NIF.route('competences/<int:person_id>', methods=['GET'])
