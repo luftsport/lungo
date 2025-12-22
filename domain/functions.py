@@ -175,7 +175,24 @@ agg_count_types = {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
+                {"$match": {"is_deleted": False, "is_passive": False, "to_date": {"$exists": False}}},
                 {"$group": {"_id": {"type_id": "$type_id", "name": "$type_name"}, "count": {"$sum": 1}}},
+                {"$sort": SON([("count", -1), ("_id", -1)])}
+            ]
+        }
+    }
+}
+
+agg_count_persons = {
+    'url': 'functions/persons/count',
+    'item_title': 'Functions Types Count',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline': [
+                {"$match": {"is_deleted": False, "is_passive": False, "to_date": {"$exists": False}}},
+                {"$group": {"_id": {"person_id": "$person_id"}, "count": {"$sum": 1}}},
                 {"$sort": SON([("count", -1), ("_id", -1)])}
             ]
         }
