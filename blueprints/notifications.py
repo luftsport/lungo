@@ -176,7 +176,6 @@ def _add_to_message(_id, person_id, verify_unique=True):
     # 2. get the person, check if in notifications_messages already
     try:
         person, _, _, status = getitem_internal(resource='persons', **{'id': person_id})
-        print('#####', person)
         if status != 200 or person is None:
             return {"_status": "ERR",
                     "_error": {
@@ -1288,10 +1287,8 @@ def generate_notifications(_id):
 @require_token()
 def add_to_message(_id):
     args = request.json
-    print(args)
     person_id = args.get('person_id', None)
     verify_unique = args.get('verify_unique', True)
-    print(person_id)
     if person_id is None:
         return eve_abort(404, f'No person id given')
 
