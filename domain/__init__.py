@@ -89,6 +89,7 @@ DOMAIN = {
     "functions_search": functions.search_definition,
     "functions_types_count": functions.agg_count_types,
     "functions_types_org_count": functions.agg_count_types_org,
+    "functions_persons_count": functions.agg_count_persons,
     "functions_types_activity_count": functions.agg_count_types_activity,
     "functions_get_persons_by_type_and_orgs": functions.agg_get_persons_by_type_and_orgs,
     "functions_memberships_count": functions.agg_count_members_on_date,
