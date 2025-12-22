@@ -4,12 +4,13 @@ To hook all the different changes to our api!
 from eve.methods.patch import patch_internal
 from eve.methods.get import get_internal, getitem_internal
 from eve.methods.delete import deleteitem_internal
+from eve.methods.post import post_internal
 from datetime import datetime, timezone, timezone
 from dateutil import tz
 from dateutil import parser
 from flask import Response, request as flask_request, abort, current_app as app, g
 import json
-
+import requests
 from dateutil.parser import parse as date_parse
 from ext.app.eve_blueprint_helper import format_response
 
@@ -20,10 +21,11 @@ import time
 import socketio
 from blueprints.fai import upsert_fai
 from blueprints.nif import _register_flydrone, get_nif_api_client
+from blueprints.notifications import _add_to_message
 # import dateutil.parser
 from ext.app.fids import get_fids
 
-from ext.scf import FAI_SYNC, COMPETENCE_FAI_MAPPING_IDS
+from ext.scf import FAI_SYNC, COMPETENCE_FAI_MAPPING_IDS, API_HEADERS
 
 from ext.app.helpers import (
     _get_merged_from,
@@ -85,6 +87,33 @@ def broadcast(change_data):  # @Todo support for change type
         sio.disconnect()
     except Exception as e:
         pass
+
+
+@_async
+def _payment_action(payment):
+    """Perform/trigger actions if payment matches"""
+    actions = [
+        {'product_name': 'Seksjonskontingent Modellfly Modellmedlem 2026', 'action': '_add_to_message', 'params': {'person_id': None, '_id': '694863b1f39e1f265689a144'}}
+    ]
+    try:
+        if payment.get('product_name', '') in [x['product_name'] for x in actions]:
+            action = [x['product_name'] for x in actions if x['product_name'] == payment['product_name']][0]
+
+            # set params:
+            if 'person_id' in action['params']:
+                action['params']['person_id'] = payment.get('person_id', None)
+
+            # DO actions!
+            if action['action'] == 'GET':
+                pass
+            elif action['action'] == 'POST':
+                pass
+            elif action['action'] == '_add_to_message':
+                app.logger.error(f'Running dummy action for payments success with action {action}')
+                #_, _ = _add_to_message(**action['params'])
+
+    except Exception as e:
+        app.logger.exception(f'Running action for payments failed')
 
 
 def _get_country_id_from_name(country_name):
@@ -873,7 +902,7 @@ def on_payment_after_put(item, orginal=None, process=[20, 21, 22, 23]):
                     if 'flydrone' in item['product_name'].lower():
                         name = item['product_name']
 
-                        if (datetime.now().month in range(1,11)) or (datetime.now().month in [11,12] and year == datetime.now().year + 1):
+                        if (datetime.now().month in range(1, 11)) or (datetime.now().month in [11, 12] and year == datetime.now().year + 1):
                             flydrone_status, flydrone_result = _register_flydrone(item['person_id'])
                             app.logger.debug(f'[FLYDRONE] Registering flydrone for {item["person_id"]}, status {flydrone_status} result: {flydrone_result}')
                             if flydrone_status not in [200, 201, 304]:
@@ -939,6 +968,7 @@ def on_payment_after_put(item, orginal=None, process=[20, 21, 22, 23]):
                     elif type_id == 20 and type_id in process:
                         product_type = 'Forbundskontigent'
                         activity = 27
+
                     try:
                         year = _get_pmt_year(item['product_name'])
                         fed.append({
@@ -964,7 +994,9 @@ def on_payment_after_put(item, orginal=None, process=[20, 21, 22, 23]):
                 resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
                                                     {'federation': fed},
                                                     False, True, **{'_id': person['_id']})
-                if status != 200:
+                if status in [200, 201]:
+                    _payment_action(item)  # Runs async so
+                else:
                     app.logger.exception('Error {} for payment id {}'.format(item['product_name'], item['id']))
 
 
@@ -1014,8 +1046,8 @@ def on_person_after_put(item, original=None):
         app.logger.exception('Broadcast of item with id {} did not work out!'.format(item['id']))
     """
 
-def _verify_and_update_person_data(item):
 
+def _verify_and_update_person_data(item):
     if '_merged_to' in item:
         return
 
@@ -1039,7 +1071,7 @@ def _verify_and_update_person_data(item):
                     verify_item['address'] = {}
                 verify_item['address']['phone_mobile'] = nif_person.get('primaryPhoneMobile', None)
             # Set country id if not set
-            if item.get('address', {}).get('country_id', None) in [None,0]:
+            if item.get('address', {}).get('country_id', None) in [None, 0]:
                 if 'address' not in verify_item:
                     verify_item['address'] = {}
                 verify_item['address']['country_id'] = _get_country_id_from_name(nif_person.get('countryName', 'Norge'))
@@ -1058,6 +1090,7 @@ def _verify_and_update_person_data(item):
 
     # Always if not deregistered return True
     return True
+
 
 def _update_person(item):
     """Runs AFTER person created or replaced"""
