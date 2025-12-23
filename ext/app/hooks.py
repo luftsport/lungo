@@ -97,20 +97,23 @@ def _payment_action(payment):
     ]
     try:
         if payment.get('product_name', '') in [x['product_name'] for x in actions]:
-            action = [x['product_name'] for x in actions if x['product_name'] == payment['product_name']][0]
+            # @TODO make it a for in loop allowing multiple
+            # action = [x['product_name'] for x in actions if x['product_name'] == payment['product_name']][0]
+            for action in actions:
+                if action.get('product_name', '_') == payment['product_name']:
 
-            # set params:
-            if 'person_id' in action['params']:
-                action['params']['person_id'] = payment.get('person_id', None)
+                    # 1. set params:
+                    if 'person_id' in action['params']:
+                        action['params']['person_id'] = payment.get('person_id', None)
 
-            # DO actions!
-            if action['action'] == 'GET':
-                pass
-            elif action['action'] == 'POST':
-                pass
-            elif action['action'] == '_add_to_message':
-                app.logger.error(f'Running dummy action for payments success with action {action}')
-                #_, _ = _add_to_message(**action['params'])
+                    # 2. DO actions!
+                    if action['action'] == 'GET':
+                        pass
+                    elif action['action'] == 'POST':
+                        pass
+                    elif action['action'] == '_add_to_message':
+                        app.logger.error(f'Running action for payments success with action {action}')
+                        _, _ = _add_to_message(**action['params'])
 
     except Exception as e:
         app.logger.exception(f'Running action for payments failed')
