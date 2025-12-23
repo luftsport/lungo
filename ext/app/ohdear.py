@@ -58,7 +58,7 @@ import os
 from typing import List, Optional, Union
 import json
 
-from ext.scf import SIO_URL, SIO_TOKEN
+from ext.scf import SIO_URL
 
 STATUSES = ['ok', 'warning', 'failed', 'crashed', 'skipped']
 
