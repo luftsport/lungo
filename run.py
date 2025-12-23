@@ -29,6 +29,7 @@ from blueprints.html import Html
 from blueprints.nif import NIF
 from blueprints.tms import Tms
 from blueprints.notifications import Notifications
+from blueprints.ohdear import Ohdear
 
 # Import blueprints
 # from blueprints.authentication import Authenticate
@@ -83,6 +84,7 @@ app.register_blueprint(ACL, url_prefix=f"{app.globals.get('prefix')}/{ACL.url_pr
 app.register_blueprint(NIF, url_prefix=f"{app.globals.get('prefix')}/{NIF.url_prefix}")
 app.register_blueprint(Tms, url_prefix=f"{app.globals.get('prefix')}/{Tms.url_prefix}")
 app.register_blueprint(Notifications, url_prefix=f"{app.globals.get('prefix')}/{Notifications.url_prefix}")
+app.register_blueprint(Ohdear, url_prefix=f"{app.globals.get('prefix')}/{Ohdear.url_prefix}")
 # Blueprint returning html
 app.register_blueprint(Html, url_prefix=f"{app.globals.get('prefix')}/{Html.url_prefix}")
 
