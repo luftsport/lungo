@@ -89,7 +89,7 @@ def broadcast(change_data):  # @Todo support for change type
         pass
 
 
-@_async
+# @_async
 def _payment_action(payment):
     """Perform/trigger actions if payment matches"""
     actions = [
