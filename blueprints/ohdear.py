@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 import base64
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
 from ext.app.eve_blueprint_helper import SwaggerBlueprint, format_response  # parse_request, format_response,
-from ext.app.eve_jsonencoder import EveJSONEncoder
+# Not yet commited: from ext.app.eve_jsonencoder import EveJSONEncoder
 from ext.auth.decorators import require_token
 from ext.app.fids import fid_exists, create_fid, update_fid
 from ext.scf import FAI_USERNAME, FAI_PASSWD, FAI_URL, COMPETENCE_FAI_MAPPING_IDS, FAI_ID_MAPPINGS_INV, COMPETENCE_FAI_MAPPING
