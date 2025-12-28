@@ -67,8 +67,12 @@ SIO_MSG = None
 SIO_READY = False
 
 # Init socket.io client
-sio_client = socketio.Client()
-sio_client.connect(SIO_URL)
+try:
+    sio_client = socketio.Client()
+    sio_client.connect(SIO_URL)
+except Exception as e:
+    sio_client = None
+    # app.logger.exception()
 
 
 
@@ -182,14 +186,12 @@ def check_nif():
 
 
 ### SIO's!
-@sio_client.event
-def connect():
-    print('Connection established with the server.')
-
-
-@sio_client.event
-def disconnect():
-    print('Disconnected from the server.')
+# @sio_client.event
+# def connect():
+#    print('Connection established with the server.')
+#@sio_client.event
+# def disconnect():
+#    print('Disconnected from the server.')
 
 
 @sio_client.event
@@ -223,10 +225,11 @@ def check_server_status(server_url):
             print(f"Server at {server_url} is reachable.")
         # Optional: wait for some time or perform further checks
     except Exception as e:
-        print(f"Failed to connect to the server: {e}")
+        # print(f"Failed to connect to the server: {e}")
+        pass
     finally:
         # Disconnect after the check
-        if sio_client.connected:
+        if sio_client and sio_client.connected:
             sio_client.disconnect()
 
 
@@ -234,25 +237,28 @@ def perform_socketio_check(server_url):
     global SIO_MSG, SIO_READY
     SIO_MSG = None
     SIO_READY = False
+    try:
+        if sio_client.connected:
+            # print("Connected to server, requesting health status...")
+            # Emit event and wait for acknowledgment/response
+            sio_client.emit('handle_health_check', {})
+            # sio_client.wait()
+            # In a real app, you might use a timeout or more robust async waiting
+            # Wait efficiently for response (with timeout)
+            timeout = 10
+            sio_client.sleep(0)  # Allow background thread to start
+            while not SIO_READY and timeout > 0:
+                sio_client.sleep(1)
+                timeout -= 1
 
-    if sio_client.connected:
-        print("Connected to server, requesting health status...")
-        # Emit event and wait for acknowledgment/response
-        sio_client.emit('handle_health_check', {})
-        # sio_client.wait()
-        # In a real app, you might use a timeout or more robust async waiting
-        # Wait efficiently for response (with timeout)
-        timeout = 10
-        sio_client.sleep(0)  # Allow background thread to start
-        while not SIO_READY and timeout > 0:
-            sio_client.sleep(1)
-            timeout -= 1
+            if SIO_READY:
+                return SIO_MSG
+            else:
+                raise TimeoutError("Health check timed out")
+    except Exception as e:
+        pass
 
-        if SIO_READY:
-            return SIO_MSG
-        else:
-            raise TimeoutError("Health check timed out")
-
+    return SIO_MSG
 
 def find_process_by_filename(filename):
     found_processes = []
