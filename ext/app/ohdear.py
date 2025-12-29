@@ -673,6 +673,7 @@ def check_service_health_ohdear(
         name: str = "ProcessCheck",
         label: str = "Process Health",
         *,
+        pid: int = None,
         pid_file: Optional[Union[str, Path]] = None,
         exe_path: Optional[Union[str, Path]] = None,
         cwd: Optional[Union[str, Path]] = None,
@@ -691,8 +692,11 @@ def check_service_health_ohdear(
     """
     candidates = []
 
-    # 1. PID file priority
-    if pid_file:
+    # 1. PID file or pid priority
+    if pid:
+        pid = int(pid)
+        candidates = [psutil.Process(pid)]
+    elif pid_file:
         pid_file = Path(pid_file)
         if not pid_file.exists():
             return {
