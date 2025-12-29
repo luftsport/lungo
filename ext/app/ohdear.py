@@ -55,7 +55,7 @@ import signal
 import time
 from pathlib import Path
 import os
-from typing import List, Optional, Union, Tuple
+from typing import List, Dict, Optional, Union, Tuple, Any
 import json
 
 from flask import current_app as app
@@ -242,7 +242,7 @@ def get_socket_ohdear_response(checker: SocketIOHealthChecker) -> dict:
         }
 
 
-def get_socket_ohdear_multi_response(checker: SocketIOHealthChecker) -> list[dict]:
+def get_socket_ohdear_multi_response(checker: SocketIOHealthChecker) -> List[Dict[str, Any]]:
     _, running, missing = checker.perform_check()
     essential = {"melwin", "mailchimp", "sendgrid"}
 
