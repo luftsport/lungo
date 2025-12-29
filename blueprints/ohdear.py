@@ -17,11 +17,11 @@ CHECK_SERVICES = [
     {'name': 'Integration Stream', 'label': 'integration', 'pid_file': '/home/einar/nif-integration/streamdaemon.pid'},
     {'name': 'NLF AUTH', 'label': 'auth', 'pid_file': '/home/einar/nlf-auth/gunicorn.pid'},
     {'name': 'Spyne for Elefun', 'label': 'elefun', 'cwd': "/home/einar/spyne", 'cmdline_contains': ['melwin.py'], 'allow_multiple': False},
-    {'name': 'Membership API', 'label': 'lungo', 'cwd': "/www/lungo", 'cmdline_contains': ['/www/lungo/bin/gunicorn', 'run:app'], 'allow_multiple': True},
+    # {'name': 'Membership API', 'label': 'lungo', 'cwd': "/www/lungo", 'cmdline_contains': ['/www/lungo/bin/gunicorn', 'run:app'], 'allow_multiple': True},
     {'name': 'Membership API', 'label': 'lungo', 'pid_file': '/www/lungo/gunicorn.pid'},
-    {'name': 'Mailchimp Lungo Daemon', 'label': 'mailchimp_daemon.py', 'pid': None},
-    {'name': 'Melwin Lungo Daemon', 'label': 'melwin_daemon.py', 'pid': None},
-    {'name': 'Sendgrid Lungo Daemon', 'label': 'sendgrid_daemon.py', 'pid': None},
+    {'name': 'Mailchimp Lungo Daemon', 'label': 'mailchimp_daemon.py', 'pid': None, 'allow_multiple': False},
+    {'name': 'Melwin Lungo Daemon', 'label': 'melwin_daemon.py', 'pid': None, 'allow_multiple': False},
+    {'name': 'Sendgrid Lungo Daemon', 'label': 'sendgrid_daemon.py', 'pid': None, 'allow_multiple': False},
     {'name': 'Notification Daemon (socket.io)', 'label': 'notifications', 'cmdline_contains': ['/www/lungo/bin/gunicorn', 'notification_daemon:app'], 'cwd': '/www/lungo', 'allow_multiple': True},
 
 ]
@@ -51,7 +51,7 @@ def check():
         result['checkResults'].append(check_systemd_service_ohdear(service_name=systemd_service))
 
     for service in CHECK_SERVICES:
-        if 'pid' in service:
+        if 'pid' in service and service['pid'] is None:
             try:
                 process = find_process_by_filename(service['label'])
                 if len(process)>0:
