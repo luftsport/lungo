@@ -6,9 +6,10 @@
     
 """
 from flask import current_app as app, g, request, Response, abort
-from functools import wraps
+from functools import wraps, partial
 
 from ext.auth.tokenauth import NlfTokenAuth
+from ext.app.ohdear import verify_ohdear_secret
 # from ext.auth.helpers import Helpers
 
 
@@ -24,13 +25,16 @@ class AuthenticationNoToken(Exception):
     """Raise custom error"""
 
 
-def require_token(allowed_roles=None):
+def require_token(allowed_roles=None, ohdear_allowed=False):
     """ Custom decorator for token auth
     Wraps the custom TokenAuth class used by Eve and sends it the required param
     Note that the eve_abort wrapper needs to be set as last, before decorator returns
     """
 
     def decorator(f):
+        if f is None:
+            # Called with parameters → return decorator factory
+            return partial(require_token, allowed_roles=allowed_roles, ohdear_allowed=ohdear_allowed)
         @wraps(f)
         def wrapped(*args, **kwargs):
 
@@ -41,6 +45,8 @@ def require_token(allowed_roles=None):
                 try:
                     authorization_token = request.authorization.get('username', None)
                 except Exception as e:
+                    if ohdear_allowed and verify_ohdear_secret():
+                        return f(*args, **kwargs)
                     raise AuthenticationFailed
 
                 # Do the authentication

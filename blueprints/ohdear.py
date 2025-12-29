@@ -38,7 +38,7 @@ def get_paths():
 
 
 @Ohdear.route("/", methods=['GET'])
-@require_token()
+@require_token(ohdear_allowed=True)
 def check():
     result = {
         "finishedAt": f"{int(time.time())}",
@@ -55,7 +55,7 @@ def check():
             process = []
             try:
                 process = find_process_by_filename(service['label'])
-                if len(process)>0:
+                if len(process) > 0:
                     service['pid'] = process[0]['pid']
                 else:
                     service.pop('pid')

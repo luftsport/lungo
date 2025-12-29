@@ -58,9 +58,8 @@ import os
 from typing import List, Dict, Optional, Union, Tuple, Any
 import json
 
-from flask import current_app as app
-
-
+from flask import current_app as app, request
+from ext.scf import OHDEAR_SECRET, OHDEAR_SECRET_HEADER
 
 from ext.scf import SIO_URL
 
@@ -71,11 +70,20 @@ SIO_MSG = None
 SIO_READY = False
 
 
+def verify_ohdear_secret():
+    secret = request.headers.get(OHDEAR_SECRET_HEADER, None)
+    if secret and secret == OHDEAR_SECRET:
+        return True
+
+    return False
+
+
 class SocketIOHealthChecker:
     """
     Encapsulated Socket.IO client for health checking.
     Safe to use even when connection fails.
     """
+
     def __init__(self, url: str, timeout: float = 10.0):
         self.url = url
         self.timeout = timeout
@@ -134,9 +142,6 @@ class SocketIOHealthChecker:
                     app.logger.error(f"[SIO Health] Missing: {missing}")
                 except:
                     print(f"[SIO Health] Missing: {missing}")
-
-
-
 
     def connect(self) -> bool:
         """Try to connect. Returns True if successful."""
@@ -265,6 +270,7 @@ def get_socket_ohdear_multi_response(checker: SocketIOHealthChecker) -> List[Dic
 
     return result
 
+
 def _bytes_to_gb(bytes_value):
     return bytes_value / (1024 ** 3)
 
@@ -372,6 +378,7 @@ def _nif_rest_apis():
 
 def check_nif():
     pass
+
 
 def find_process_by_filename(filename):
     found_processes = []
@@ -694,8 +701,16 @@ def check_service_health_ohdear(
 
     # 1. PID file or pid priority
     if pid:
-        pid = int(pid)
-        candidates = [psutil.Process(pid)]
+        try:
+            pid = int(pid)
+            candidates = [psutil.Process(pid)]
+        except Exception as e:
+            return {
+                "name": name, "label": label, "status": "failed",
+                "notificationMessage": f"Invalid PID number: {e}",
+                "shortSummary": "Bad PID",
+                "meta": {"error": str(e)}
+            }
     elif pid_file:
         pid_file = Path(pid_file)
         if not pid_file.exists():
@@ -846,10 +861,11 @@ def check_service_health_ohdear(
         "meta": meta
     }
 
+
 def check_systemd_service_ohdear(
-    service_name: str,                  # e.g. "mongod" or "mongod.service"
-    name: Union[str, None] = None,  # ← Fixed: old Union syntax
-    label: Union[str, None] = None,  # ← Fixed
+        service_name: str,  # e.g. "mongod" or "mongod.service"
+        name: Union[str, None] = None,  # ← Fixed: old Union syntax
+        label: Union[str, None] = None,  # ← Fixed
 ) -> dict:
     """
     Checks a systemd service and returns Oh Dear formatted JSON.
@@ -972,8 +988,8 @@ def check_systemd_service_ohdear(
         "meta": meta
     }
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     print(check_disk())
     """
     # 3.7-> asyncio.run(check_server_status('http://localhost:7000'))
