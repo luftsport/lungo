@@ -52,6 +52,7 @@ def check():
 
     for service in CHECK_SERVICES:
         if 'pid' in service and service['pid'] is None:
+            process = []
             try:
                 process = find_process_by_filename(service['label'])
                 if len(process)>0:
