@@ -57,7 +57,10 @@ def check():
                 process = find_process_by_filename(service['label'])
                 if len(process)>0:
                     service['pid'] = process[0]['pid']
+                else:
+                    service.pop('pid')
             except Exception as e:
+                service.pop('pid')
                 app.logger.exception(f'Error checking for service {service} by pid: {e}')
         result['checkResults'].append(check_service_health_ohdear(**service))
 
