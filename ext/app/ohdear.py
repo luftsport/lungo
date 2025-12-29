@@ -55,8 +55,12 @@ import signal
 import time
 from pathlib import Path
 import os
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 import json
+
+from flask import current_app as app
+
+
 
 from ext.scf import SIO_URL
 
@@ -66,15 +70,200 @@ SIO_CHECKS = {'endpoints': []}
 SIO_MSG = None
 SIO_READY = False
 
-# Init socket.io client
-try:
-    sio_client = socketio.Client()
-    sio_client.connect(SIO_URL)
-except Exception as e:
-    sio_client = None
-    # app.logger.exception()
+
+class SocketIOHealthChecker:
+    """
+    Encapsulated Socket.IO client for health checking.
+    Safe to use even when connection fails.
+    """
+    def __init__(self, url: str, timeout: float = 10.0):
+        self.url = url
+        self.timeout = timeout
+        self.sio = socketio.Client()
+
+        self._connected = False
+        self._last_result: Optional[Tuple[bool, List[str], List[str]]] = None
+
+        # Register events only once
+        self._register_events()
+
+    def _register_events(self):
+        @self.sio.event
+        def connect():
+            self._connected = True
+            try:
+                app.logger.debug("[SIO Health] Connected")
+            except:
+                print("[SIO Health] Connected")
+
+        @self.sio.event
+        def disconnect():
+            self._connected = False
+            try:
+                app.logger.debug("[SIO Health] Disconnected")
+            except:
+                print("[SIO Health] Disconnected")
+
+        @self.sio.event
+        def connect_error(data):
+            self._connected = False
+            try:
+                app.logger.debug(f"[SIO Health] Connection failed: {data}")
+            except:
+                print(f"[SIO Health] Connection failed: {data}")
+
+        @self.sio.event
+        def health_check_response(data):
+            socket_services = {'melwin', 'mailchimp', 'sendgrid'}
+
+            connected_clients = set(data.get('clients', []))
+
+            all_essential = socket_services.issubset(connected_clients)
+            running = list(connected_clients & socket_services | {'notification'})
+            missing = list(socket_services - connected_clients)
+
+            self._last_result = (all_essential, running, missing)
+
+            try:
+                app.logger.debug(f"[SIO Health] Server reported clients: {connected_clients}")
+            except:
+                print(f"[SIO Health] Server reported clients: {connected_clients}")
+
+            if not all_essential:
+                try:
+                    app.logger.error(f"[SIO Health] Missing: {missing}")
+                except:
+                    print(f"[SIO Health] Missing: {missing}")
 
 
+
+
+    def connect(self) -> bool:
+        """Try to connect. Returns True if successful."""
+        if self._connected:
+            return True
+
+        try:
+            self.sio.connect(
+                self.url,
+                # transports=['websocket', 'polling'],
+                # wait_timeout=3.0
+            )
+            # Give a little time for the connect event
+            time.sleep(0.4)
+            return self._connected
+        except Exception as e:
+            try:
+                app.logger.exception(f"[SIO Health] Connection failed: {e}")
+            except:
+                print(f"[SIO Health] Connection failed: {e}")
+            return False
+
+    def is_connected(self) -> bool:
+        return self._connected
+
+    def perform_check(self) -> Tuple[bool, List[str], List[str]]:
+        """
+        Returns:
+            (success: bool, running_services: list, missing_services: list)
+        """
+        if not self.connect():
+            try:
+                app.logger.debug("If we can't even connect → everything is missing")
+            except:
+                print("If we can't even connect → everything is missing")
+            return False, [], ['melwin', 'mailchimp', 'sendgrid']
+
+        self._last_result = None  # reset
+
+        try:
+            self.sio.emit('handle_health_check', {})
+
+            waited = 0
+            step = 0.4
+            while waited < self.timeout:
+                if self._last_result is not None:
+                    return self._last_result
+                time.sleep(step)
+                waited += step
+
+            try:
+                app.logger.error("[SIO Health] Health check timed out")
+            except:
+                print("[SIO Health] Health check timed out")
+            return False, [], ['melwin', 'mailchimp', 'sendgrid']
+
+        except Exception as e:
+            try:
+                app.logger.exception(f"[SIO Health] Error during check: {e}")
+            except:
+                print(f"[SIO Health] Error during check: {e}")
+            return False, [], ['melwin', 'mailchimp', 'sendgrid']
+
+    def close(self):
+        """Clean shutdown"""
+        if self._connected:
+            try:
+                self.sio.disconnect()
+            except:
+                pass
+        self._connected = False
+
+
+def get_socket_ohdear_response(checker: SocketIOHealthChecker) -> dict:
+    ok, running, missing = checker.perform_check()
+
+    essential = {"melwin", "mailchimp", "sendgrid"}
+    all_connected = essential.issubset(running)
+
+    if all_connected:
+        return {
+            "name": "Socket.io daemon checks",
+            "label": "socket.io",
+            "status": "ok",
+            "message": "All essential Socket.IO services connected",
+            "short_message": "Socket.IO healthy",
+            "meta": {
+                "connected": sorted(running),
+                "missing": []
+            }
+        }
+    else:
+        return {
+            "name": "Socket.io daemon checks",
+            "label": "socket.io",
+            "status": "fail",
+            "message": f"Missing essential services: {', '.join(missing)}",
+            "short_message": "Socket.IO degraded",
+            "meta": {
+                "connected": sorted(running),
+                "missing": sorted(missing)
+            }
+        }
+
+
+def get_socket_ohdear_multi_response(checker: SocketIOHealthChecker) -> list[dict]:
+    _, running, missing = checker.perform_check()
+    essential = {"melwin", "mailchimp", "sendgrid"}
+
+    result = []
+    for service in essential:
+        if service in running:
+            result.append({
+                "name": f"Socket.IO – {service.title()}",
+                "label": service.title(),
+                "status": "ok",
+                "message": f"{service} connected"
+            })
+        else:
+            result.append({
+                "name": f"Socket.IO – {service.title()}",
+                "label": service.title(),
+                "status": "fail",
+                "message": f"{service} not connected"
+            })
+
+    return result
 
 def _bytes_to_gb(bytes_value):
     return bytes_value / (1024 ** 3)
@@ -183,82 +372,6 @@ def _nif_rest_apis():
 
 def check_nif():
     pass
-
-
-### SIO's!
-# @sio_client.event
-# def connect():
-#    print('Connection established with the server.')
-#@sio_client.event
-# def disconnect():
-#    print('Disconnected from the server.')
-
-
-@sio_client.event
-def health_check_response(data):
-    global SIO_MSG, SIO_READY
-    socket_services = ['melwin', 'mailchimp', 'sendgrid']
-    status = False
-    if 'melwin' in data['clients'] and 'sendgrid' in data['clients'] and 'mailchimp' in data['clients']:
-        status = True
-        print('OK! melwin, mailchimperen og sendgrid er alles gut!')
-    if 'melwin' not in data['clients']:
-        print('Melwin does not have a room!')
-    if 'mailchimp' not in data['clients']:
-        print('Mailchimpern does not have a room!')
-    if 'sendgrid' not in data['clients']:
-        print('Sendgrid does not have a room!')
-    print(f"Server reported total connected clients: {data['clients']}")
-
-    SIO_MSG = status, [x for x in data['clients'] if x in socket_services + ['notification']], [x for x in socket_services if x not in data['clients']]
-    SIO_READY = True
-    # if sio_client.connected:
-    #    sio_client.disconnect()
-    # sio_client.disconnect()
-
-
-def check_server_status(server_url):
-    """Just check if we can connect to the server"""
-    try:
-        # Attempt to connect to the server
-        if sio_client.connected is True:
-            print(f"Server at {server_url} is reachable.")
-        # Optional: wait for some time or perform further checks
-    except Exception as e:
-        # print(f"Failed to connect to the server: {e}")
-        pass
-    finally:
-        # Disconnect after the check
-        if sio_client and sio_client.connected:
-            sio_client.disconnect()
-
-
-def perform_socketio_check(server_url):
-    global SIO_MSG, SIO_READY
-    SIO_MSG = None
-    SIO_READY = False
-    try:
-        if sio_client.connected:
-            # print("Connected to server, requesting health status...")
-            # Emit event and wait for acknowledgment/response
-            sio_client.emit('handle_health_check', {})
-            # sio_client.wait()
-            # In a real app, you might use a timeout or more robust async waiting
-            # Wait efficiently for response (with timeout)
-            timeout = 10
-            sio_client.sleep(0)  # Allow background thread to start
-            while not SIO_READY and timeout > 0:
-                sio_client.sleep(1)
-                timeout -= 1
-
-            if SIO_READY:
-                return SIO_MSG
-            else:
-                raise TimeoutError("Health check timed out")
-    except Exception as e:
-        pass
-
-    return SIO_MSG
 
 def find_process_by_filename(filename):
     found_processes = []
@@ -856,8 +969,9 @@ def check_systemd_service_ohdear(
     }
 
 if __name__ == '__main__':
-    print(check_disk())
 
+    print(check_disk())
+    """
     # 3.7-> asyncio.run(check_server_status('http://localhost:7000'))
     print(perform_socketio_check(SIO_URL))
 
@@ -882,3 +996,4 @@ if __name__ == '__main__':
     print(check_service_health_ohdear(name='Spyne for Elefun', label='elefun', cwd="/home/einar/spyne", cmdline_contains=['melwin.py'], allow_multiple=True))
     print(check_service_health_ohdear(name='Membership API', label='lungo', cwd="/www/lungo", cmdline_contains=['/www/lungo/bin/gunicorn', 'run:app'], allow_multiple=True))
     print(server_health_ohdear(critical_disk_paths=["/", "/var", "/home"],warning_percent=75,critical_percent=90))
+    """
