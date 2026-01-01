@@ -13,7 +13,7 @@ Tms = SwaggerBlueprint('TMS resources', __name__, url_prefix='tms')
 
 class TMSAPI:
 
-    def __init__(self, username, password):
+    def __init__(self, username=TMS_USERNAME, password=TMS_PASSWORD):
         self.base_url = TMS_URL
         self.license_path = TMS_LICENSE_PATH
         self.license_type_path = TMS_LICENSE_TYPE_PATH
