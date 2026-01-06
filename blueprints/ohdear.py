@@ -87,7 +87,7 @@ def check():
             app.logger.exception(f'Error closing checker: {e}')
     try:
         response, _, _, status, _ = post_internal(resource='ohdear_snapshots',
-                                                  payl=result,
+                                                  payl=json.loads(dumps(result)),
                                                   skip_validation=True)
     except Exception as e:
         app.logger.exception('[Ohdear] Error post_interal result {e}')
