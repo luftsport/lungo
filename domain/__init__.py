@@ -40,7 +40,7 @@ import notifications
 import notifications_messages
 import files
 import sendgrid_webhook
-
+import ohdear
 # import test, test_ref
 
 DOMAIN = {
@@ -181,6 +181,9 @@ DOMAIN = {
     "notifications_messages_events": notifications_messages.agg_events,
     # Sendgrid Webhook
     "sendgrid_webhook": sendgrid_webhook.definition,
+    #OhDear
+    "ohdear_snapshots": ohdear.definition,
+
     # Files
     "files": files.definition,
 

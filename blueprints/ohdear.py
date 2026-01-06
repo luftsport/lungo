@@ -1,5 +1,6 @@
 import json
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
+from eve.methods.post import post_internal
 from ext.app.eve_blueprint_helper import SwaggerBlueprint, format_response  # parse_request, format_response,
 from ext.auth.decorators import require_token
 from ext.app.eve_helper import eve_response, eve_abort
@@ -9,7 +10,7 @@ from ext.scf import SIO_URL
 from ext.app.ohdear import check_systemd_service_ohdear, check_service_health_ohdear, server_health_ohdear, check_mongo, find_process_by_filename, get_socket_ohdear_response, get_socket_ohdear_multi_response, SocketIOHealthChecker
 
 Ohdear = SwaggerBlueprint('Ohdear resources', __name__, url_prefix='ohdear')
-
+CHECK_SOCKETIO = True
 CHECK_SYSTEMD_SERVICES = ['mongod', 'nginx']
 CHECK_SERVICES = [
 
@@ -70,13 +71,26 @@ def check():
     result['checkResults'].append(check_mongo())
 
     try:
-        checker = SocketIOHealthChecker(SIO_URL)
-        socket_results = [get_socket_ohdear_response(checker)]
-        # socket_results = get_socket_ohdear_multi_response(checker)
-        for item in socket_results:
-            result['checkResults'].append(item)
+        if CHECK_SOCKETIO is True:
+            checker = SocketIOHealthChecker(SIO_URL)
+            socket_results = [get_socket_ohdear_response(checker)]
+            # socket_results = get_socket_ohdear_multi_response(checker)
+            for item in socket_results:
+                result['checkResults'].append(item)
+            checker.close()
 
     except Exception as e:
         app.logger.exception(f'Error running the socket checks!')
+        try:
+            checker.close()
+        except Exception as e:
+            app.logger.exception(f'Error closing checker: {e}')
+    try:
+        response, _, _, status, _ = post_internal(resource='ohdear',
+                                                  payl=result,
+                                                  skip_validation=True)
+    except Exception as e:
+        app.logger.exception('[Ohdear] Error post_interal result {e}')
+
 
     return jsonify(json.loads(dumps(result))), 200  # ,status_code=200,) #json.dumps(result, cls=EveJSONEncoder)
