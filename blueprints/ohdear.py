@@ -31,6 +31,26 @@ CHECK_SERVER_HEALTH = [
 ]
 
 
+def clean_mongo_keys(doc):
+    """
+    Recursively replaces invalid characters in dictionary keys
+    - $ → _dollar_
+    - . → _dot_
+    """
+    if isinstance(doc, dict):
+        new_doc = {}
+        for key, value in doc.items():
+            # Replace invalid chars
+            new_key = key.replace('$', '_dollar_').replace('.', '_dot_')
+            new_doc[new_key] = clean_mongo_keys(value)
+        return new_doc
+
+    elif isinstance(doc, list):
+        return [clean_mongo_keys(item) for item in doc]
+
+    else:
+        return doc
+
 @Ohdear.route('/api-doc', methods=['GET'])
 @require_token()
 def get_paths():
@@ -87,7 +107,7 @@ def check():
             app.logger.exception(f'Error closing checker: {e}')
     try:
         response, _, _, status, _ = post_internal(resource='ohdear_snapshots',
-                                                  payl=json.loads(dumps(result)),
+                                                  payl=clean_mongo_keys(result),
                                                   skip_validation=True)
     except Exception as e:
         app.logger.exception('[Ohdear] Error post_interal result {e}')
