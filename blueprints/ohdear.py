@@ -24,7 +24,7 @@ CHECK_SERVICES = [
     {'name': 'Melwin Lungo Daemon', 'label': 'melwin_daemon.py', 'pid': None, 'allow_multiple': False},
     {'name': 'Sendgrid Lungo Daemon', 'label': 'sendgrid_daemon.py', 'pid': None, 'allow_multiple': False},
     # {'name': 'Notification Daemon (socket.io)', 'label': 'notifications', 'cmdline_contains': ['/www/lungo/bin/gunicorn', 'notification_daemon:app'], 'cwd': '/www/lungo', 'allow_multiple': True},
-    {'name': 'Notification Daemon (socket.io)', 'label': 'notifications', 'pid_file': '/www/lungon/otification_daemon.pid'}
+    {'name': 'Notification Daemon (socket.io)', 'label': 'notifications', 'pid_file': '/www/lungo/notification_daemon.pid'}
 
 ]
 CHECK_SERVER_HEALTH = [
