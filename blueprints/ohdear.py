@@ -79,7 +79,14 @@ def check():
                 if len(process) > 0:
                     service['pid'] = process[0]['pid']
                 else:
-                    service.pop('pid')
+                    # Make sure not to fail when resync is running
+                    if service['name'] == 'Integration Syncronization':
+                        process = find_process_by_filename('resync')
+                        if len(process) > 0:
+                            service['pid'] = process[0]['pid']
+                    else:
+                        service.pop('pid')
+
             except Exception as e:
                 service.pop('pid')
                 app.logger.exception(f'Error checking for service {service} by pid: {e}')
