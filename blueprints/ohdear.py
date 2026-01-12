@@ -64,7 +64,6 @@ def get_paths():
 @require_token(ohdear_allowed=True)
 def check():
     result = {
-        "finishedAt": f"{int(time.time())}",
         "checkResults": [
         ]
     }
@@ -75,7 +74,7 @@ def check():
         result['checkResults'].append(check_systemd_service_ohdear(service_name=systemd_service))
 
     # 2. daemons
-    for service in CHECK_SERVICES:
+    for service in CHECK_SERVICES.copy():
         checked = None
         if 'pid' in service and service['pid'] is None:
             try:
@@ -100,7 +99,7 @@ def check():
         result['checkResults'].append(checked)
 
     # 3. Server
-    for server in CHECK_SERVER_HEALTH:
+    for server in CHECK_SERVER_HEALTH.copy():
         result['checkResults'].append(server_health_ohdear(**server))
 
     result['checkResults'].append(check_mongo())
@@ -121,6 +120,9 @@ def check():
             checker.close()
         except Exception as e:
             app.logger.exception(f'Error closing checker: {e}')
+
+    # Done, add timestamp now
+    result['finishedAt'] = f'{int(time.time())}'
 
     # Finally, we store the snapshot locally too
     try:
