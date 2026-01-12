@@ -712,8 +712,8 @@ def check_service_health_ohdear(
                 "meta": {"error": str(e)}
             }
     elif pid_file:
-        pid_file = Path(pid_file)
-        if not pid_file.exists():
+        _pid_file = Path(pid_file)
+        if not _pid_file.exists():
             return {
                 "name": name, "label": label, "status": "failed",
                 "notificationMessage": f"PID file missing: {pid_file}",
@@ -721,7 +721,7 @@ def check_service_health_ohdear(
                 "meta": {"pid_file": str(pid_file)}
             }
         try:
-            pid = int(pid_file.read_text().strip())
+            pid = int(_pid_file.read_text().strip())
             candidates = [psutil.Process(pid)]
         except Exception as e:
             return {
