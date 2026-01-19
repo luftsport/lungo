@@ -6,30 +6,11 @@ from ext.auth.decorators import require_token
 from ext.app.eve_helper import eve_response, eve_abort
 import time
 from bson.json_util import dumps
-from ext.scf import SIO_URL
+from ext.scf import SIO_URL, CHECK_SOCKETIO, CHECK_SYSTEMD_SERVICES, CHECK_SERVICES, CHECK_SERVER_HEALTH
 from ext.app.ohdear import check_systemd_service_ohdear, check_service_health_ohdear, server_health_ohdear, check_mongo, find_process_by_filename, get_socket_ohdear_response, get_socket_ohdear_multi_response, SocketIOHealthChecker
 
 Ohdear = SwaggerBlueprint('Ohdear resources', __name__, url_prefix='ohdear')
-CHECK_SOCKETIO = True
-CHECK_SYSTEMD_SERVICES = ['mongod', 'nginx']
-CHECK_SERVICES = [
 
-    {'name': 'Integration Syncronization', 'label': 'integration', 'pid_file': '/home/einar/nif-integration/syncdaemon.pid'},
-    {'name': 'Integration Stream', 'label': 'integration', 'pid_file': '/home/einar/nif-integration/streamdaemon.pid'},
-    {'name': 'NLF AUTH', 'label': 'auth', 'pid_file': '/home/einar/nlf-auth/gunicorn.pid'},
-    {'name': 'Spyne for Elefun', 'label': 'elefun', 'cwd': "/home/einar/spyne", 'cmdline_contains': ['melwin.py'], 'allow_multiple': False},
-    # {'name': 'Membership API', 'label': 'lungo', 'cwd': "/www/lungo", 'cmdline_contains': ['/www/lungo/bin/gunicorn', 'run:app'], 'allow_multiple': True},
-    {'name': 'Membership API', 'label': 'lungo', 'pid_file': '/www/lungo/gunicorn.pid'},
-    {'name': 'Mailchimp Lungo Daemon', 'label': 'mailchimp_daemon.py', 'pid': None, 'allow_multiple': False},
-    {'name': 'Melwin Lungo Daemon', 'label': 'melwin_daemon.py', 'pid': None, 'allow_multiple': False},
-    {'name': 'Sendgrid Lungo Daemon', 'label': 'sendgrid_daemon.py', 'pid': None, 'allow_multiple': False},
-    # {'name': 'Notification Daemon (socket.io)', 'label': 'notifications', 'cmdline_contains': ['/www/lungo/bin/gunicorn', 'notification_daemon:app'], 'cwd': '/www/lungo', 'allow_multiple': True},
-    {'name': 'Notification Daemon (socket.io)', 'label': 'notifications', 'pid_file': '/www/lungo/notification_daemon.pid'}
-
-]
-CHECK_SERVER_HEALTH = [
-    {'critical_disk_paths': ["/", "/var", "/home"], 'warning_percent': 75, 'critical_percent': 90}
-]
 
 
 def clean_mongo_keys(doc):
@@ -130,6 +111,6 @@ def check():
                                                   payl=clean_mongo_keys(json.loads(dumps(result))),
                                                   skip_validation=True)
     except Exception as e:
-        app.logger.exception('[Ohdear] Error post_interal result {e}')
+        app.logger.exception(f'[Ohdear] Error post_interal result {e}')
 
     return jsonify(json.loads(dumps(result))), 200  # ,status_code=200,) #json.dumps(result, cls=EveJSONEncoder)
