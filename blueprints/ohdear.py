@@ -60,6 +60,7 @@ def check():
         if 'pid' in service and service['pid'] is None:
             try:
                 process = find_process_by_filename(service['label'])
+                app.logger.debug(f'Found process for service {service["label"]}: {process}')
                 if len(process) > 0:
                     service['pid'] = process[0]['pid']
                 else:
@@ -69,6 +70,7 @@ def check():
                 service.pop('pid')
                 app.logger.exception(f'Error checking for service {service} by pid: {e}')
 
+        app.logger.debug(f'Checking service health for service with parameters: {service}')
         checked = check_service_health_ohdear(**service)
 
         # If resync is running, don't fail integration sync
