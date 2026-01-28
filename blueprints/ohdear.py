@@ -59,26 +59,31 @@ def check():
         checked = None
         if 'pid' in service and service['pid'] is None:
             try:
+                app.logger.debug(f'Finding process for service {service["label"]} by filename')
                 process = find_process_by_filename(service['label'])
-                app.logger.debug(f'Found process for service {service["label"]}: {process}')
+                app.logger.debug(f'Found process for service by filename {service["label"]}: {process}')
                 if len(process) > 0:
+                    app.logger.debug(f'Setting pid for service {service["label"]} to {process[0]["pid"]}')
                     service['pid'] = process[0]['pid']
                 else:
+                    app.logger.debug(f'No process found for service {service["label"]} by filename')
                     service.pop('pid')
 
             except Exception as e:
                 service.pop('pid')
-                app.logger.exception(f'Error checking for service {service} by pid: {e}')
+                app.logger.exception(f'Error checking for service {service} by name: {e}')
 
         app.logger.debug(f'Checking service health for service with parameters: {service}')
         checked = check_service_health_ohdear(**service)
 
         # If resync is running, don't fail integration sync
         if checked['status'] != 'ok' and service['name'] == 'Integration Syncronization':
+            app.logger.debug(f'Integration sync check failed, checking for resync process')
             process = find_process_by_filename('resync')
             if len(process) > 0:
                 service['pid'] = process[0]['pid']
                 checked = check_service_health_ohdear(**service)
+
         result['checkResults'].append(checked)
 
     # 3. Server
