@@ -37,7 +37,7 @@ definition = {
     'versioning': False,
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT', 'DELETE'],
-    'mongo_indexes': {'id': ([('id', 1)], {'background': True}),
+    'mongo_indexes': {'id_': ([('id', 1)], {'background': True}),
                       'created': ([('created', 1)], {'background': True}),
                       '_status': ([('_status', 1)], {'background': True}),
                       '_org_id': ([('_org_id', 1)], {'background': True}),
