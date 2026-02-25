@@ -22,7 +22,13 @@ from eve.utils import parse_request
 import json
 from functools import wraps
 import inspect
-from pydantic import validate_call, ValidationError
+try:
+    # Python <=3.6
+    from pydantic import validate_arguments as validate_call
+except ImportError:
+    from pydantic import validate_call
+from pydantic import ValidationError
+
 NIF = SwaggerBlueprint('NIF tools', __name__, url_prefix='nif')
 
 API = None
