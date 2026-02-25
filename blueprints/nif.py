@@ -22,7 +22,7 @@ from eve.utils import parse_request
 import json
 from functools import wraps
 import inspect
-
+from pydantic import validate_call, ValidationError
 NIF = SwaggerBlueprint('NIF tools', __name__, url_prefix='nif')
 
 API = None
@@ -35,8 +35,13 @@ def get_nif_api_client() -> NifRestApiClient:
 
     return API
 
-
-def _gen_change_msg(entity_id, entity_type, change_type='Modified', org_id=376, realm='PROD'):
+@validate_call
+def _gen_change_msg(
+        entity_id: int,
+        entity_type: str,
+        change_type: str = 'Modified',
+        org_id: int = 376,
+        realm: str = 'PROD'):
     payload = {}
     sequence_ordinal = datetime.utcnow()
 
