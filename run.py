@@ -32,6 +32,7 @@ from blueprints.notifications import Notifications
 from blueprints.ohdear import Ohdear
 import time
 from flask import g, request, current_app
+import uuid
 # Import blueprints
 # from blueprints.authentication import Authenticate
 # Register custom blueprints
@@ -203,6 +204,7 @@ if 1 == 1 or not app.debug:
 
 @app.before_request
 def start_timer_and_log_start():
+    g.request_id = str(uuid.uuid4())
     g.start_time = time.perf_counter()
 
     # Optional: skip logging health-checks or static if you have many
@@ -237,6 +239,7 @@ def start_timer_and_log_start():
         except Exception:
             msg_parts.append("body=[parse-error]")
 
+    msg_parts.insert(0, f"request_id={g.request_id}")
     app.logger.info(" → " + " | ".join(msg_parts))
 
 
@@ -252,7 +255,8 @@ def log_completion(response):
         return response
 
     app.logger.info(
-        " ← status=%s | duration=%.4f s | path=%s",
+        "request_id=%s | ← status ← status=%s | duration=%.4f s | path=%s",
+        g.request_id,
         response.status_code,
         duration,
         request.path
