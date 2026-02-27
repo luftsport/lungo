@@ -12,10 +12,3 @@ else
         kill -15 `cat ${LUNGO_PID_FILE}`
         echo "Killed Lungo process from pid file"
 fi
-
-if [ ! -f $NOTIFY_PID_FILE ];then
-        echo "No pid file for notification daemon, exiting"
-else
-        kill -15 `cat ${NOTIFY_PID_FILE}`
-        echo "Killed Notification Daemon process from pid file"
-fi
