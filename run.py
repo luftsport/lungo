@@ -14,9 +14,9 @@ import os, sys
 from eve import Eve
 import json
 
-
 try:
     from eve_swagger import get_swagger_blueprint, add_documentation as add_swagger_documentation
+
     swagger_blueprint = get_swagger_blueprint()
 except Exception as e:
     from eve_swagger import swagger as swagger_blueprint, add_documentation as add_swagger_documentation
@@ -30,7 +30,8 @@ from blueprints.nif import NIF
 from blueprints.tms import Tms
 from blueprints.notifications import Notifications
 from blueprints.ohdear import Ohdear
-
+import time
+from flask import g, request, current_app
 # Import blueprints
 # from blueprints.authentication import Authenticate
 # Register custom blueprints
@@ -58,6 +59,7 @@ SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settin
 # Instantiate with custom auth
 # app = CustomEve(auth=TokenAuth, settings=SETTINGS_PATH)
 # app = Eve(settings=SETTINGS_PATH)
+
 app = Eve(auth=NlfTokenAuth, settings=SETTINGS_PATH)
 # app = Eve(settings=SETTINGS_PATH)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -100,7 +102,6 @@ with app.app_context():
         for path, operations in swagger_spec.items():
             app.logger.info(f'[Blueprint] adding path {path} to swagger doc')
             add_swagger_documentation(swagger_blueprint, {'paths': {path: operations}})
-
 
 from ext.app.hooks import (
     on_function_post,
@@ -198,6 +199,66 @@ if 1 == 1 or not app.debug:
     file_handler.setLevel(logging.DEBUG)
     app.logger.addHandler(file_handler)
     app.logger.info('Lungo startup on database %s' % app.config['MONGO_DBNAME'])
+
+
+@app.before_request
+def start_timer_and_log_start():
+    g.start_time = time.perf_counter()
+
+    # Optional: skip logging health-checks or static if you have many
+    if request.path.startswith(('/_', '/static', '/health')):
+        return
+
+    # Build log message base
+    msg_parts = [
+        f"method={request.method}",
+        f"path={request.path}",
+    ]
+
+    # Query params (GET/DELETE usually; also ? in POST sometimes)
+    if request.args:
+        # Convert to str; be careful – mask tokens/passwords in prod!
+        params_str = ', '.join(f"{k}={v}" for k, v in request.args.items(multi=True))
+        msg_parts.append(f"query_params={{{params_str}}}")
+
+    # Body for POST/PUT/PATCH (JSON or form) – careful with size & secrets
+    if request.method in ('POST', 'PUT', 'PATCH'):
+        try:
+            if request.is_json:
+                body = request.get_json(silent=True)
+                if body:
+                    # Truncate if huge; or just log keys
+                    body_preview = str(body)[:500] + '...' if len(str(body)) > 500 else str(body)
+                    msg_parts.append(f"body_preview={body_preview}")
+            elif request.form:
+                form_str = ', '.join(f"{k}={v}" for k, v in request.form.items())
+                msg_parts.append(f"form={{{form_str}}}")
+            # else: raw data → request.get_data() – usually skip or log length only
+        except Exception:
+            msg_parts.append("body=[parse-error]")
+
+    app.logger.info(" → " + " | ".join(msg_parts))
+
+
+@app.after_request
+def log_completion(response):
+    if not hasattr(g, 'start_time'):
+        return response
+
+    duration = time.perf_counter() - g.start_time
+
+    # Optional: skip or shorten for health endpoints
+    if request.path.startswith(('/_', '/static', '/health')):
+        return response
+
+    app.logger.info(
+        " ← status=%s | duration=%.4f s | path=%s",
+        response.status_code,
+        duration,
+        request.path
+    )
+
+    return response
 
 
 # Run only once
