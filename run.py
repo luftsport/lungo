@@ -255,7 +255,7 @@ def log_completion(response):
         return response
 
     app.logger.info(
-        "request_id=%s | ← status ← status=%s | duration=%.4f s | path=%s",
+        "request_id=%s |← status=%s | duration=%.4f s | path=%s",
         g.request_id,
         response.status_code,
         duration,
