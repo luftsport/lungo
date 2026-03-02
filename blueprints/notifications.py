@@ -92,6 +92,17 @@ class Worker(threading.Thread):
                 self.work_queue.task_done()
 
 
+def get_list_of_all_members() -> List[int]:
+    try:
+        col = app.data.driver.db['persons']
+        persons = list(col.find({'_merged_to': {'$exists': False}}, {'id': 1, '_id': -1}))
+        return [x['id'] for x in persons if 'id' in x]
+
+    except Exception as e:
+        app.logger.error(f"Error fetching members from Mongo: {e}")
+        return []
+
+
 def filter_existing_persons(resp: List[Dict], max_concurrent: int = 10) -> List[str]:
     """
     Filter person_ids that exist in the remote API using a thread pool and work queue.
@@ -104,7 +115,7 @@ def filter_existing_persons(resp: List[Dict], max_concurrent: int = 10) -> List[
         List of person_ids that exist in the remote API.
     """
     # Extract unique person_ids
-    person_ids = list(set(item['person_id'] for item in resp))
+    person_ids = list(set(item['person_id'] for item in resp if 'person_id' in item))
     app.logger.info(f"Processing {len(person_ids)} unique person_ids")
 
     # Initialize thread-safe results list and lock
@@ -1087,8 +1098,7 @@ def generate_notifications(_id):
 
             # Manual snaikoil
             if response['recipients'].get('roles', []) == [{"org": "*", "activity": "*", "role": NIF_ROLE_MEMBER}]:
-                with open('/www/lungo/members_all.json') as fp:
-                    recipients.extend(json.load(fp))
+                recipients.extend(get_list_of_all_members())
             else:
                 for role in response['recipients'].get('roles', []):
                     recipients.extend(get_users_from_role(role))
