@@ -213,12 +213,14 @@ definition = {
     'versioning': True,
     'resource_methods': ['GET'],
     'item_methods': ['GET'],
-    'mongo_indexes': {  # 'person_id': ([('id', 1)], {'background': True}),
+    'mongo_indexes': {
+        # 'person_id': ([('id', 1)], {'background': True}),
         # , 'unique': True gives DuplicateKeyError with versioning
-        # 'primary_email': ([('primary_email', 'text')], {'background': True}),
         'primary_email': ([('primary_email', 1)], {'background': True}),
+        'additional_emails': ([('address.email', 1)], {'background': True}),
         'location': ([('address.location.geo', '2dsphere')], {'background': True}),
         # 'clubs': ([('clubs', 1)], {'background': True}),
+        'merged': ([('_merged_to', 1)], {'background': True}),
         'membership': ([('memberships', 1)], {'background': True}),
         'group': ([('memberships.group', 1)], {'background': True}),
         'discipline': ([('memberships.discipline', 1)], {'background': True}),
@@ -227,7 +229,9 @@ definition = {
         'activities': ([('activities', 1)], {'background': True}),
         'licenses': ([('licenses', 1)], {'background': True}),
         'competences': ([('competences', 1)], {'background': True}),
-        'names': ([('full_name', 'text')], {'background': True}) # , ('primary_email','text')
+        'timestamps': ([('_created', 1), ('_updated', 1), ('birth_date', 1), ('created_date', 1), ('last_changed_date', 1)], {'background': True}),
+        'personal': ([('gender', 1)], {'background': True}),
+        'names': ([('full_name', 'text'), ('primary_email','text')], {'background': True}) # ,
     },
     'schema': _schema
 }

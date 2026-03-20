@@ -98,6 +98,7 @@ definition = {
         'uuid': ([('uuid', 1)], {'background': True}),
         'event': ([('event_from', 1), ('event_from_id', 1), ('event_created', 1)], {'background': True}),
         'recipients': ([('recipients', 1)], {'background': True}),
+        'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
     },
     'additional_lookup': {
         'url': 'regex("[a-fA-F0-9-]+")',

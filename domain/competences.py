@@ -52,7 +52,8 @@ definition = {
                       'valid_until': ([('valid_until', 1)], {'background': True}),
                       'section': ([('_section', 1)], {'background': True}),
                       'code': ([('_code', 1)], {'background': True}),
-                      'title': ([('title', 'text')], {'background': True})
+                      'title': ([('title', 'text')], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
                       },
     'schema': _schema
 }
@@ -95,7 +96,7 @@ search_definition = {
                        "_version": 1
                    },
                    'default_sort': [("_score", {"$meta": "textScore"})],
-                   #'filter': {'_merged_to': {'$exists': False}}
+                   # 'filter': {'_merged_to': {'$exists': False}}
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

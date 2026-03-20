@@ -5,11 +5,11 @@ _schema = {
            'required': True,
            'unique': True},
     'type_id': {'type': 'integer'
-                #'data_relation': {
+                # 'data_relation': {
                 #    'resource': 'licenses_types',
                 #    'field': 'id',
                 #    'embeddable': True,
-                #},
+                # },
                 },
     'type_name': {'type': 'string'},
     'type_price': {'type': 'number'},
@@ -62,6 +62,7 @@ definition = {
                       'period_from_date': ([('period_from_date', 1)], {'background': True}),
                       'period_owner_org_id': ([('period_owner_org_id', 1)], {'background': True}),
                       'text': ([('period_name', 'text'), ('type_name', 'text')], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
                       },
     'schema': _schema
 }

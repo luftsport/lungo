@@ -128,13 +128,12 @@ definition = {
                       'KL Number': ([('nif_organization_number', 1)], {'background': True}),
                       '_up': ([('_up', 1)], {'background': True}),
                       '_down': ([('_down', 1)], {'background': True}),
-                      'name': ([('name', 'text'),('describing_name', 'text')], {'background': True}),
+                      'name': ([('name', 'text'), ('describing_name', 'text')], {'background': True}),
                       'location': ([('contact.location.geo', '2dsphere')], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
                       },
     'schema': _schema
 }
-
-
 
 # Process resource without data_relations
 _schema_process = _schema.copy()
@@ -186,7 +185,7 @@ search_definition = {
                        "_version": 1
                    },
                    'default_sort': [("_score", {"$meta": "textScore"})],
-                   #'filter': {'org_id_owner': 376, 'is_valid':True}
+                   # 'filter': {'org_id_owner': 376, 'is_valid':True}
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',
@@ -197,7 +196,6 @@ search_definition = {
     'item_methods': [],
     'schema': _schema
 }
-
 
 # Aggregation
 from bson import SON, ObjectId

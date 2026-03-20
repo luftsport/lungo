@@ -42,6 +42,7 @@ definition = {
                       '_status': ([('_status', 1)], {'background': True}),
                       '_org_id': ([('_org_id', 1)], {'background': True}),
                       '_updated': ([('_updated', 1)], {'background': True}),
+                      '_created': ([('_created', 1)], {'background': True}),
                       'entity_type': ([('entity_type', 1)], {'background': True}),
                       'change_type': ([('change_type', 1)], {'background': True}),
                       '_ordinal': ([('_ordinal', 1)], {'background': True}),

@@ -41,6 +41,7 @@ import notifications_messages
 import files
 import sendgrid_webhook
 import ohdear
+import request_logs
 # import test, test_ref
 
 DOMAIN = {
@@ -183,6 +184,8 @@ DOMAIN = {
     "sendgrid_webhook": sendgrid_webhook.definition,
     #OhDear
     "ohdear_snapshots": ohdear.definition,
+    # Profiler
+    "request_logs": request_logs.definition,
 
     # Files
     "files": files.definition,

@@ -12,5 +12,8 @@ definition = {
     'versioning': False,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET'],
+    'mongo_indexes': {
+        'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
+    },
     'schema': _schema
 }

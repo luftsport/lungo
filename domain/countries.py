@@ -22,7 +22,8 @@ definition = {
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'mongo_indexes': {'country_id': ([('id', 1)], {'background': True}),
-                      'country_name': ([('name', 'text'), ('name_en', 'text')], {'background': True})
+                      'country_name': ([('name', 'text'), ('name_en', 'text')], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
                       },
     'schema': _schema
 }
@@ -41,7 +42,7 @@ search_definition = {
                        "_version": 1
                    },
                    'default_sort': [("_score", {"$meta": "textScore"})],
-                   #'filter': {'org_id_owner': 376, 'is_valid':True}
+                   # 'filter': {'org_id_owner': 376, 'is_valid':True}
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

@@ -20,7 +20,8 @@ definition = {
     'resource_methods': ['GET', 'POST', 'DELETE'],
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'mongo_indexes': {'id': ([('id', 1)], {'background': True}),
-                      'name': ([('name', 'text')], {'background': True})
+                      'name': ([('name', 'text')], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
                       },
     'schema': _schema
 }

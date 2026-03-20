@@ -28,7 +28,8 @@ definition = {
     'mongo_indexes': {'type_id': ([('id', 1)], {'background': True}),
                       'org_id_owner': ([('org_id_owner', 1)], {'background': True}),
                       'parent_activity_id': ([('parent_activity_id', 1)], {'background': True}),
-                      'name': ([('name', 'text')], {'background': True})
+                      'name': ([('name', 'text')], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
                       },
     'schema': _schema
 }

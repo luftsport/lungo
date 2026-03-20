@@ -47,7 +47,8 @@ definition = {
                       'ref': ([('ref', 1), ('ref_id', 1)], {'background': True}),
                       'owner': ([('owner', 1)], {'background': True}),
                       'acl': ([('acl', 1)], {'background': True}),
-                      'descr': ([('description', 'text'), ('name', 'text')], {'background': True})
+                      'descr': ([('description', 'text'), ('name', 'text')], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
                       },
     'schema': _schema,
 

@@ -23,7 +23,8 @@ definition = {
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'mongo_indexes': {'county_id': ([('id', 1)], {'background': True}),
                       'parent_id': ([('parent_id', 1)], {'background': True}),
-                      'county_name': ([('name', 'text')], {'background': True})
+                      'county_name': ([('name', 'text')], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
                       },
     'schema': _schema
 }
@@ -42,7 +43,7 @@ search_definition = {
                        "_version": 1
                    },
                    'default_sort': [("_score", {"$meta": "textScore"})],
-                   #'filter': {'org_id_owner': 376, 'is_valid':True}
+                   # 'filter': {'org_id_owner': 376, 'is_valid':True}
                    },
     'additional_lookup': {
         'url': 'regex("[\d{1,9}]+")',

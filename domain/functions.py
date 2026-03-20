@@ -78,7 +78,8 @@ definition = {
                       'active_in_org_id': (
                           [('active_in_org_id', 1), ('org_id', 1), ('org_type_id', 1)], {'background': True}),
                       'has_paid_membership': ([('has_paid_membership', 1)], {'background': True}),
-                      'type_name': ([('type_name', 'text')], {'background': True})
+                      'type_name': ([('type_name', 'text')], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
                       },
     'schema': _schema
 }

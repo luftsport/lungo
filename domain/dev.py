@@ -13,25 +13,27 @@
 """
 
 _schema = {
-            'app': {
-                   'type': 'string',
-                   'required': True,
-                   },
-            'payload': {
-                      'type': 'dict',
-                      'required': True,
-                      },
+    'app': {
+        'type': 'string',
+        'required': True,
+    },
+    'payload': {
+        'type': 'dict',
+        'required': True,
+    },
 
-                
-            }
+}
 
 definition = {
-        'item_title': 'dev',
-        'url': 'dev',
-        'versioning': False,
-        # Full on!
-        'resource_methods': ['GET', 'POST', 'DELETE'],
-        'item_methods': ['GET', 'PATCH', 'PUT', 'DELETE'],
-        # Add schema
-        'schema': _schema,
+    'item_title': 'dev',
+    'url': 'dev',
+    'versioning': False,
+    # Full on!
+    'resource_methods': ['GET', 'POST', 'DELETE'],
+    'item_methods': ['GET', 'PATCH', 'PUT', 'DELETE'],
+    'mongo_indexes': {
+        'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
+    },
+    # Add schema
+    'schema': _schema,
 }

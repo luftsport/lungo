@@ -13,7 +13,7 @@ _schema = {'type': {'type': 'string',
                     'required': True,
                     },
            'uuid': {'type': 'string'},
-           'data': { # To build the message!
+           'data': {  # To build the message!
                'type': 'dict',
                'schema': {
                    'subject': {'type': 'string'},  # Subject of the notification
@@ -53,14 +53,20 @@ _schema = {'type': {'type': 'string',
            # Event information
            'event_id': {'type': 'objectid',
                         'data_relation': {
-                           'resource': 'notifications',
-                           'field': '_id',
-                           'embeddable': True,
-                       }},
+                            'resource': 'notifications',
+                            'field': '_id',
+                            'embeddable': True,
+                        }},
            'event_created': {'type': 'datetime'},
            'event_from': {'type': 'string'},  # ex notifications
            'event_from_id': {'type': 'objectid'},  # {'type': 'objectid'},
            'sg_message_id': {'type': 'string', 'nullable': True},  # Sendgrid message id
+           # {'type': 'string',
+           #            'data_relation': {
+           #               'resource': 'sendgrid_webhook',
+           #               'field': 'sg_message_id',
+           #               'embeddable': True,
+           #           }},
            # 'event_person_id': {'type': 'integer'}, # Sender
            'dismissible': {'type': 'boolean'},  # Can dimiss?
            'dismissed': {'type': 'datetime', 'nullable': True},
@@ -85,6 +91,7 @@ definition = {
         'uuid': ([('uuid', 1)], {'background': True}),
         'event': ([('event_from', 1), ('event_from_id', 1), ('event_created', 1)], {'background': True}),
         'recipient': ([('recipient', 1)], {'background': True}),
+        'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
     },
     'additional_lookup': {
         'url': 'regex("[a-fA-F0-9-]+")',

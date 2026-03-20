@@ -29,20 +29,21 @@ definition = {
     'datasource': {'source': RESOURCE_COLLECTION,
                    },
     'url': 'persons/fids',
-    #'additional_lookup': {
+    # 'additional_lookup': {
     #    'url': 'regex("[\d{1,9}]+")',
     #    'field': 'person_id',
-    #},
+    # },
     # 'pagination': False,
     # 'extra_response_fields': ['personId'],
-    #'versioning': True,
+    # 'versioning': True,
     # 'internal_resource': True, # Only internal?
     'allow_unknown': True,
     'resource_methods': ['GET', 'POST'],
     'item_methods': ['GET', 'PATCH', 'PUT', 'DELETE'],
     'mongo_indexes': {
         'person_id': ([('person_id', 1)], {'background': True}),
-        'fid_type': ([('fid_type', 1)], {'background': True})
+        'fid_type': ([('fid_type', 1)], {'background': True}),
+        'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
     },
     'schema': _schema
 }

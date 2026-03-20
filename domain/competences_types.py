@@ -52,6 +52,7 @@ definition = {
     'item_methods': ['GET', 'PATCH', 'PUT'],
     'mongo_indexes': {'type_id': ([('id', 1)], {'background': True}),
                       'type': ([('meta_type', 1)], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True}),
                       'title': ([('title', 'text'), ('description', 'text'), ('sports.name', 'text')], {'background': True})
                       },
     'allow_unknown': True,

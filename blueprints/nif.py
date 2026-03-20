@@ -76,7 +76,7 @@ def _gen_change_msg(
 
 
 def _get_KA(use_cache=True):
-    return KA(KA_USERNAME, KA_PASSWORD, use_cache=use_cache)
+    return KA(KA_USERNAME, KA_PASSWORD, use_cache=use_cache, cookie_file='ka_cookies.json')
 
 
 def _get_SA():

@@ -12,6 +12,8 @@
 import os, sys
 
 from eve import Eve
+# Log profiling
+
 import json
 
 try:
@@ -30,9 +32,7 @@ from blueprints.nif import NIF
 from blueprints.tms import Tms
 from blueprints.notifications import Notifications
 from blueprints.ohdear import Ohdear
-import time
-from flask import g, request, current_app
-import uuid
+
 # Import blueprints
 # from blueprints.authentication import Authenticate
 # Register custom blueprints
@@ -201,68 +201,92 @@ if 1 == 1 or not app.debug:
     app.logger.addHandler(file_handler)
     app.logger.info('Lungo startup on database %s' % app.config['MONGO_DBNAME'])
 
+PROFILING = True
+if PROFILING is True:
+    import time
+    from eve.methods.post import post_internal
+    from flask import g, request
+    import uuid
+    @app.before_request
+    def start_timer_and_log_start():
+        g.request_id = str(uuid.uuid4())
+        g.start_time = time.perf_counter()
 
-@app.before_request
-def start_timer_and_log_start():
-    g.request_id = str(uuid.uuid4())
-    g.start_time = time.perf_counter()
+        # Optional: skip logging health-checks or static if you have many
+        if request.path.endswith(('request/logs', 'request')):
+            return
 
-    # Optional: skip logging health-checks or static if you have many
-    if request.path.startswith(('/_', '/static', '/health')):
-        return
+        # Build log message base
+        msg_parts = [
+            f"method={request.method}",
+            f"path={request.path}",
+        ]
 
-    # Build log message base
-    msg_parts = [
-        f"method={request.method}",
-        f"path={request.path}",
-    ]
+        # Query params (GET/DELETE usually; also ? in POST sometimes)
+        if request.args:
+            g.query_params =  ', '.join(f"{k}={v}" for k, v in request.args.items(multi=True))
+            msg_parts.append(f"query_params={{{g.query_params}}}")
 
-    # Query params (GET/DELETE usually; also ? in POST sometimes)
-    if request.args:
-        # Convert to str; be careful – mask tokens/passwords in prod!
-        params_str = ', '.join(f"{k}={v}" for k, v in request.args.items(multi=True))
-        msg_parts.append(f"query_params={{{params_str}}}")
+        # Body for POST/PUT/PATCH (JSON or form)
+        if request.method in ('POST', 'PUT', 'PATCH'):
+            try:
+                if request.is_json:
+                    body = request.get_json(silent=True)
+                    if body:
+                        # Truncate if huge; or just log keys
+                        body_preview = str(body)[:500] + '...' if len(str(body)) > 500 else str(body)
+                        msg_parts.append(f"body_preview={body_preview}")
+                elif request.form:
+                    form_str = ', '.join(f"{k}={v}" for k, v in request.form.items())
+                    msg_parts.append(f"form={{{form_str}}}")
+                # else: raw data → request.get_data() – usually skip or log length only
+            except Exception:
+                msg_parts.append("body=[parse-error]")
 
-    # Body for POST/PUT/PATCH (JSON or form) – careful with size & secrets
-    if request.method in ('POST', 'PUT', 'PATCH'):
+        msg_parts.insert(0, f"request_id={g.request_id}")
+        app.logger.info(" → " + " | ".join(msg_parts))
+
+
+    def store_log(payload):
+        # Store the log in MongoDB or any other storage
+        # You can use app.data.driver.db to access the MongoDB instance
         try:
-            if request.is_json:
-                body = request.get_json(silent=True)
-                if body:
-                    # Truncate if huge; or just log keys
-                    body_preview = str(body)[:500] + '...' if len(str(body)) > 500 else str(body)
-                    msg_parts.append(f"body_preview={body_preview}")
-            elif request.form:
-                form_str = ', '.join(f"{k}={v}" for k, v in request.form.items())
-                msg_parts.append(f"form={{{form_str}}}")
-            # else: raw data → request.get_data() – usually skip or log length only
-        except Exception:
-            msg_parts.append("body=[parse-error]")
-
-    msg_parts.insert(0, f"request_id={g.request_id}")
-    app.logger.info(" → " + " | ".join(msg_parts))
+            # app.data.driver.db['request_logs'].insert_one(payload)
+            _, _, _, _, _ = post_internal(resource='request_logs',
+                                          payl=payload,
+                                          skip_validation=True)
+        except Exception as e:
+            current_app.logger.error(f"Failed to store log: {e}")
 
 
-@app.after_request
-def log_completion(response):
-    if not hasattr(g, 'start_time'):
+    @app.after_request
+    def log_completion(response):
+        if not hasattr(g, 'start_time') or 300 <= response.status_code < 400:
+            return response
+
+        duration = time.perf_counter() - g.start_time
+
+        # Optional: skip or shorten for health endpoints
+        if request.path.startswith(('/_', '/static', '/health')):
+            return response
+
+        app.logger.info(
+            "request_id=%s |← status=%s | duration=%.4f s | path=%s",
+            g.request_id,
+            response.status_code,
+            duration,
+            request.path
+        )
+        store_log({
+            'request_id': g.request_id,
+            'method': request.method,
+            'request_args': g.query_params if hasattr(g, 'query_params') else None,
+            'path': request.path,
+            'status_code': response.status_code,
+            'duration': duration,
+            'start_time': g.start_time
+        })
         return response
-
-    duration = time.perf_counter() - g.start_time
-
-    # Optional: skip or shorten for health endpoints
-    if request.path.startswith(('/_', '/static', '/health')):
-        return response
-
-    app.logger.info(
-        "request_id=%s |← status=%s | duration=%.4f s | path=%s",
-        g.request_id,
-        response.status_code,
-        duration,
-        request.path
-    )
-
-    return response
 
 
 # Run only once

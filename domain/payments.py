@@ -52,6 +52,7 @@ definition = {
                       'paid_date': ([('paid_date', 1)], {'background': True}),
                       'person_id': ([('person_id', 1)], {'background': True}),
                       'text': ([('product_type', 'text'), ('product_name', 'text')], {'background': True}),
+                      'timestamps': ([('_created', 1), ('_updated', 1)], {'background': True})
                       },
     'schema': _schema
 }
@@ -76,7 +77,6 @@ process_definition = {
     'schema': _schema_process
 }
 
-
 payments_total_per_year = {
     'url': 'payments/year/total',
     'item_title': 'Aggregates and returns total amount payed for year',
@@ -85,11 +85,11 @@ payments_total_per_year = {
         'source': RESOURCE_COLLECTION,
         'aggregation': {
             'pipeline': [
-        {'$match': {'paid_date': {'$gte': '$from_date', '$lte': '$to_date'}}},
-        {'$group': {"_id": "payments", "amount": {"$sum": '$amount'}, "count": {"$sum": 1}}}
+                {'$match': {'paid_date': {'$gte': '$from_date', '$lte': '$to_date'}}},
+                {'$group': {"_id": "payments", "amount": {"$sum": '$amount'}, "count": {"$sum": 1}}}
 
-                #{'$project': {'Total': {"$sum": '$amount'}}}
-        ]
+                # {'$project': {'Total': {"$sum": '$amount'}}}
+            ]
         }
     }
 }
