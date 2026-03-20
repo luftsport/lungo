@@ -13,7 +13,7 @@ import json
 import requests
 from dateutil.parser import parse as date_parse
 from ext.app.eve_blueprint_helper import format_response
-
+from ext.app.helpers import DateExtractor
 from ext.auth.clients import LUNGO_SIO_TOKEN
 from ext.app.decorators import _async, debounce
 from ext.app.persons import deregister_person
@@ -194,12 +194,11 @@ def after_get_person(response):
         # replace id with _merged_to
         headers = {
             'Location': '{}'.format(
-                # Also, rewrites to https
-                flask_request.url.replace('http:', 'https:').replace(str(response.get('id', 0)), str(response.get('_merged_to', 0)))
+                # Also, used to rewrite to https with .replace('http:', 'https:')
+                flask_request.url.replace(str(response.get('id', 0)), str(response.get('_merged_to', 0)))
             )
         }
-        # from flask import redirect
-        # return redirect(headers['Location'], 301)
+
         return abort(
             Response(
                 response=None,
@@ -656,9 +655,18 @@ def _get_pmt_group_from_club(org_id):
 
 def _get_pmt_year(text):
     try:
-        return date_parse(text, fuzzy=True).year
-    except:
-        # Error could not extract a year use todays year!
+        dates = DateExtractor.extract_dates(text)
+        if not dates:
+            raise ValueError("No dates found")
+
+        year = dates[0].year
+
+        # Handle both attribute and callable cases
+        if callable(year):
+            return year()
+        return year
+
+    except Exception:
         pass
 
     return datetime.now().year

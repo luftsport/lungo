@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, date
 from dateutil import parser, tz
 from flask import current_app as app, g
 from eve.methods.get import get_internal, getitem_internal
 from operator import itemgetter
+import re
 
 LOCAL_TIMEZONE = "Europe/Oslo"  # UTC
 tz_utc = tz.gettz('UTC')
@@ -164,3 +165,93 @@ def _get_functions_types(type_id) -> dict:
             return function_type['_items'][0]
 
     return {}
+
+
+class DateExtractor:
+
+    DATE_REGEX = re.compile(
+        r"""
+        \b(
+            # ISO / numeric formats
+            \d{4}[-./]\d{1,2}[-./]\d{1,2} |
+            \d{1,2}[-./]\d{1,2}[-./]\d{4} |
+            \d{8} |
+    
+            # 9 Jan 2026 / 09 Jan 26
+            \d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?,?\s+\d{2,4} |
+    
+            # January 9, 2026
+            (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{2,4}
+        )\b
+        """,
+        re.IGNORECASE | re.VERBOSE,
+    )
+
+
+    def normalize_date_string(s: str) -> str:
+        return s.replace(".", "-").replace("/", "-").strip()
+
+
+    def try_parse_iso(s: str):
+        try:
+            parts = s.split("-")
+            if len(parts) == 3 and len(parts[0]) == 4:
+                y, m, d = map(int, parts)
+                return date(y, m, d)
+        except:
+            pass
+        return None
+
+
+    def try_parse_eu(s: str):
+        try:
+            parts = s.split("-")
+            if len(parts) == 3 and len(parts[2]) == 4:
+                d, m, y = map(int, parts)
+                return date(y, m, d)
+        except:
+            pass
+        return None
+
+
+    def try_parse_compact(s: str):
+        try:
+            if len(s) == 8 and s.isdigit():
+                return date(int(s[:4]), int(s[4:6]), int(s[6:8]))
+        except:
+            pass
+        return None
+
+
+    def try_parse_textual(s: str):
+        """Handle '9 Jan 2026', 'January 9, 2026', etc."""
+        try:
+            dt = parser.parse(s, dayfirst=True, yearfirst=True, fuzzy=True)
+
+            # Fix 2-digit year ambiguity (dateutil can guess weirdly)
+            if dt.year < 100:
+                dt = dt.replace(year=2000 + dt.year if dt.year < 50 else 1900 + dt.year)
+
+            return dt.date()
+        except:
+            return None
+
+
+    def extract_dates(text: str):
+        matches = DATE_REGEX.findall(text)
+        results = []
+
+        for raw in matches:
+            s = normalize_date_string(raw)
+
+            parsed = (
+                    try_parse_iso(s)
+                    or try_parse_compact(s)
+                    or try_parse_eu(s)
+                    or try_parse_textual(raw)  # use original for text parsing
+            )
+
+            if parsed:
+                results.append(parsed)
+
+        return sorted(set(results))
