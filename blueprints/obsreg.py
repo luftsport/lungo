@@ -23,7 +23,7 @@ def get_avatar(person_id):
     try:
         headers = {"Authorization": f"Basic {USERS[g.token]['client_token']}"}
         response = requests.get(f'{OBSREG_API_URL}/persons/avatar/{person_id}', headers=headers)
-        if status == 200:
+        if response.status_code == 200:
             return eve_response(response.json(), response.status_code)
     except Exception as e:
         app.logger.exception(f'Error fetching avatar for person {person_id}')
