@@ -22,7 +22,7 @@ OBSREG = SwaggerBlueprint('OBSREG resources', __name__, url_prefix='obsreg')
 def get_avatar(person_id):
     try:
         headers = {"Authorization": f"Basic {USERS[g.token]['client_token']}"}
-        response = requests.get(f'{OBSREG_API_URL}/persons/{person_id}/avatar', headers)
+        response = requests.get(f'{OBSREG_API_URL}/persons/avatar/{person_id}', headers=headers)
         if status == 200:
             return eve_response(response.json(), response.status_code)
     except Exception as e:
