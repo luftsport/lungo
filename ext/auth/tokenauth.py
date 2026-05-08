@@ -16,6 +16,7 @@ from ext.auth.clients import users as USERS
 from datetime import datetime
 
 
+
 # from eve.methods.get import getitem as get_internal
 # from bson.objectid import ObjectId
 
@@ -55,6 +56,7 @@ class NlfTokenAuth(TokenAuth):
 
                 # globals
                 g.client_id = self.user_id
+                g.token = token
                 # X-on-behalf-of => person_id
                 try:
                     g.whitelist_secret_contact = USERS[token].get('whitelist_secret_contact', {})

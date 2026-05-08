@@ -30,6 +30,7 @@ from blueprints.acl import ACL
 from blueprints.html import Html
 from blueprints.nif import NIF
 from blueprints.tms import Tms
+from blueprints.obsreg import OBSREG
 from blueprints.notifications import Notifications
 from blueprints.ohdear import Ohdear
 
@@ -86,6 +87,7 @@ app.register_blueprint(Fai, url_prefix=f"{app.globals.get('prefix')}/{Fai.url_pr
 app.register_blueprint(ACL, url_prefix=f"{app.globals.get('prefix')}/{ACL.url_prefix}")
 app.register_blueprint(NIF, url_prefix=f"{app.globals.get('prefix')}/{NIF.url_prefix}")
 app.register_blueprint(Tms, url_prefix=f"{app.globals.get('prefix')}/{Tms.url_prefix}")
+app.register_blueprint(OBSREG, url_prefix=f"{app.globals.get('prefix')}/{OBSREG.url_prefix}")
 app.register_blueprint(Notifications, url_prefix=f"{app.globals.get('prefix')}/{Notifications.url_prefix}")
 app.register_blueprint(Ohdear, url_prefix=f"{app.globals.get('prefix')}/{Ohdear.url_prefix}")
 # Blueprint returning html
