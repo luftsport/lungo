@@ -10,7 +10,7 @@ cd $WORKING_DIR
 
 if [[ INVENV == 0 ]]
 then
-        source bin/acticate
+        source bin/activate
 fi
 
 # Membership api:
