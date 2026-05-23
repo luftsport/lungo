@@ -4,6 +4,7 @@ from flask import current_app as app, g
 from eve.methods.get import get_internal, getitem_internal
 from operator import itemgetter
 import re
+from typing import List
 
 LOCAL_TIMEZONE = "Europe/Oslo"  # UTC
 tz_utc = tz.gettz('UTC')
@@ -231,22 +232,17 @@ class DateExtractor:
 
         return None
 
-    def extract_years(self, text: str, min_year: int = 1900, max_year: int = 2200) -> list[int]:
-        """
-        Returns years in order of appearance.
-        """
+    def extract_years(text: str, min_year: int = 1900, max_year: int = 2200) -> List[int]:
         if not text:
             return []
 
-        # Pattern for years between 1900-2200 with word boundaries
-        year_pattern = re.compile(r'\b(19\d{2}|20\d{2}|21\d{2}|22[0-0])\b')
+        pattern = re.compile(r'\b(19[0-9]{2}|2[0-2][0-9]{2})\b')
 
         years = []
         seen = set()
 
-        for match in year_pattern.finditer(text):
-            year = int(match.group(1))
-
+        for match in pattern.finditer(text):
+            year = int(match.group(0))
             if min_year <= year <= max_year and year not in seen:
                 years.append(year)
                 seen.add(year)
