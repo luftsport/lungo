@@ -232,7 +232,7 @@ class DateExtractor:
 
         return None
 
-    def extract_years(text: str, min_year: int = 1900, max_year: int = 2200) -> List[int]:
+    def try_parse_years(self, text: str, min_year: int = 1900, max_year: int = 2200) -> List[int]:
         if not text:
             return []
 
@@ -249,13 +249,13 @@ class DateExtractor:
 
         return years
 
-    def try_parse_year(self, s: str):
+    def get_best_year(self, s: str):
         """Extracts the first valid year from the string, or returns None if not found.
         @TODO: Improve with handling sorted years to get largest or smallest year if multiple found, or use context to determine which year is relevant."""
 
         try:
             years = self.extract_years(s)
-            return years[0] if years else None
+            return years[0] if years and len(years)>0 else None
         except Exception as e:
             pass
         return None
@@ -272,6 +272,8 @@ class DateExtractor:
                     or self.try_parse_compact(s)
                     or self.try_parse_eu(s)
                     or self.try_parse_textual(raw)  # use original for text parsing
+                    or self.extract_years(s)
+                    or self.extract_years(raw)  # fallback to original text for year extraction
             )
 
             if parsed:
