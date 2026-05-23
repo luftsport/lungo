@@ -15,6 +15,7 @@ import domain
 
 from version import __version_info__
 APP_VERSION = '.'.join(__version_info__)
+APP_ENV = 'production'
 APP_AUTHOR = 'Einar Huseby'
 APP_LICENSE = 'MIT'
 APP_COPYRIGHT = '(c) 2020'
