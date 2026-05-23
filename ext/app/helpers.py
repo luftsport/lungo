@@ -28,7 +28,6 @@ def _fix_naive(date_time):
             app.logger.error(f'Fixing naive date time failed: {date_time}')
             app.logger.exception(e)
             date_time = None
-
     if isinstance(date_time, datetime):
         #if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
         """self.org_created is naive, no timezone we assume UTC"""
@@ -37,7 +36,6 @@ def _fix_naive(date_time):
         # All datetime is local from nif
         offset = date_time.replace(tzinfo=tz_local).utcoffset()
         date_time = (date_time.replace(tzinfo=None) - offset).replace(tzinfo=tz_utc)
-
     return date_time
 
 
@@ -234,7 +232,9 @@ class DateExtractor:
 
             return dt.date()
         except:
-            return None
+            pass
+
+        return None
 
 
     def extract_dates(text: str):
