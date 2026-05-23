@@ -175,10 +175,10 @@ class DateExtractor:
             \d{8} |
 
             # 9 Jan 2026 / 09 Jan 26
-            \d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?,?\s+\d{2,4} |
+            \d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Mai|Jun|Jul|Aug|Sep|Oct|Okt|Nov|Dec|Des)[a-z]*\.?,?\s+\d{2,4} |
 
             # January 9, 2026
-            (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{2,4}
+            (?:Jan|Feb|Mar|Apr|May|Mai|Jun|Jul|Aug|Sep|Oct|Okt|Nov|Dec|Des)[a-z]*\.?\s+\d{1,2},?\s+\d{2,4}
         )\b
         """,
         re.IGNORECASE | re.VERBOSE,
@@ -205,7 +205,7 @@ class DateExtractor:
                 return date(y, m, d)
         except Exception as e:
             pass
-        
+
         return None
 
     def try_parse_compact(self, s: str):
@@ -229,6 +229,39 @@ class DateExtractor:
         except Exception as e:
             pass
 
+        return None
+
+    def extract_years(self, text: str, min_year: int = 1900, max_year: int = 2200) -> list[int]:
+        """
+        Returns years in order of appearance.
+        """
+        if not text:
+            return []
+
+        # Pattern for years between 1900-2200 with word boundaries
+        year_pattern = re.compile(r'\b(19\d{2}|20\d{2}|21\d{2}|22[0-0])\b')
+
+        years = []
+        seen = set()
+
+        for match in year_pattern.finditer(text):
+            year = int(match.group(1))
+
+            if min_year <= year <= max_year and year not in seen:
+                years.append(year)
+                seen.add(year)
+
+        return years
+
+    def try_parse_year(self, s: str):
+        """Extracts the first valid year from the string, or returns None if not found.
+        @TODO: Improve with handling sorted years to get largest or smallest year if multiple found, or use context to determine which year is relevant."""
+
+        try:
+            years = self.extract_years(s)
+            return years[0] if years else None
+        except Exception as e:
+            pass
         return None
 
     def extract_dates(self, text: str):
