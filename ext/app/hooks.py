@@ -562,6 +562,16 @@ def on_competence_put(response, original=None):
                             'license_id': fai_result.get('idlicence', None),
                             'person_id': fai_result.get('fai_person_id', None)
                         }
+                    elif fai_result.get('success', True) is False:
+                        # Need to check if it is already exists, if so then use fai_license as base!
+                        if 'same valid licence' in fai_result.get('message', None):
+                            # Fix the license in fid on our side!
+                            # Get the license
+                            # Then update the _competence['_fai'] with the existing license
+                            _competence['_fai'] = {
+                                'license_id': fai_result.get('idlicence', None),
+                                'person_id': fai_result.get('fai_person_id', None)
+                            }
                     else:
                         app.logger.error('[HOOK] FAI competence upsert failed for person {} competence {} fai status {} and result {}'.format(person.get('id', 'Unknown'), response.get('id', 'Unknown'), fai_status, fai_result))
             except Exception as e:
@@ -666,8 +676,8 @@ def _get_pmt_year(text):
             return year()
         return year
 
-    except Exception:
-        pass
+    except Exception as e:
+        app.logger.exception(f'Error extracting year from text: {text}')
 
     return datetime.now().year
 
