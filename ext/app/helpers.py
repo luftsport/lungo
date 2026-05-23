@@ -29,7 +29,7 @@ def _fix_naive(date_time):
             app.logger.exception(e)
             date_time = None
     if isinstance(date_time, datetime):
-        #if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
+        # if date_time.tzinfo is None or date_time.tzinfo.utcoffset(date_time) is None:
         """self.org_created is naive, no timezone we assume UTC"""
         # date_time = date_time.replace(tzinfo=tz_local)
         # date_time = (date_time.replace(tzinfo=None) - date_time.utcoffset()).replace(tzinfo=tz_utc)
@@ -166,7 +166,6 @@ def _get_functions_types(type_id) -> dict:
 
 
 class DateExtractor:
-
     DATE_REGEX = re.compile(
         r"""
         \b(
@@ -174,10 +173,10 @@ class DateExtractor:
             \d{4}[-./]\d{1,2}[-./]\d{1,2} |
             \d{1,2}[-./]\d{1,2}[-./]\d{4} |
             \d{8} |
-    
+
             # 9 Jan 2026 / 09 Jan 26
             \d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?,?\s+\d{2,4} |
-    
+
             # January 9, 2026
             (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{2,4}
         )\b
@@ -185,70 +184,65 @@ class DateExtractor:
         re.IGNORECASE | re.VERBOSE,
     )
 
-
-    def normalize_date_string(s: str) -> str:
+    def normalize_date_string(self, s: str) -> str:
         return s.replace(".", "-").replace("/", "-").strip()
 
-
-    def try_parse_iso(s: str):
+    def try_parse_iso(self, s: str):
         try:
             parts = s.split("-")
             if len(parts) == 3 and len(parts[0]) == 4:
                 y, m, d = map(int, parts)
                 return date(y, m, d)
-        except:
+        except Exception as e:
             pass
         return None
 
-
-    def try_parse_eu(s: str):
+    def try_parse_eu(self, s: str):
         try:
             parts = s.split("-")
             if len(parts) == 3 and len(parts[2]) == 4:
                 d, m, y = map(int, parts)
                 return date(y, m, d)
-        except:
+        except Exception as e:
             pass
+        
         return None
 
-
-    def try_parse_compact(s: str):
+    def try_parse_compact(self, s: str):
         try:
             if len(s) == 8 and s.isdigit():
                 return date(int(s[:4]), int(s[4:6]), int(s[6:8]))
-        except:
+        except Exception as e:
             pass
         return None
 
-
-    def try_parse_textual(s: str):
+    def try_parse_textual(self, s: str):
         """Handle '9 Jan 2026', 'January 9, 2026', etc."""
         try:
             dt = parser.parse(s, dayfirst=True, yearfirst=True, fuzzy=True)
 
-            # Fix 2-digit year ambiguity (dateutil can guess weirdly)
+            # Fix 2-digit year ambiguity
             if dt.year < 100:
                 dt = dt.replace(year=2000 + dt.year if dt.year < 50 else 1900 + dt.year)
 
             return dt.date()
-        except:
+        except Exception as e:
             pass
 
         return None
 
-
-    def extract_dates(text: str):
-        matches = DATE_REGEX.findall(text)
+    def extract_dates(self, text: str):
+        matches = self.DATE_REGEX.findall(text)
         results = []
 
         for raw in matches:
-            s = normalize_date_string(raw)
+            s = self.normalize_date_string(raw)
 
             parsed = (
-                    try_parse_iso(s)
-                    or try_parse_compact(s)
-                    or try_parse_eu(s)
-                    or try_parse_textual(raw)  # use original for text parsing
+                    self.try_parse_iso(s)
+                    or self.try_parse_compact(s)
+                    or self.try_parse_eu(s)
+                    or self.try_parse_textual(raw)  # use original for text parsing
             )
 
             if parsed:
