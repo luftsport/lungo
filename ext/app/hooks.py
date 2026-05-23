@@ -667,10 +667,16 @@ def _get_pmt_year(text):
     try:
         extractor = DateExtractor()
         dates = extractor.extract_dates(text)
-        if not dates:
-            raise ValueError("No dates found")
+        year = None
+        if dates and len(dates) > 0:
+            year = dates[0].year
+        else:
+            years = extractor.extract_years(text)
+            if years and len(years) > 0:
+                year = years[0]
 
-        year = dates[0].year
+        if year is None:
+            raise ValueError("No dates found")
 
         # Handle both attribute and callable cases
         if callable(year):

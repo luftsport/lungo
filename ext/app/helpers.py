@@ -232,7 +232,18 @@ class DateExtractor:
 
         return None
 
-    def try_parse_years(self, text: str, min_year: int = 1900, max_year: int = 2200) -> List[int]:
+    def get_best_year(self, s: str):
+        """Extracts the first valid year from the string, or returns None if not found.
+        @TODO: Improve with handling sorted years to get largest or smallest year if multiple found, or use context to determine which year is relevant."""
+
+        try:
+            years = self.extract_years(s)
+            return years[0] if years and len(years) > 0 else None
+        except Exception as e:
+            pass
+        return None
+
+    def extract_years(self, text: str, min_year: int = 1900, max_year: int = 2200) -> List[int]:
         if not text:
             return []
         pattern = re.compile(r'\b(19[0-9]{2}|2[0-2][0-9]{2})\b')
@@ -245,18 +256,7 @@ class DateExtractor:
                 seen.add(year)
         return years
 
-    def get_best_year(self, s: str):
-        """Extracts the first valid year from the string, or returns None if not found.
-        @TODO: Improve with handling sorted years to get largest or smallest year if multiple found, or use context to determine which year is relevant."""
-
-        try:
-            years = self.extract_years(s)
-            return years[0] if years and len(years)>0 else None
-        except Exception as e:
-            pass
-        return None
-
-    def extract_dates(self, text: str):
+    def extract_dates(self, text: str) -> List:
         matches = self.DATE_REGEX.findall(text)
         results = []
 
@@ -268,11 +268,12 @@ class DateExtractor:
                     or self.try_parse_compact(s)
                     or self.try_parse_eu(s)
                     or self.try_parse_textual(raw)  # use original for text parsing
-                    or self.try_parse_years(s)
-                    or self.try_parse_years(raw)  # fallback to original text for year extraction
             )
 
             if parsed:
                 results.append(parsed)
 
-        return sorted(set(results))
+        if results and len(results) > 0:
+            return sorted(set(results))
+
+        return []
