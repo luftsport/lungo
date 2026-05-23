@@ -665,7 +665,8 @@ def _get_pmt_group_from_club(org_id):
 
 def _get_pmt_year(text):
     try:
-        dates = DateExtractor.extract_dates(text)
+        extractor = DateExtractor()
+        dates = extractor.extract_dates(text)
         if not dates:
             raise ValueError("No dates found")
 
