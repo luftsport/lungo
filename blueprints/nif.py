@@ -638,6 +638,16 @@ def ka_get_payment_export_detail(export_id):
     status, log = ka.get_payment_export_detail(export_id)
     return eve_response(log, status)
 
+@NIF.route('ka/invoices/search/day/<string:day>', methods=['GET'])
+@require_token()
+def ka_find_invoices_day(day):
+    ka = _get_KA()
+    try:
+        from_date = datetime.strptime(day, '%Y-%m-%d')
+    except:
+        from_date = datetime.now()
+    status, result = ka.search_invoices(from_date=from_date)
+    return eve_response(result, status)
 
 @NIF.route('sa/organizations/<int:org_id>', methods=['GET'])
 @require_token()
