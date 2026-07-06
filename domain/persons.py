@@ -231,7 +231,7 @@ definition = {
         'competences': ([('competences', 1)], {'background': True}),
         'timestamps': ([('_created', 1), ('_updated', 1), ('birth_date', 1), ('created_date', 1), ('last_changed_date', 1)], {'background': True}),
         'personal': ([('gender', 1)], {'background': True}),
-        'names': ([('full_name', 'text'), ('primary_email','text')], {'background': True}) # ,
+        'names': ([('full_name', 'text'), ('primary_email', 'text')], {'background': True})  # ,
     },
     'schema': _schema
 }
@@ -533,6 +533,40 @@ agg_age_gender_bucket_distribution = {
                                             "$sum": {"$cond": {"if": {"$eq": ["$gender", "U"]}, "then": 1, "else": 0}}},
                                     }
                             }
+                    }
+                ]
+        }
+    }
+}
+
+agg_person_all_emails = {
+    'url': 'persons/emails',
+    'item_title': 'Persons all emails',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION +'_versions',
+        'aggregation': {
+            'pipeline':
+                [
+                    {
+                        "$match": {
+                            "id": "$person_id"
+                        }
+                    },
+                    {
+                        "$unwind": "$address.email"
+                    },
+                    {
+                        "$group": {
+                            "_id": None,
+                            "distinct_emails": {"$addToSet": "$address.email"}
+                        }
+                    },
+                    {
+                        "$project": {
+                            "_id": 0,
+                            "distinct_emails": 1
+                        }
                     }
                 ]
         }
