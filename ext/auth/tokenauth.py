@@ -55,17 +55,24 @@ class NlfTokenAuth(TokenAuth):
                 self.user_id = USERS[token]['id']
 
                 # globals
+
+                # Keep client id and token global
                 g.client_id = self.user_id
                 g.token = token
-                # X-on-behalf-of => person_id
+
+                # If the client provides the NIF user id keep it on global
+                on_behalf_of = request.headers.get('X-On-Behalf-Of')
+                if on_behalf_of is not None:
+                    g.person_id = on_behalf_of
+
                 try:
                     g.whitelist_secret_contact = USERS[token].get('whitelist_secret_contact', {})
                 except:
                     g.whitelist_secret_contact = {}
-                    app.logger.exception(f'[FAILED AUTH] Token {token} has no whitelist_secret_contact')
+                    app.logger.debug(f'[FAILED AUTH] Token {token} has no whitelist_secret_contact')
 
                 return True
-        except:  # Keyerror
+        except Exception as e:  # Keyerror
             app.logger.exception(f'[FAILED AUTH] Token {token} is not valid for resource {resource} and method {method}')
 
         """
