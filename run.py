@@ -12,7 +12,6 @@
 import os, sys
 
 from eve import Eve
-# Log profiling
 
 import json
 
@@ -33,7 +32,7 @@ from blueprints.tms import Tms
 from blueprints.obsreg import OBSREG
 from blueprints.notifications import Notifications
 from blueprints.ohdear import Ohdear
-
+from werkzeug.middleware.proxy_fix import ProxyFix
 # Import blueprints
 # from blueprints.authentication import Authenticate
 # Register custom blueprints
@@ -63,6 +62,7 @@ SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settin
 # app = Eve(settings=SETTINGS_PATH)
 
 app = Eve(auth=NlfTokenAuth, settings=SETTINGS_PATH)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 # app = Eve(settings=SETTINGS_PATH)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.debug = True
@@ -194,14 +194,69 @@ Levels: debug|info|warning|error|critical"""
 if 1 == 1 or not app.debug:
     import logging
     from logging.handlers import RotatingFileHandler
+    from ext.app.mongo_logging_handler import SimpleMongoHandler, FlaskContextFilter
+    from ext.scf import LOG_URI, LOG_DATABASE, LOG_COLLECTION
+    from settings import APP_VERSION, APP_ENV
 
+    # 1. File handler with rotation
     file_handler = RotatingFileHandler('lungo-backend.log', 'a', 25 * 1024 * 1024, 10)
-    file_handler.setFormatter(
-        logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
-    app.logger.setLevel(logging.DEBUG)
     file_handler.setLevel(logging.DEBUG)
+
+    # 2. Mongo Handler - Only ERROR and above
+    """mongo_handler = BufferedMongoHandler(
+        host=LOG_URI,
+        database_name='logs',
+        collection='lungo',
+        capped=True,
+        capped_max=50000,
+        buffer_size=50,
+        buffer_periodical_flush_timing=10.0,
+        buffer_early_flush_level='CRITICAL',
+        fail_silently=False
+    )"""
+    mongo_handler = SimpleMongoHandler(
+        LOG_URI,
+        database_name=LOG_DATABASE,
+        collection_name=LOG_COLLECTION,
+        static_fields={
+            'logger': 'lungo',
+            'environment': APP_ENV,
+            'version': APP_VERSION
+        }
+    )
+    mongo_handler.setLevel(logging.ERROR)  # only ERROR and above to MongoDB
+    mongo_handler.addFilter(FlaskContextFilter()) # Add Flask context filter to include client_id and person_id in logs
+
+    # Formatters
+    file_formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        # '%(asctime)s | %(levelname)-8s | %(name)s | %(message)s | %(extra)s'
+    )
+    mongo_formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    )
+
+    file_handler.setFormatter(file_formatter)
+    mongo_handler.setFormatter(None)  # mongo_formatter)
+
+    # Add the handlers
     app.logger.addHandler(file_handler)
+    app.logger.addHandler(mongo_handler)
+
+    # Prevent propagation if needed
+    app.logger.propagate = False
+
+    # Expose the logs resource
+    app.logger.info("Registering blueprint")
+    from blueprints.logs import Logs
+    app.logger.info('Logs.url_prefix: %s' % Logs.url_prefix)
+    app.logger.info(f"{app.globals.get('prefix')}/{Logs.url_prefix}")
+    app.register_blueprint(Logs, url_prefix=f"{app.globals.get('prefix')}/{Logs.url_prefix}")
+
+    # We have started up, log to file
     app.logger.info('Lungo startup on database %s' % app.config['MONGO_DBNAME'])
+    # app.logger.error("Message with extra data", extra={"person_id": 123, "action": "test_logging"})
+    # app.logger.error('Lungo test message just checking!')
 
 PROFILING = True
 if PROFILING is True:
@@ -209,6 +264,8 @@ if PROFILING is True:
     from eve.methods.post import post_internal
     from flask import g, request
     import uuid
+
+
     @app.before_request
     def start_timer_and_log_start():
         g.request_id = str(uuid.uuid4())
@@ -226,7 +283,7 @@ if PROFILING is True:
 
         # Query params (GET/DELETE usually; also ? in POST sometimes)
         if request.args:
-            g.query_params =  ', '.join(f"{k}={v}" for k, v in request.args.items(multi=True))
+            g.query_params = ', '.join(f"{k}={v}" for k, v in request.args.items(multi=True))
             msg_parts.append(f"query_params={{{g.query_params}}}")
 
         # Body for POST/PUT/PATCH (JSON or form)
@@ -295,6 +352,9 @@ if PROFILING is True:
 # if app.debug and not os.environ.get("WERKZEUG_RUN_MAIN") == "true":
 # run once goes here
 def save_resources_to_file(output_file='resources.json'):
+    """Saves all resources both eve and blueprint resources to a JSON file for debugging or documentation purposes.
+    :param output_file: The name of the output JSON file.
+    """
     with app.app_context():
         # Access the DOMAIN configuration
         domain_config = app.config['DOMAIN']
@@ -329,11 +389,38 @@ def save_resources_to_file(output_file='resources.json'):
                 json.dump(serializable_domain, f, indent=4, sort_keys=True)
             print(f"All resources saved to {output_file}")
         except Exception as e:
-            print(f"Error saving to file: {e}")
-            print(f"Error saving resources: {e}")
+            print(f"Error saving resources to file: {e}")
 
 
-# save_resources_to_file('resources.json')
+def save_all_rules_to_file(output_file='blueprint_resources.json', blueprints_only=True):
+    """Saves all URL rules (both Eve and blueprint) to a JSON file for debugging or documentation purposes.
+    :param output_file: The name of the output JSON file.
+    :param blueprints_only: If True, only include rules from blueprints; if False, include all rules.
+    """
+    with app.app_context():
+        rules = []
+        for rule in app.url_map.iter_rules():
+
+            if blueprints_only is True and '.' in rule.endpoint:  # blueprint!
+                rules.append({
+                    'rule': str(rule),
+                    'endpoint': rule.endpoint,
+                    'methods': list(rule.methods)
+                })
+            else:
+                rules.append({
+                    'rule': str(rule),
+                    'endpoint': rule.endpoint,
+                    'methods': list(rule.methods)
+                })
+        try:
+            with open(output_file, 'w') as f:
+                json.dump(rules, f, indent=4, sort_keys=True)
+            print(f"All rules saved to {output_file}")
+        except Exception as e:
+            print(f"Error saving rules to file: {e}")
+
 
 if __name__ == '__main__':
+    app.logger.info("[MAIN] Lungo backend server starting...")
     app.run(host=app.config['APP_HOST'], port=app.config['APP_PORT'])
