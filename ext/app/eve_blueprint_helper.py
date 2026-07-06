@@ -9,8 +9,9 @@ from eve.utils import config
 from hashlib import md5
 from pymongo.errors import PyMongoError
 import functools
-from typing import Dict, Optional, List, Union, Any, Callable
-
+from typing import Dict, Optional, List, Union, Any, Callable, Tuple
+from pymongo import ASCENDING, DESCENDING
+from math import inf
 # Global registry for Swagger specs
 _SWAGGER_SPEC_REGISTRY = {}
 
@@ -102,7 +103,7 @@ class SwaggerBlueprint(Blueprint):
                 }
 
             # Add If-Match header for endpoints requiring ETag
-            #if app.config.get('IF_MATCH') and method_lower in ['get', 'put', 'patch', 'delete'] and '{_id}' in swagger_path:
+            # if app.config.get('IF_MATCH') and method_lower in ['get', 'put', 'patch', 'delete'] and '{_id}' in swagger_path:
             #    operation['parameters'] = operation.get('parameters', []) + [
             #        {'name': 'If-Match', 'in': 'header', 'description': 'ETag for concurrency control', 'required': True, 'schema': {'type': 'string'}}
             #    ]
@@ -171,12 +172,12 @@ def trigger_hooks(resource: str, hook_type: str, method: str = None,
             raise EveBlueprintError(500, f"Hook {hook_name} failed: {str(e)}")
 
 
-def parse_request(resource: str = None, document_id: str = None) -> Dict[str, Any]:
+def parse_request(resource: str = None, document_id: str = None, is_blueprint=False) -> Dict[str, Any]:
     """Parse Flask request args/body in Eve style with ETag and hook support."""
     args = request.args
     parsed = {}
 
-    if resource and 'DOMAIN' in app.config and resource not in app.config['DOMAIN']:
+    if resource and 'DOMAIN' in app.config and (resource not in app.config['DOMAIN'] and is_blueprint is False):
         raise EveBlueprintError(404, f"Resource '{resource}' not found")
 
     if 'where' in args:
@@ -228,7 +229,7 @@ def parse_request(resource: str = None, document_id: str = None) -> Dict[str, An
 
     if resource and 'DOMAIN' in app.config and resource in app.config['DOMAIN']:
         domain = app.config['DOMAIN'][resource]
-        max_limit = domain.get('max_results', app.config.get('PAGINATION_LIMIT', 50)) # PAGINATION_DEFAULT
+        max_limit = domain.get('max_results', app.config.get('PAGINATION_LIMIT', 50))  # PAGINATION_DEFAULT
         if parsed['max_results'] > max_limit:
             raise EveBlueprintError(400, f"'max_results' exceeds limit of {max_limit}")
         if parsed['max_results'] == 0:
@@ -269,9 +270,77 @@ def parse_request(resource: str = None, document_id: str = None) -> Dict[str, An
             raise EveBlueprintError(400, "Invalid JSON body")
 
     if resource and request.method in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']:
-        trigger_hooks(resource, 'pre', request.method, request, parsed.get('where', {}))
+        try:
+            trigger_hooks(resource, 'pre', request.method, request, parsed.get('where', {}))
+        except EveBlueprintError as e:
+            pass
+        except Exception as e:
+            print('Failed trigering hooks but thats ok')
 
     return parsed
+
+
+def parsed_to_pymongo(
+        parsed: Dict[str, Any],
+        collection=None,  # optional: if you want to execute immediately
+        default_sort: List = None
+) -> Tuple[Dict, List, Dict, int, int]:
+    """
+    Convert parsed Eve-style request into PyMongo query components.
+    Returns: (query, sort_list, projection, skip, limit)
+    """
+    # 1. Base query (Eve 'where' is already MongoDB syntax)
+    query = parsed.get('where') or {}
+
+    # 2. Sort
+    sort_list = []
+    if parsed.get('sort'):
+        for field in parsed['sort']:
+            if field.startswith('-'):
+                sort_list.append((field[1:], DESCENDING))
+            else:
+                sort_list.append((field, ASCENDING))
+    elif default_sort:
+        sort_list = default_sort
+
+    # 3. Projection
+    projection = parsed.get('projection') or None
+
+    # 4. Pagination
+    page = parsed.get('page', 1)
+    max_results = parsed.get('max_results', 25)
+
+    if max_results == 0:  # Eve behavior: return all
+        skip = 0
+        limit = 0  # 0 means no limit in PyMongo
+    else:
+        skip = (page - 1) * max_results
+        limit = max_results
+
+    if collection is not None:
+        cursor = collection.find(
+            filter=query,
+            projection=projection,
+            sort=sort_list if sort_list else None,
+            skip=skip,
+            limit=limit
+        )
+        return cursor
+
+    return query, sort_list, projection, skip, limit
+
+
+def execute_parsed_query(collection, parsed: dict, **extra_find_kwargs):
+    query, sort, proj, skip, limit = parsed_to_pymongo(parsed)
+
+    return collection.find(
+        filter=query,
+        projection=proj,
+        sort=sort,
+        skip=skip,
+        limit=limit,
+        **extra_find_kwargs
+    )
 
 
 def format_response(items: Union[List[Dict], Dict], total: Optional[int] = None, resource: str = None,
@@ -317,10 +386,10 @@ def format_response(items: Union[List[Dict], Dict], total: Optional[int] = None,
                               response=response_data)
             except Exception as e:
                 pass
-        resp = jsonify(response_data)
-        resp.status_code = status_code
-
-        return resp
+        resp = make_response(jsonify(response_data), status_code)
+        # resp.status_code = status_code
+        print(resp, type(resp))
+        return resp  # , status_code # Response(resp, status=status_code, mimetype='application/json')
     except Exception as e:
         if isinstance(e, EveBlueprintError):
             raise
