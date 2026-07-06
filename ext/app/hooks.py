@@ -1120,9 +1120,22 @@ def _verify_and_update_person_data(item):
     return True
 
 
-def _update_person(item):
-    """Runs AFTER person created or replaced"""
+def _update_person(item, force=False):
+    """Runs AFTER person created POST or replaced PUT"""
 
+    # Reset BEFORE we process each
+    if force is True:
+        verify_item = item.copy()
+        verify_item['functions'] = []
+        verify_item['competences'] = []
+        verify_item['licenses'] = []
+        verify_item['memberships'] = []
+        verify_item['magazines'] = []
+        verify_item['federation'] = []
+
+        resp, _, _, status = patch_internal(RESOURCE_PERSONS_PROCESS,
+                                            verify_item,
+                                            False, True, **{'_id': item['_id']})
     # One shot!
     if _verify_and_update_person_data(item) is True:
         # Person not deregistered
