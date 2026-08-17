@@ -3,9 +3,11 @@ from ext.app.eve_blueprint_helper import SwaggerBlueprint # parse_request, forma
 from ext.auth.decorators import require_token
 from ext.auth.clients import users
 from ext.app.eve_helper import eve_response, eve_abort
+from ext.app.eve_blueprint_helper import parse_request
 from eve.methods.get import get_internal, getitem_internal, _perform_aggregation
 from datetime import datetime
 import re
+import json
 
 ACL = SwaggerBlueprint('Acl helpers for the lazy programmer', __name__, url_prefix='acl')
 
@@ -19,6 +21,18 @@ NLF_ORG = {27: 'nlf',
            235: 'ballong'
            }
 
+def _get_orgs(orgs=[]):
+    if len(orgs)>0:
+        lookup = {'is_active': True, '$or': [{'id': {'$in': orgs}}, {'parent_id': {'$in': orgs}}]}
+    else:
+        lookup = {'is_active': True}
+    col = app.data.driver.db['organizations']
+    result = list(col.find(lookup))
+
+    if result:
+        return [{'id': x['id'], 'type_id': x['type_id'], 'parent_id': x['parent_id'], 'activity': x['main_activity'], 'name': x['name']} for x in result]
+
+    return []
 
 def _get_activities_in_club(org_id):
     activities = []
@@ -140,6 +154,71 @@ def acl_simple(person_id):
 
     return eve_abort(status)
 
+@ACL.route('/club/<int:org_id>/simple/<int:person_id>', methods=['GET'])
+def acl_simple_club_or_discipline(org_id, person_id):
+
+    if org_id:
+        orgs = _get_orgs(orgs=[org_id])
+    elif not org_id:
+        args = parse_request(resource=None, is_blueprint=True)
+        orgs = _get_orgs(args.get('where', {}).get('orgs', []))
+    else:
+        orgs = _get_orgs([])
+
+    acl_orgs = []
+    col_f = app.data.driver.db['functions']
+    for org in orgs:
+        lookup = {'person_id': person_id,
+                  'is_deleted': False,
+                  'is_passive': False,
+                  'type_is_license': False,
+                  'org_id': org['id'],
+                  '$or': [{'to_date': {'$gt': '{}Z'.format(datetime.now().isoformat())}}, {'to_date': {'$exists': False}}]
+                  }
+
+        functions = col_f.find(lookup)
+
+        if functions:
+
+            if org['type_id'] == 14: # Gren
+                for f in functions:
+                    #main_activity
+                    acl_orgs.append(
+                        '{}_{}'.format(
+                            NLF_ORG[org['activity']['id']].strip(),
+                            re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', f.get('type_name', '')).lower().strip('_').strip()
+                        )
+                    )
+            elif org['type_id'] in [5, 6]:
+                for f in functions:
+                    acl_orgs.append(
+                        '{}_{}'.format(
+                            'klubb',
+                            re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', f.get('type_name', '')).lower().strip('_').strip()
+                        )
+                    )
+
+    return eve_response(list(set(acl_orgs)), 200)
+
+@ACL.route('/competences/simple/<int:person_id>', methods=['GET'])
+def acl_simple_competences(person_id):
+
+    args = parse_request(resource=None, is_blueprint=True)
+    col = app.data.driver.db['persons']
+    person = col.find_one({'id': person_id},{'competences': 1}) #, 'valid_until': {'$gt': datetime.now()}})
+    acl_competences = []
+    if person:
+
+        for competence in person.get('competences', []):
+
+            if '_code' in competence:
+                acl_competences.append(re.sub(r'_{2,}', '_',re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', competence.get('_code', '')).lower().strip('_').strip()))
+
+            else:
+                acl_competences.append(re.sub(r'_{2,}', '_',re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', competence.get('title', '')).lower().strip('_').strip()))
+
+
+    return eve_response(list(set(acl_competences)), 200)
 
 def acl_simple_all():
     functions, _, _, status, _ = get_internal('functions')
@@ -253,7 +332,6 @@ def acl_club_roles(club_id):
     resource = 'functions_types_org_count'
     datasource = app.config['DOMAIN'][resource]['datasource']
     aggregation = datasource.get('aggregation')
-    print(aggregation)
     if aggregation:
 
         aggregation['pipeline'][0]['$match']['active_in_org_id'] = club_id
