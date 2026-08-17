@@ -6,6 +6,7 @@ __pycache__/
 *$py.class
 sendgrid_asyncio*
 sendgrid_daemon*
+*scf*
 # C extensions
 *.so
 .idea/
