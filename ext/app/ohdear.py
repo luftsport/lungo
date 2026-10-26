@@ -150,7 +150,7 @@ class SocketIOHealthChecker:
 
         try:
             self.sio.connect(
-                self.url,
+                self.url,transports=['websocket']
                 # transports=['websocket', 'polling'],
                 # wait_timeout=3.0
             )
@@ -991,29 +991,4 @@ def check_systemd_service_ohdear(
 
 if __name__ == '__main__':
     print(check_disk())
-    """
-    # 3.7-> asyncio.run(check_server_status('http://localhost:7000'))
-    print(perform_socketio_check(SIO_URL))
 
-    # check_server_status(SIO_URL)
-    # print(find_process_by_filename('notification_daemon.py'))
-    # print(find_process_by_filename('melwin_daemon.py'))
-    # print(find_process_by_filename('sendgrid_daemon.py'))
-    # print(find_process_by_filename('nlf-auth'))
-    # print(find_process_by_filename('melwin.py'))
-
-    # print(check_service_health_ohdear(name='MongoDB (systemd-service)', label='mongo', cmdline_contains=['/usr/bin/mongod'], allow_multiple=True))
-    # print(check_service_health_ohdear(name='MongoDB (systemd-service)', label='mongo', pid_file='/storage/mongodb/mongod.lock', allow_multiple=True))
-    check_systemd_service_ohdear(service_name='mongod')
-    print(check_mongo())
-
-    print(check_service_health(pid_file = "/var/run/nginx.pid",cmdline_contains=["nginx: master process", "nginx"]))
-    print(check_service_health_ohdear(name='Notification Daemon (socket.io)', label='notifications', cmdline_contains=['/www/lungo/bin/gunicorn', 'notification_daemon:app'], cwd='/www/lungo', allow_multiple=True))
-    print(check_service_health_ohdear(name='Integration Syncronization', label='integration', pid_file='/home/einar/nif-integration/syncdaemon.pid'))
-    print(check_service_health_ohdear(name='Integration Stream', label='integration', pid_file='/home/einar/nif-integration/streamdaemon.pid'))
-    print(check_service_health_ohdear(name='Membership API', label='lungo', pid_file='/www/lungo/gunicorn.pid'))
-    print(check_service_health_ohdear(name='NLF AUTH', label='auth', pid_file='/home/einar/nlf-auth/gunicorn.pid'))
-    print(check_service_health_ohdear(name='Spyne for Elefun', label='elefun', cwd="/home/einar/spyne", cmdline_contains=['melwin.py'], allow_multiple=True))
-    print(check_service_health_ohdear(name='Membership API', label='lungo', cwd="/www/lungo", cmdline_contains=['/www/lungo/bin/gunicorn', 'run:app'], allow_multiple=True))
-    print(server_health_ohdear(critical_disk_paths=["/", "/var", "/home"],warning_percent=75,critical_percent=90))
-    """

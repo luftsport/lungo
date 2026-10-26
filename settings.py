@@ -27,11 +27,17 @@ MONGO_HOST = 'localhost'
 MONGO_PORT = 27017
 MONGO_USERNAME = ''
 MONGO_PASSWORD = ''
-MONGO_DBNAME = 'ka'
+MONGO_DBNAME = 'lungo'
 # Use default 30s?
 MONGO_CONNECT_TIMEOUT_MS = 30000 # 30 seconds
 MONGO_SOCKET_TIMEOUT_MS = 600000  # 10 minutes
-MONGO_REPLICA_SET = "rs"
+MONGO_REPLICA_SET = "rs0"
+MONGO_OPTIONS = {
+    'directConnection': True,
+    'maxPoolSize': 12,       # Provides 12 DB connections per worker (plenty for 8 threads to share)
+    'minPoolSize': 4,        # Keeps 4 connections warm per worker
+    'waitQueueTimeoutMS': 1500
+}
 
 APP_HOST = '127.0.0.1'
 APP_PORT = 9191

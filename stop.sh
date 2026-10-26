@@ -1,8 +1,8 @@
 #!/bin/bash
 
 WORKING_DIR="${PWD}/"
-LUNGO_PID_FILE="${PWD}/gunicorn.pid"
-NOTIFY_PID_FILE="${PWD}/notification_daemon.pid"
+LUNGO_PID_FILE="/var/local/run/lungo/lungo.pid"
+NOTIFY_PID_FILE="/var/local/run/lungo/lungo_notification_daemon.pid"
 
 cd $WORKING_DIR
 
