@@ -1,8 +1,10 @@
 import logging
 from datetime import datetime
-from pymongo import MongoClient
+from pymongo import MongoClient, WriteConcern
 from pymongo.errors import PyMongoError
 from flask import request, g, has_request_context
+
+WRITE_CONCERN = WriteConcern(w=0, j=False)  # Unacknowledged writes for performance
 
 class FlaskContextFilter(logging.Filter):
     """Injects Flask context data into the log record automatically."""
@@ -28,7 +30,7 @@ class SimpleMongoHandler(logging.Handler):
             static_fields: dict = None
     ):
         super().__init__()
-        self.client = MongoClient(logs_uri, serverSelectionTimeoutMS=5000)
+        self.client = MongoClient(logs_uri, serverSelectionTimeoutMS=5000, directConnection=True, write_concern=WRITE_CONCERN)
         self.db = self.client[database_name]
         self.collection = self.db[collection_name]
 
