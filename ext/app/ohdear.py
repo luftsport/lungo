@@ -150,7 +150,8 @@ class SocketIOHealthChecker:
 
         try:
             self.sio.connect(
-                self.url,transports=['websocket']
+                self.url
+                # ,transports=['websocket']
                 # transports=['websocket', 'polling'],
                 # wait_timeout=3.0
             )
