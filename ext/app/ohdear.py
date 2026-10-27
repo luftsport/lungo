@@ -538,7 +538,7 @@ def check_service_health(
         cmdline_contains: Optional[Union[str, List[str]]] = None,
         cmdline_exact: Optional[List[str]] = None,
         allow_multiple: bool = False,  # default: expect exactly ONE process
-        expect_multiple: bool = None,  # deprecated — use allow_multiple=True instead
+        expect_multiple: bool = False,  # deprecated — use allow_multiple=True instead
 ) -> dict:
     """
     - allow_multiple=False (default) → expects exactly 1 process → healthy only if 1 found
@@ -687,16 +687,8 @@ def check_service_health_ohdear(
         cmdline_contains: Optional[Union[str, List[str]]] = None,
         cmdline_exact: Optional[List[str]] = None,
         allow_multiple: bool = False,
-        cpu_measurement_interval: float = 0.5,  # seconds — small delay for accurate CPU %
+        cpu_measurement_interval: float = 0.5,  # seconds
 ) -> dict:
-    """
-    Full Oh Dear custom check with:
-    - Process count
-    - Memory (RSS + %)
-    - CPU % (accurate, measured over interval)
-    - Uptime (human + seconds)
-    - Start time
-    """
     candidates = []
 
     # 1. PID file or pid priority
@@ -704,6 +696,9 @@ def check_service_health_ohdear(
         try:
             pid = int(pid)
             candidates = [psutil.Process(pid)]
+        except psutil.NoSuchProcess:
+            # Handle if the explicit PID doesn't exist right away
+            pass
         except Exception as e:
             return {
                 "name": name, "label": label, "status": "failed",
@@ -712,7 +707,7 @@ def check_service_health_ohdear(
                 "meta": {"error": str(e)}
             }
     elif pid_file:
-        _pid_file = Path(pid_file)
+        _pid_file = Path(pid_file).resolve()
         if not _pid_file.exists():
             return {
                 "name": name, "label": label, "status": "failed",
@@ -721,17 +716,23 @@ def check_service_health_ohdear(
                 "meta": {"pid_file": str(pid_file)}
             }
         try:
-            pid = int(_pid_file.read_text().strip())
+            raw_pid = _pid_file.read_text().strip()
+            if not raw_pid:
+                raise ValueError("PID file is empty")
+            pid = int(raw_pid)
             candidates = [psutil.Process(pid)]
+        except psutil.NoSuchProcess:
+            # Handle if the explicit PID from the file doesn't exist
+            pass
         except Exception as e:
             return {
                 "name": name, "label": label, "status": "failed",
-                "notificationMessage": f"Invalid PID file: {e}",
+                "notificationMessage": f"Invalid PID file content: {e}",
                 "shortSummary": "Bad PID",
                 "meta": {"error": str(e)}
             }
 
-    # 2. Search processes
+    # 2. Search processes if candidates is empty
     if not candidates:
         substrs = [cmdline_contains] if isinstance(cmdline_contains, str) else cmdline_contains or []
 
@@ -740,14 +741,14 @@ def check_service_health_ohdear(
                 continue
             try:
                 matches = True
-                if exe_path and p.exe() and Path(p.exe()).resolve() != Path(exe_path).resolve():
+                if exe_path and p.info['exe'] and Path(p.info['exe']).resolve() != Path(exe_path).resolve():
                     matches = False
-                if cwd and p.cwd() and Path(p.cwd()).resolve() != Path(cwd).resolve():
+                if cwd and p.info['cwd'] and Path(p.info['cwd']).resolve() != Path(cwd).resolve():
                     matches = False
-                if cmdline_exact and p.cmdline() != cmdline_exact:
+                if cmdline_exact and p.info['cmdline'] != cmdline_exact:
                     matches = False
                 if substrs:
-                    cmd = " ".join(p.cmdline() or [])
+                    cmd = " ".join(p.info['cmdline'] or [])
                     if not any(s in cmd for s in substrs):
                         matches = False
                 if matches:
@@ -755,22 +756,37 @@ def check_service_health_ohdear(
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 continue
 
-    # Filter healthy (alive) processes
+    # 3. Filter healthy (alive) processes
     healthy_procs = []
     for p in candidates:
         try:
             if p.status() == psutil.STATUS_ZOMBIE:
                 continue
+
+            # Low-level OS check
             os.kill(p.pid, 0)
             healthy_procs.append(p)
-        except (psutil.AccessDenied, psutil.NoSuchProcess):
+
+        except PermissionError:
+            # OS says Access Denied -> Means the process IS alive under another user context!
             healthy_procs.append(p)
-        except OSError as e:
-            print(e)
+
+        except ProcessLookupError:
+            # OS says No Such Process -> Process is entirely dead.
+            continue
+
+        except OSError:
+            # Catch-all for other OS constraints
+            continue
+
+        except (psutil.NoSuchProcess, psutil.ZombieProcess):
+            continue
+        except psutil.AccessDenied:
+            # Double safe fallback if psutil methods trigger it before os.kill does
+            healthy_procs.append(p)
 
     count = len(healthy_procs)
     pids = [p.pid for p in healthy_procs]
-
     total_ram_mb = psutil.virtual_memory().total / 1024 / 1024
 
     meta = {
@@ -788,20 +804,24 @@ def check_service_health_ohdear(
             "meta": meta
         }
 
-    # Accurate CPU measurement (requires two samples)
+    # 4. Accurate CPU measurement
     try:
-        # First sample
-        cpu_times_before = {p.pid: p.cpu_times() for p in healthy_procs}
+        # First sample call to establish baseline tick
+        for p in healthy_procs:
+            try:
+                p.cpu_percent(interval=None)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
         time.sleep(cpu_measurement_interval)
-        # Second sample
+
+        # Second sample calculates actual diff over the time frame
         cpu_percents = []
         for p in healthy_procs:
             try:
-                # This gives accurate CPU % over the interval
-                cpu_percent = p.cpu_percent(interval=None)  # None = use cached value from previous call
+                cpu_percent = p.cpu_percent(interval=None)
                 cpu_percents.append(cpu_percent)
-            except Exception as e:
-                print(e)
+            except Exception:
                 cpu_percents.append(0.0)
 
         total_cpu_percent = sum(cpu_percents)
@@ -810,9 +830,9 @@ def check_service_health_ohdear(
         total_cpu_percent = avg_cpu_percent = 0.0
         meta["cpu_measurement_error"] = str(e)
 
-    # Main process (oldest = parent)
-    main_proc = min(healthy_procs, key=lambda p: p.create_time())
+    # 5. Extract Main Process Metrics (Oldest parent)
     try:
+        main_proc = min(healthy_procs, key=lambda p: p.create_time())
         mem = main_proc.memory_info()
         mem_rss_mb = mem.rss / 1024 / 1024
         mem_percent = main_proc.memory_percent()
@@ -836,10 +856,17 @@ def check_service_health_ohdear(
             "cpu_percent_average": round(avg_cpu_percent, 2),
             "cpu_measurement_interval": cpu_measurement_interval,
         })
+    except (psutil.AccessDenied, psutil.NoSuchProcess) as e:
+        # If health checker lacks rights to read internal mem/args, record cleanly
+        mem_rss_mb = 0.0
+        uptime_str = "Unknown"
+        meta["detail_error"] = f"Privilege restriction reading metrics: {e}"
     except Exception as e:
+        mem_rss_mb = 0.0
+        uptime_str = "Unknown"
         meta["detail_error"] = str(e)
 
-    # Decision
+    # 6. Decision logic
     if not allow_multiple and count > 1:
         return {
             "name": name, "label": label, "status": "failed",
@@ -848,7 +875,6 @@ def check_service_health_ohdear(
             "meta": meta
         }
 
-    # All good
     ram_str = f"{int(mem_rss_mb)} MB"
     cpu_str = f"{total_cpu_percent:.1f}% CPU" if total_cpu_percent > 0 else "0% CPU"
 
@@ -857,7 +883,7 @@ def check_service_health_ohdear(
         "label": label,
         "status": "ok",
         "notificationMessage": f"{count} process(es) • Uptime {uptime_str} • {ram_str} • {cpu_str}",
-        "shortSummary": f"{count} ↑{uptime_str.split()[0]} {ram_str}",
+        "shortSummary": f"{count} ↑{uptime_str.split()[0] if ' ' in uptime_str else uptime_str} {ram_str}",
         "meta": meta
     }
 
