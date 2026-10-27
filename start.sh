@@ -1,4 +1,6 @@
 #!/bin/bash
+echo "Error: This script is deprecated / not for use. Use 'startup.sh' instead" >&2
+exit 1
 
 INVENV=$(python -c 'import sys; print ("1" if hasattr(sys, "real_prefix") else "0")')
 
@@ -21,8 +23,17 @@ $GUNICORN --workers=5 --threads=20 --worker-class=meinheld.gmeinheld.MeinheldWor
 # Socket.io server, aiohttp:
 $GUNICORN -w 1 --worker-class aiohttp.GunicornWebWorker notification_daemon:app -b localhost:7000 --pid /var/local/run/lungo/lungo_notification_daemon.pid --daemon
 
-# Start Melwin socket.io client
-$PYTHON melwin_daemon.py 2>&1&
+SERVICES=("notifications.service" "melwin.service" "sendgrid.service" "mailchimp.service")
+printf "%-20s | %s\n" "SERVICE NAME" "STATUS"
+echo "-------------------------------------"
+for SERVICE in "${SERVICES[@]}"; do
+    if systemctl is-active --quiet "$SERVICE"; then
+        printf "%-20s | 🟢 Running\n" "$SERVICE"
+    else
+        printf "%-20s | 🔴 Down / Inactive\n" "$SERVICE"
+    fi
+done
+
 
 if [[ INVENV == 0 ]]
 then

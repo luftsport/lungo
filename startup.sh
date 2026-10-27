@@ -36,21 +36,17 @@ $GUNICORN \
   --daemon \
   run:app
 
-# Socket.io server, aiohttp:
-# $GUNICORN -w 1 --worker-class aiohttp.GunicornWebWorker notification_daemon:app -b localhost:7000 --pid notification_daemon.pid --daemon
-
-# Start Melwin socket.io client
-#$PYTHON melwin_daemon.py 2>&1&
-#nohup melwin_daemon.py > logs/melwin_daemon.log &
-#killall melwin_daemon.py
-#$PYTHON melwin_daemon.py > logs/melwin_daemon.log 2>&1 &
-#$PYTHON mailchimp_daemon.py 2>&1&
-#nohup mailchimp_daemon.py > logs/mailchimp_daemon.log &
-#killall mailchimp_daemon.py
-#$PYTHON mailchimp_daemon.py > logs/mailchimp_daemon.log 2>&1 &
-# /dev/null 2>&1
-#killall sendgrid_daemon.py
-#$PYTHON sendgrid_daemon.py > logs/sendgrid_daemon.log 2>&1 &
+# Verify if needed services are running:
+SERVICES=("notifications.service" "melwin.service" "sendgrid.service" "mailchimp.service")
+printf "%-20s | %s\n" "SERVICE NAME" "STATUS"
+echo "-------------------------------------"
+for SERVICE in "${SERVICES[@]}"; do
+    if systemctl is-active --quiet "$SERVICE"; then
+        printf "%-20s | 🟢 Running\n" "$SERVICE"
+    else
+        printf "%-20s | 🔴 Down / Inactive\n" "$SERVICE"
+    fi
+done
 
 if [[ INVENV == 0 ]]
 then
