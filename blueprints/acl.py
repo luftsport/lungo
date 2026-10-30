@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app as app, request, Response, abort, jsonify
-from ext.app.eve_blueprint_helper import SwaggerBlueprint # parse_request, format_response,
+from ext.app.eve_blueprint_helper import SwaggerBlueprint  # parse_request, format_response,
 from ext.auth.decorators import require_token
 from ext.auth.clients import users
 from ext.app.eve_helper import eve_response, eve_abort
@@ -11,18 +11,29 @@ import json
 
 ACL = SwaggerBlueprint('Acl helpers for the lazy programmer', __name__, url_prefix='acl')
 
-NLF_ORG = {27: 'nlf',
-           237: 'mikro',
-           238: 'motor',
-           109: 'fallskjerm',
-           110: 'hps',
-           111: 'seil',
-           236: 'modell',
-           235: 'ballong'
-           }
+
+@ACL.route('/api-doc', methods=['GET'])
+@require_token()
+def get_paths():
+    resp = [str(p) for p in app.url_map.iter_rules() if str(p).startswith('/api/v1/acl')]
+    return eve_response(resp)
+
+
+def _get_activities():
+    lookup = {'parent_activity_id': 27}
+    col = app.data.driver.db['activities']
+    result = list(col.find(lookup))
+    activities = {}
+    if result:
+        for x in result:
+            activities[x['id']] = x['name'].lower()
+        activities[27] = 'nlf'
+    print(result)
+    return activities
+
 
 def _get_orgs(orgs=[]):
-    if len(orgs)>0:
+    if len(orgs) > 0:
         lookup = {'is_active': True, '$or': [{'id': {'$in': orgs}}, {'parent_id': {'$in': orgs}}]}
     else:
         lookup = {'is_active': True}
@@ -32,7 +43,8 @@ def _get_orgs(orgs=[]):
     if result:
         return [{'id': x['id'], 'type_id': x['type_id'], 'parent_id': x['parent_id'], 'activity': x['main_activity'], 'name': x['name']} for x in result]
 
-    return []
+    return {}
+
 
 def _get_activities_in_club(org_id):
     activities = []
@@ -74,6 +86,7 @@ def _acl_from_functions(person_id):
     functions, _, _, status, _ = get_internal('functions_process', **lookup)
 
     if status == 200:
+        nlf_activities = _get_activities()
 
         for f in functions['_items']:
 
@@ -89,7 +102,7 @@ def _acl_from_functions(person_id):
                 """
                 for activity in [v['id'] for v in org.get('activities', [{'id': 27}])]:
                     try:
-                        if activity in list(NLF_ORG.keys()):
+                        if activity in list(nlf_activities.keys()):
                             function_acl.append({'activity': activity,
                                                  'org': f['active_in_org_id'],
                                                  'role': f['type_id'],
@@ -139,13 +152,13 @@ def acl_simple(person_id):
     status, function_acl = _acl_from_functions(person_id)
 
     if status == 200:
-
+        activities = _get_activities()
         simple_acl = []
         for a in function_acl:
-            if a['activity'] in list(NLF_ORG.keys()):  # and a['role'] in [10000000]:
+            if a['activity'] in list(activities.keys()):  # and a['role'] in [10000000]:
                 simple_acl.append(
                     '{}_{}'.format(
-                        NLF_ORG[a['activity']].strip(),
+                        activities[a['activity']].strip(),
                         re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', a.get('name', '')).lower().strip('_').strip()
                     )
                 )
@@ -154,9 +167,9 @@ def acl_simple(person_id):
 
     return eve_abort(status)
 
+
 @ACL.route('/club/<int:org_id>/simple/<int:person_id>', methods=['GET'])
 def acl_simple_club_or_discipline(org_id, person_id):
-
     if org_id:
         orgs = _get_orgs(orgs=[org_id])
     elif not org_id:
@@ -179,13 +192,13 @@ def acl_simple_club_or_discipline(org_id, person_id):
         functions = col_f.find(lookup)
 
         if functions:
-
-            if org['type_id'] == 14: # Gren
+            activities = _get_activities()
+            if org['type_id'] == 14:  # Gren
                 for f in functions:
-                    #main_activity
+                    # main_activity
                     acl_orgs.append(
                         '{}_{}'.format(
-                            NLF_ORG[org['activity']['id']].strip(),
+                            activities[org['activity']['id']].strip(),
                             re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', f.get('type_name', '')).lower().strip('_').strip()
                         )
                     )
@@ -200,25 +213,25 @@ def acl_simple_club_or_discipline(org_id, person_id):
 
     return eve_response(list(set(acl_orgs)), 200)
 
+
 @ACL.route('/competences/simple/<int:person_id>', methods=['GET'])
 def acl_simple_competences(person_id):
-
     args = parse_request(resource=None, is_blueprint=True)
     col = app.data.driver.db['persons']
-    person = col.find_one({'id': person_id},{'competences': 1}) #, 'valid_until': {'$gt': datetime.now()}})
+    person = col.find_one({'id': person_id}, {'competences': 1})  # , 'valid_until': {'$gt': datetime.now()}})
     acl_competences = []
     if person:
 
         for competence in person.get('competences', []):
 
             if '_code' in competence:
-                acl_competences.append(re.sub(r'_{2,}', '_',re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', competence.get('_code', '')).lower().strip('_').strip()))
+                acl_competences.append(re.sub(r'_{2,}', '_', re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', competence.get('_code', '')).lower().strip('_').strip()))
 
             else:
-                acl_competences.append(re.sub(r'_{2,}', '_',re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', competence.get('title', '')).lower().strip('_').strip()))
-
+                acl_competences.append(re.sub(r'_{2,}', '_', re.sub(r'[^a-zæøåA-ZÆØÅ0-9]', '_', competence.get('title', '')).lower().strip('_').strip()))
 
     return eve_response(list(set(acl_competences)), 200)
+
 
 def acl_simple_all():
     functions, _, _, status, _ = get_internal('functions')
@@ -232,10 +245,10 @@ def acl_simple_all():
 def acl_activities_person(person_id):
     activities = []
     status, roles = _acl_from_functions(person_id)
-
+    nlf_activities = _get_activities()
     if status == 200:
         for role in roles:
-            activities.append(NLF_ORG[role['activity']])
+            activities.append(nlf_activities[role['activity']])
 
     return eve_response(list(set(activities)), 200)
 
@@ -243,7 +256,7 @@ def acl_activities_person(person_id):
 @ACL.route('/activities/', methods=['GET'])
 @require_token()
 def acl_activities():
-    return eve_response(NLF_ORG, 200)
+    return eve_response(_get_activities(), 200)
 
 
 @ACL.route('/clubs/person/<int:person_id>', methods=['GET'])
