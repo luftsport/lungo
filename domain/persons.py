@@ -544,7 +544,7 @@ agg_person_all_emails = {
     'item_title': 'Persons all emails',
     'pagination': False,
     'datasource': {
-        'source': RESOURCE_COLLECTION +'_versions',
+        'source': RESOURCE_COLLECTION + '_versions',
         'aggregation': {
             'pipeline':
                 [
@@ -572,3 +572,51 @@ agg_person_all_emails = {
         }
     }
 }
+
+agg_persons_member_since_in_org = {
+    'url': 'persons/member/since',
+    'item_title': 'Persons member since in organization',
+    'pagination': False,
+    'datasource': {
+        'source': RESOURCE_COLLECTION,
+        'aggregation': {
+            'pipeline':
+                [
+                    {"$match": {"$or": [{"memberships.discipline": "$org_id"}, {"memberships.club": "$org_id"}]}},
+                    {
+                        "$project": {
+                            "_id": 0,
+                            "person_id": "$id",
+                            "full_name": 1,
+                            "matching_membership": {
+                                "$arrayElemAt": [
+                                    {
+                                        "$filter": {
+                                            "input": "$memberships",
+                                            "as": "m",
+                                            "cond": {
+                                                "$or": [
+                                                    {"$eq": ["$$m.discipline", "$org_id"]},
+                                                    {"$eq": ["$$m.club", "$org_id"]}
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    0
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        "$project": {
+                            "person_id": 1,
+                            "full_name": 1,
+                            "from_date": "$matching_membership.from_date",
+                            "membership_type": {"$ifNull": ["$matching_membership.payment.type", "unknown"]}
+                        }
+                    }
+                ]
+        }
+    }
+}
+

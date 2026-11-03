@@ -68,6 +68,7 @@ DOMAIN = {
     "persons_emails": persons.agg_person_all_emails,
     "persons_age_distribution": persons.agg_age_distribution,
     "persons_age_gender_bucket_distribution": persons.agg_age_gender_bucket_distribution,
+    "persons_member_since_in_org": persons.agg_persons_member_since_in_org,
     # Foreign id/connections
     "persons_fids": persons_fids.definition,
     # Custom Persons
