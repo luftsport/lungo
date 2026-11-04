@@ -113,7 +113,8 @@ from ext.app.hooks import (
     on_organizations_post, on_organizations_put, after_get_person, after_get_persons, on_person_before_put,
     assign_lookup,
     on_payment_before_post, on_payment_after_put, on_payment_after_post, on_payment_before_put,
-    on_notifications_delete
+    on_notifications_delete,
+    on_aggregate
 )
 
 # Should be able to filter out all merged when doing lookup
@@ -169,10 +170,10 @@ app.on_replaced_organizations_process += on_organizations_put
 app.on_delete_notifications += on_notifications_delete
 
 # AGGREGATION
+app.before_aggregation += on_aggregate
 
 # Sendgrid webhook
 from ext.app.sendgrid_hooks import verify_sendgrid_signature
-
 app.on_insert_sendgrid_webhook += verify_sendgrid_signature
 
 """
@@ -225,7 +226,7 @@ if 1 == 1 or not app.debug:
         }
     )
     mongo_handler.setLevel(logging.ERROR)  # only ERROR and above to MongoDB
-    mongo_handler.addFilter(FlaskContextFilter()) # Add Flask context filter to include client_id and person_id in logs
+    mongo_handler.addFilter(FlaskContextFilter())  # Add Flask context filter to include client_id and person_id in logs
 
     # Formatters
     file_formatter = logging.Formatter(
@@ -249,6 +250,7 @@ if 1 == 1 or not app.debug:
     # Expose the logs resource
     app.logger.info("Registering blueprint")
     from blueprints.logs import Logs
+
     app.logger.info('Logs.url_prefix: %s' % Logs.url_prefix)
     app.logger.info(f"{app.globals.get('prefix')}/{Logs.url_prefix}")
     app.register_blueprint(Logs, url_prefix=f"{app.globals.get('prefix')}/{Logs.url_prefix}")

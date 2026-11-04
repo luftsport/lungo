@@ -59,6 +59,7 @@ class NlfTokenAuth(TokenAuth):
                 # Keep client id and token global
                 g.client_id = self.user_id
                 g.token = token
+                g.resource_lookup = self.resource_lookup
 
                 # If the client provides the NIF user id keep it on global
                 on_behalf_of = request.headers.get('X-On-Behalf-Of')

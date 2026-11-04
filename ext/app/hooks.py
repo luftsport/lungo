@@ -81,7 +81,7 @@ tz_local = tz.gettz(LOCAL_TIMEZONE)
 def broadcast(change_data):  # @Todo support for change type
     try:
         sio = socketio.Client()
-        sio.connect('http://localhost:7000?token={}'.format(LUNGO_SIO_TOKEN))
+        sio.connect('http://localhost:7000?token={}'.format(LUNGO_SIO_TOKEN), transports=['websocket'])
         sio.emit('broadcast_change', change_data)
         time.sleep(0.1)
         sio.disconnect()
@@ -1204,3 +1204,44 @@ def on_notification_delete(item):
 def on_notifications_delete(items):
     for item in items:
         on_notification_delete(item)
+
+def on_aggregate(endpoint, pipeline):
+    """
+    Runs the entire substitution logic for the aggregation pipeline over again
+    Replaces all $<param> with the values from g.resource_lookup which comes from the client lookup parameters
+
+    :param endpoint:
+    :param pipeline:
+    :return:
+    """
+    try:
+        if g.resource_lookup is not None:
+            from copy import deepcopy
+            # Override / inject client parameters into the pipeline before Eve executes it
+            client_params = {}
+            for key, value in g.resource_lookup.items():
+                client_params[key] = value  # force user
+
+            # Re-run an eve-ish substitution for the aggregation pipeline with the client parameters
+            original_pipeline = app.config["DOMAIN"][endpoint]["datasource"]["aggregation"]["pipeline"]
+            new_pipeline = deepcopy(original_pipeline)
+
+            # Eve’s internal substitution logic is roughly this recursive replace:
+            def substitute(obj, params):
+                if isinstance(obj, dict):
+                    return {k: substitute(v, params) for k, v in obj.items()}
+                if isinstance(obj, list):
+                    return [substitute(i, params) for i in obj]
+                if isinstance(obj, str) and obj.startswith("$") and obj in params:
+                    return params[obj]
+                return obj
+
+            substituted = substitute(new_pipeline, client_params)
+
+            #  Replace the pipeline that Eve now will execute
+            pipeline[:] = substituted
+
+
+    except Exception as e:
+        app.logger.exception('Error in on_aggregate hook for endpoint {} and pipeline {}'.format(endpoint, pipeline))
+        pipeline = [] # Always null the pipeline if error occurs to avoid Eve executing a broken pipeline
